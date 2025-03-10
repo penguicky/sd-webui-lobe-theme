@@ -420,6 +420,12 @@ $ bun install
 $ bun dev
 ```
 
+And to build the project for release:
+
+```bash
+$ bun run build
+```
+
 <div align="right">
 
 [![][back-to-top]](#readme-top)

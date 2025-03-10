@@ -42,14 +42,14 @@ export default (token: Theme) => {
         li {
           border-bottom: 1px solid ${token.colorBorder};
 
-          &:hover {
+          &:hover, &.selected {
             background: ${token.colorFillSecondary} !important;
           }
 
           &:nth-of-type(odd) {
             background: transparent !important;
 
-            &:hover {
+            &:hover, &.selected {
               background: ${token.colorFillSecondary} !important;
             }
           }
