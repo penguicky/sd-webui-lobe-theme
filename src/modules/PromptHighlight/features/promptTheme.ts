@@ -10,6 +10,7 @@ export const themeConfig: any = (isDarkMode: ThemeAppearance) => {
   const colorGreen = isDarkMode ? colorScales.lime[type][9] : colorScales.green[type][10];
   const colorBlue = isDarkMode ? colorScales.blue[type][9] : colorScales.geekblue[type][9];
   const colorPurple = isDarkMode ? colorScales.purple[type][11] : colorScales.purple[type][8];
+  const colorGray = isDarkMode ? colorScales.gray[type][8] : colorScales.gray[type][9];
   return {
     colors: {
       'editor.foreground': colorGreen,
@@ -70,6 +71,12 @@ export const themeConfig: any = (isDarkMode: ThemeAppearance) => {
         settings: {
           foreground: colorYellow,
         },
+      },
+      {
+        scope: 'comment',
+        settings: {
+          foreground: colorGray,
+        }
       },
     ],
     type,
