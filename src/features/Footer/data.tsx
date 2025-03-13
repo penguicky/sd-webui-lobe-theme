@@ -77,7 +77,7 @@ export const MoreProducts = [
     url: 'https://github.com/lobehub/sd-webui-lobe-theme',
   },
   {
-    description: 'Minifier ExtraNetwrok Covers',
+    description: 'Minifier ExtraNetwork Covers',
     openExternal: true,
     title: '✂️ Cover Minifier',
     url: 'https://github.com/canisminor1990/sd-webui-cover-minifier',
