@@ -8,10 +8,15 @@ import { useHighlight } from '@/hooks/useHighlight';
 
 import { useStyles } from '../style';
 
-const SyntaxHighlighter = memo<PropsWithChildren>(({ children }) => {
+interface PropsWithChildrenParentId extends PropsWithChildren {
+  parentId: string;
+}
+
+const SyntaxHighlighter = memo<PropsWithChildrenParentId>(({ parentId, children }) => {
   const { styles } = useStyles();
   const { isDarkMode } = useThemeMode();
-  const { data: codeToHtml, isLoading } = useHighlight(children as string, isDarkMode);
+  const isNegPrompt = parentId.endsWith("_neg_prompt");
+  const { data: codeToHtml, isLoading } = useHighlight(children as string, isDarkMode, isNegPrompt);
 
   return (
     <>

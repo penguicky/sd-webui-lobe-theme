@@ -1,8 +1,9 @@
 import { colors as colorScales } from '@lobehub/ui';
 import { ThemeAppearance } from 'antd-style';
 
-export const themeConfig: any = (isDarkMode: ThemeAppearance) => {
-  const type = isDarkMode ? 'dark' : 'light';
+export const themeConfig: any = (isDarkMode: ThemeAppearance, isNegPrompt: boolean) => {
+  const type = (isDarkMode ? 'dark' : 'light');
+  const name = type + (isNegPrompt ? '-neg-prompt' : '');
 
   const colorYellow = isDarkMode ? colorScales.yellow[type][9] : colorScales.gold[type][10];
   const colorOrange = isDarkMode ? colorScales.gold[type][9] : colorScales.orange[type][10];
@@ -13,9 +14,9 @@ export const themeConfig: any = (isDarkMode: ThemeAppearance) => {
   const colorGray = isDarkMode ? colorScales.gray[type][8] : colorScales.gray[type][9];
   return {
     colors: {
-      'editor.foreground': colorGreen,
+      'editor.foreground': isNegPrompt ? colorVolcano : colorGreen,
     },
-    name: type,
+    name: name,
     tokenColors: [
       {
         scope: 'comma',

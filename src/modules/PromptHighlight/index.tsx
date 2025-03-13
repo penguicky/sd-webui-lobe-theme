@@ -63,7 +63,7 @@ const Index = memo<AppProps>(({ parentId }) => {
       ref={ref}
       style={{ height: size?.height, width: handlePromptResize() }}
     >
-      <SyntaxHighlighter>{prompt}</SyntaxHighlighter>
+      <SyntaxHighlighter parentId={parentId}>{prompt}</SyntaxHighlighter>
     </div>
   );
 });

@@ -16,7 +16,7 @@ const initHighlighter = async(): Promise<HighlighterCore> => {
     // @ts-ignore
     langs: [prompt],
     loadWasm: getWasmInlined,
-    themes: [themeConfig(true), themeConfig(false)],
+    themes: [themeConfig(true, false), themeConfig(false, false), themeConfig(true, true), themeConfig(false, true)],
   });
 
   cacheHighlighter = highlighter;
@@ -24,13 +24,13 @@ const initHighlighter = async(): Promise<HighlighterCore> => {
   return highlighter;
 };
 
-export const useHighlight = (text: string, isDarkMode: boolean) =>
+export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boolean) =>
   useSWR([isDarkMode ? 'dark' : 'light', text].join('-'), async() => {
     try {
       const highlighter = await initHighlighter();
       const html = highlighter?.codeToHtml(text, {
         lang: 'prompt',
-        theme: isDarkMode ? 'dark' : 'light',
+        theme: (isDarkMode ? 'dark' : 'light') + (isNegPrompt ? '-neg-prompt' : ''),
         transformers: [
           {
             code(node) {
