@@ -16,9 +16,9 @@ consola.info('Proxy:', `http://${SD_HOST}:${SD_PORT}`);
 export default defineConfig({
   base: '/dev',
   build: {
-    cssMinify: true,
+    cssMinify: 'esbuild',
     emptyOutDir: true,
-    minify: 'terser',
+    minify: 'esbuild',
     outDir: './javascript',
     rollupOptions: {
       input: resolve(__dirname, 'src/main.tsx'),
