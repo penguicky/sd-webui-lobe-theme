@@ -114,7 +114,7 @@ export const Highlighter = memo<HighlighterProps>(
           )}
         </Flexbox>
         <div style={expand ? {} : { height: 0, overflow: 'hidden' }}>
-          <SyntaxHighlighter>{children}</SyntaxHighlighter>
+          <SyntaxHighlighter parentId={className || ''}>{children}</SyntaxHighlighter>
         </div>
       </div>
     );
