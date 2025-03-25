@@ -72,6 +72,8 @@ export const getLatestVersion = async(): Promise<string> => {
       '',
     )}/releases/latest`,
   );
+
+  if (!res.ok) return DEFAULT_VERSION;
   const data = (await res.json()) as any;
   if (!data || !data.tag_name) return DEFAULT_VERSION;
   return semver.clean(data.tag_name as string) || DEFAULT_VERSION;
