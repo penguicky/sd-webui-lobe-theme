@@ -27,18 +27,23 @@ export default defineConfig({
     rollupOptions: {
       input: resolve(__dirname, 'src/main.tsx'),
       output: {
-        assetFileNames: `[name].[hash].[ext]`,
-        chunkFileNames: `[name]-[hash].js`,
-        entryFileNames: `[name]-[hash].js`,
+        // Use original naming to avoid module loading issues
+        assetFileNames: `[name].[ext]`,
+        chunkFileNames: `[name].js`,
+        entryFileNames: `[name].js`,
 
-        // Manual chunks for better code splitting
-        manualChunks: {
-          'antd-vendor': ['antd', 'antd-style'],
-          'i18n-vendor': ['i18next', 'react-i18next', 'i18next-http-backend'],
-          'react-vendor': ['react', 'react-dom'],
-          'state-vendor': ['zustand', 'zustand-utils', 'swr', 'ahooks'],
-          'ui-vendor': ['@lobehub/ui', 'lucide-react'],
-          'utils-vendor': ['lodash-es', 'dayjs', 'semver'],
+        // Simplified manual chunks - only split the largest dependencies
+        manualChunks: (id) => {
+          // Keep React together
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react-vendor';
+          }
+          // Keep Antd together
+          if (id.includes('node_modules/antd') || id.includes('node_modules/@ant-design')) {
+            return 'antd-vendor';
+          }
+          // Everything else in main bundle to avoid loading issues
+          return undefined;
         },
       },
     },
