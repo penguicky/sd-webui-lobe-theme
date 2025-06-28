@@ -1,48 +1,71 @@
 import { useResponsive } from 'antd-style';
-import isEqual from 'fast-deep-equal';
-import { memo, useRef } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { useInject } from '@/hooks/useInject';
-import { selectors, useAppStore } from '@/store';
+import { useAppStore } from '@/store';
 import { type DivProps } from '@/types';
 
 import SplitView from './SplitView';
 import { removePromptScrollHide } from './removePromptScrollHide';
 import { useStyles } from './style';
 
+// Memoized selector to prevent unnecessary re-renders
+const selectOptimizedSettings = (state: any) => ({
+  layoutSplitPreview: state.setting.layoutSplitPreview,
+  promptTextareaType: state.setting.promptTextareaType,
+});
+
 const Content = memo<DivProps>(({ className, ...props }) => {
   const mainReference = useRef<HTMLDivElement>(null);
   const { mobile } = useResponsive();
-  const setting = useAppStore(selectors.currentSetting, isEqual);
-  const { cx, styles } = useStyles({
-    isPromptResizable: setting.promptTextareaType === 'resizable',
-    layoutSplitPreview: setting.layoutSplitPreview,
-  });
+
+  // Use shallow comparison and specific selector
+  const { promptTextareaType, layoutSplitPreview } = useAppStore(selectOptimizedSettings, shallow);
+
+  // Memoize style configuration
+  const styleConfig = useMemo(
+    () => ({
+      isPromptResizable: promptTextareaType === 'resizable',
+      layoutSplitPreview,
+    }),
+    [promptTextareaType, layoutSplitPreview],
+  );
+
+  const { cx, styles } = useStyles(styleConfig);
+
+  // Memoize the inject success callback
+  const handleInjectSuccess = useCallback(() => {
+    removePromptScrollHide();
+  }, []);
 
   useInject(mainReference, '.app', {
     debug: '[layout] inject - Content',
-    onSuccess: () => {
-      removePromptScrollHide();
-    },
+    onSuccess: handleInjectSuccess,
   });
+
+  // Memoize className computation
+  const computedClassName = useMemo(
+    () =>
+      cx(
+        styles.container,
+        styles.textares,
+        styles.txt2img,
+        layoutSplitPreview && styles.splitView,
+        className,
+      ),
+    [cx, styles, layoutSplitPreview, className],
+  );
 
   return (
     <>
-      <div
-        className={cx(
-          styles.container,
-          styles.textares,
-          styles.txt2img,
-          setting.layoutSplitPreview && styles.splitView,
-          className,
-        )}
-        ref={mainReference}
-        {...props}
-      />
+      <div className={computedClassName} ref={mainReference} {...props} />
 
-      {setting.layoutSplitPreview && mobile === false && <SplitView />}
+      {layoutSplitPreview && !mobile && <SplitView />}
     </>
   );
 });
+
+Content.displayName = 'Content';
 
 export default Content;

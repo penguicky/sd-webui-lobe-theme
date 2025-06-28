@@ -1,14 +1,14 @@
 import { LayoutHeader, LayoutMain, LayoutSidebar } from '@lobehub/ui';
-import isEqual from 'fast-deep-equal';
 import { memo, useEffect } from 'react';
+import { shallow } from 'zustand/shallow';
 
 import StructuredData from '@/components/StructuredData';
 import PromptFormator from '@/features/PromptFormator';
+import { useOptimizedSelector, usePerformanceMonitor } from '@/hooks/usePerformance';
 import '@/locales/config';
 import ImageInfo from '@/modules/ImageInfo/page';
 import PromptHighlight from '@/modules/PromptHighlight/page';
 import replaceIcon from '@/scripts/replaceIcon';
-import { selectors, useAppStore } from '@/store';
 import GlobalStyle from '@/styles';
 
 import Content from '../features/Content';
@@ -21,18 +21,66 @@ import { useStyles } from './style';
 
 export const HEADER_HEIGHT = 64;
 
+// Optimized selectors
+const selectLayoutSettings = (state: any) => ({
+  enableExtraNetworkSidebar: state.setting.enableExtraNetworkSidebar,
+  enableHighlight: state.setting.enableHighlight,
+  enableImageInfo: state.setting.enableImageInfo,
+  enableSidebar: state.setting.enableSidebar,
+  liteAnimation: state.setting.liteAnimation,
+  primaryColor: state.setting.primaryColor,
+  svgIcon: state.setting.svgIcon,
+});
+
 const Index = memo(() => {
-  const setting = useAppStore(selectors.currentSetting, isEqual);
+  // Use performance monitoring
+  usePerformanceMonitor('App Index');
+
+  // Use optimized selectors
+  const {
+    enableSidebar,
+    enableExtraNetworkSidebar,
+    enableHighlight,
+    enableImageInfo,
+    svgIcon,
+    liteAnimation,
+    primaryColor,
+  } = useOptimizedSelector(selectLayoutSettings, shallow);
+
   const { cx, styles } = useStyles({
     headerHeight: HEADER_HEIGHT,
-    isPrimaryColor: Boolean(setting.primaryColor),
+    isPrimaryColor: Boolean(primaryColor),
   });
 
   useEffect(() => {
-    if (setting.enableHighlight) PromptHighlight();
-    if (setting.enableImageInfo) ImageInfo();
-    if (setting.svgIcon) replaceIcon();
-  }, []);
+    // Batch DOM operations
+    const tasks: Array<() => void> = [];
+
+    if (enableHighlight) {
+      tasks.push(() => PromptHighlight());
+    }
+
+    if (enableImageInfo) {
+      tasks.push(() => ImageInfo());
+    }
+
+    if (svgIcon) {
+      tasks.push(() => replaceIcon());
+    }
+
+    // Execute all tasks in the next frame to avoid blocking
+    if (tasks.length > 0) {
+      requestAnimationFrame(() => {
+        tasks.forEach((task) => {
+          try {
+            task();
+          } catch (error) {
+            console.error('Failed to execute initialization task:', error);
+          }
+        });
+      });
+    }
+  }, [enableHighlight, enableImageInfo, svgIcon]);
 
   return (
     <>
@@ -42,8 +90,8 @@ const Index = memo(() => {
         <Header />
       </LayoutHeader>
       <LayoutMain>
-        {<div className={setting.liteAnimation ? styles.backgroundLite : styles.background} />}
-        {setting.enableSidebar && (
+        <div className={liteAnimation ? styles.backgroundLite : styles.background} />
+        {enableSidebar && (
           <LayoutSidebar
             className={styles.sidebar}
             headerHeight={HEADER_HEIGHT}
@@ -52,10 +100,10 @@ const Index = memo(() => {
             <QuickSettingSidebar headerHeight={HEADER_HEIGHT} />
           </LayoutSidebar>
         )}
-        <Content className={cx(!setting.enableSidebar && styles.quicksettings)} />
+        <Content className={cx(!enableSidebar && styles.quicksettings)} />
         <PromptFormator />
         <Share />
-        {setting?.enableExtraNetworkSidebar && (
+        {enableExtraNetworkSidebar && (
           <LayoutSidebar
             className={styles.sidebar}
             headerHeight={HEADER_HEIGHT}
@@ -69,5 +117,7 @@ const Index = memo(() => {
     </>
   );
 });
+
+Index.displayName = 'App';
 
 export default Index;
