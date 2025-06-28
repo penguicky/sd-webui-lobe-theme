@@ -16,37 +16,30 @@ consola.info('Proxy:', `http://${SD_HOST}:${SD_PORT}`);
 export default defineConfig({
   base: '/dev',
   build: {
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000,
     cssMinify: 'esbuild',
     emptyOutDir: true,
     minify: 'esbuild',
     outDir: './javascript',
 
-    reportCompressedSize: true,
+    // Increase limit since we're using single bundle
+reportCompressedSize: true,
 
-    rollupOptions: {
+    
+rollupOptions: {
       input: resolve(__dirname, 'src/main.tsx'),
       output: {
-        // Use original naming to avoid module loading issues
+        // Single file output - no code splitting for compatibility
         assetFileNames: `[name].[ext]`,
         chunkFileNames: `[name].js`,
         entryFileNames: `[name].js`,
 
-        // Simplified manual chunks - only split the largest dependencies
-        manualChunks: (id) => {
-          // Keep React together
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'react-vendor';
-          }
-          // Keep Antd together
-          if (id.includes('node_modules/antd') || id.includes('node_modules/@ant-design')) {
-            return 'antd-vendor';
-          }
-          // Everything else in main bundle to avoid loading issues
-          return undefined;
-        },
+        
+        inlineDynamicImports: true,
+        // Force everything into a single bundle
+manualChunks: undefined,
       },
-    },
+    }, 
     sourcemap: !isProduction,
     target: 'es2020',
   },
