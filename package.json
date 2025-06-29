@@ -1,6 +1,6 @@
 {
   "name": "sd-webui-lobe-theme",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "private": true,
   "description": "LobeThem: The Modern Theme for Stable Diffusion WebUI, Exquisite interface design, Highly customizable UI, and Efficiency boosting features.",
   "keywords": [
@@ -45,10 +45,6 @@
     "type-check": "tsc --noEmit"
   },
   "lint-staged": {
-    "*.md": [
-      "remark --quiet --output --",
-      "prettier --write --no-error-on-unmatched-pattern"
-    ],
     "*.json": [
       "prettier --write --no-error-on-unmatched-pattern"
     ],
