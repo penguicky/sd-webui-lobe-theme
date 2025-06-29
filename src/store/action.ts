@@ -72,7 +72,7 @@ export const createSettings: StateCreator<Store, [['zustand/devtools', never]], 
     consola.info('🤯 [cache] cleared localStorage cache');
   },
 
-  // New method for batch updates
+  // Enhanced batch update method that handles restart
   onBatchUpdateSetting: async (settingUpdates) => {
     const oldSetting = get().setting;
     const newSetting = settingUpdates.reduce<WebuiSetting>(
@@ -80,14 +80,24 @@ export const createSettings: StateCreator<Store, [['zustand/devtools', never]], 
       oldSetting,
     );
 
+    // Update state immediately for better UX
     set(() => ({ setting: newSetting }), false, 'onBatchUpdateSetting');
 
+    // Update localStorage immediately
     debouncedLocalStorageSet(SETTING_KEY, JSON.stringify(newSetting));
 
     try {
       await postSetting(newSetting);
+      consola.success('🤯 [setting] batch update applied successfully');
+
+      if (__DEV__) {
+        console.table(newSetting);
+      }
     } catch (error) {
       consola.error('Failed to post batch setting update:', error);
+      // Revert the setting on failure
+      set(() => ({ setting: oldSetting }), false, 'onBatchUpdateSetting');
+      throw error; // Re-throw so the UI can handle the error
     }
   },
 

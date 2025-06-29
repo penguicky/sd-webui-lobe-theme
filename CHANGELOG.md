@@ -2,6 +2,54 @@
 
 # Changelog
 
+## [Version 3.7.1](https://github.com/lobehub/sd-webui-lobe-theme/compare/v3.7.0...v3.7.1)
+
+<sup>Released on **2025-01-08**</sup>
+
+#### ✨ Features
+
+- **settings**: Add batch settings functionality across multiple tabs.
+
+#### 🐛 Bug Fixes
+
+- **settings**: Fix visual state persistence when switching between tabs.
+- **settings**: Fix immediate restart issue when changing settings.
+
+#### 💄 Styles
+
+- **settings**: Update footer layout with consistent button positioning.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's improved
+
+- **settings**: Add batch settings functionality across multiple tabs - Users can now make changes across multiple settings tabs and apply them all at once with a single restart, greatly improving the user experience when configuring multiple options
+- **settings**: Implement centralized state management for settings modal - Pending changes are now tracked across all tabs and persist when switching between tabs
+- **settings**: Add visual feedback for pending changes - Users receive clear visual indicators when they have unsaved changes, including highlighted footer and descriptive messaging
+- **settings**: Enhance apply/reset functionality - Single "Apply All Changes & Restart" button replaces individual tab submissions, with improved error handling and user notifications
+
+#### What's fixed
+
+- **settings**: Fix visual state persistence when switching between tabs - Form controls now maintain their changed state (toggles, colors, selections) when navigating between tabs, ensuring visual consistency
+- **settings**: Fix immediate restart issue when changing settings - Settings changes are now staged instead of applied immediately, allowing users to make multiple changes before restarting
+- **settings**: Fix footer button positioning - Buttons now maintain consistent right-alignment regardless of pending changes state
+- **settings**: Fix color selection state management - Primary and neutral color selections are properly tracked and restored when switching tabs
+
+#### Styles
+
+- **settings**: Update footer layout with consistent button positioning - Footer buttons now remain in the same position whether changes are pending or not, providing a more stable user interface
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 3.7.0]
 
 <sup>Released on **2025-06-29**</sup>

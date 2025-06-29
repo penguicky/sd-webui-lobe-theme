@@ -42,9 +42,12 @@
   },
   "setting": {
     "button": {
-      "reset": "Revert to default",
-      "submit": "Apply and Restart Interface"
+      "reset": "Reset to Default",
+      "submit": "Apply and Restart Interface",
+      "applyAll": "Apply All Changes & Restart",
+      "noChanges": "No Changes to Apply"
     },
+
     "confirmPageUnload": {
       "desc": "Helps prevent loss of unsaved data",
       "title": "Confirmation on page leaving"
@@ -165,7 +168,12 @@
       "experimental": "Experimental",
       "layout": "Layout",
       "sidebar": "Sidebar"
-    }
+    },
+    "pendingChanges": "You have unsaved changes in multiple tabs",
+    "resetConfirmTitle": "Reset all settings to default?",
+    "noChangesToApply": "No changes to apply",
+    "settingsAppliedSuccess": "Settings applied successfully",
+    "settingsApplyError": "Failed to apply settings"
   },
   "share": "Share",
   "shareModal": {

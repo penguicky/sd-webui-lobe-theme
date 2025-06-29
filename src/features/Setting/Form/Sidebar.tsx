@@ -1,24 +1,41 @@
 import { Form } from '@lobehub/ui';
 import { InputNumber, Segmented, Switch } from 'antd';
-import isEqual from 'fast-deep-equal';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { type WebuiSetting, selectors, useAppStore } from '@/store';
+import { type WebuiSetting } from '@/store';
 
 import { SettingItemGroup } from './types';
 
-const SettingForm = memo(() => {
-  const setting = useAppStore(selectors.currentSetting, isEqual);
-  const onSetSetting = useAppStore((st) => st.onSetSetting);
-  const [rawSetting, setRawSetting] = useState<WebuiSetting>(setting);
+interface SidebarFormProps {
+  currentSetting: WebuiSetting;
+}
+
+const SettingForm = memo<SidebarFormProps>(({ currentSetting }) => {
+  // Use current setting (which includes pending changes) for conditional visibility
+  const [rawSetting, setRawSetting] = useState<WebuiSetting>(currentSetting);
 
   const { t } = useTranslation();
 
+  // MODIFIED: Track changes in real-time as user makes them
   const onFinish = useCallback((value: WebuiSetting) => {
-    onSetSetting(value);
-    location.reload();
+    // Keep for compatibility but won't be called without submit button
+    const changeEvent = new CustomEvent('settingsFormChange', { detail: value });
+    window.dispatchEvent(changeEvent);
   }, []);
+
+  // ADDED: Track changes in real-time
+  const onValuesChange = useCallback(
+    (changedValues: Partial<WebuiSetting>, allValues: WebuiSetting) => {
+      // Update local state for conditional visibility
+      setRawSetting(allValues);
+
+      // Dispatch change event immediately when any field changes
+      const changeEvent = new CustomEvent('settingsFormChange', { detail: allValues });
+      window.dispatchEvent(changeEvent);
+    },
+    [],
+  );
 
   const quickSettingSidebar: SettingItemGroup = useMemo(
     () => ({
@@ -66,10 +83,9 @@ const SettingForm = memo(() => {
           name: 'sidebarWidth',
         },
       ],
-
       title: t('setting.group.quickSettingSidebar'),
     }),
-    [rawSetting.enableSidebar],
+    [rawSetting.enableSidebar, t],
   );
 
   const extraNetworkSidebar: SettingItemGroup = useMemo(
@@ -125,19 +141,18 @@ const SettingForm = memo(() => {
           name: 'extraNetworkCardSize',
         },
       ],
-
       title: t('setting.group.extraNetworkSidebar'),
     }),
-    [rawSetting.enableExtraNetworkSidebar],
+    [rawSetting.enableExtraNetworkSidebar, t],
   );
 
   return (
     <Form
       id="theme_settings"
-      initialValues={setting}
+      initialValues={currentSetting}
       items={[quickSettingSidebar, extraNetworkSidebar]}
       onFinish={onFinish}
-      onValuesChange={(_, v) => setRawSetting(v)}
+      onValuesChange={onValuesChange}
       style={{ flex: 1 }}
       variant={'pure'}
     />
