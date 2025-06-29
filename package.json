@@ -1,6 +1,6 @@
 {
   "name": "sd-webui-lobe-theme",
-  "version": "3.5.4",
+  "version": "3.6.0",
   "private": true,
   "description": "LobeThem: The Modern Theme for Stable Diffusion WebUI, Exquisite interface design, Highly customizable UI, and Efficiency boosting features.",
   "keywords": [
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/lobehub/sd-webui-lobe-theme.git"
+    "url": "https://github.com/penguicky/sd-webui-lobe-theme.git"
   },
   "license": "AGPL3",
   "author": "LobeHub <i@lobehub.com>",
@@ -27,6 +27,7 @@
   ],
   "scripts": {
     "build": "vite build",
+    "build:analyze": "vite build && npx vite-bundle-analyzer javascript/main.js",
     "ci": "npm run lint && npm run type-check",
     "dev": "vite",
     "dev:sd": "cd ../../ && ./webui.sh",
@@ -34,12 +35,12 @@
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
     "lint:md": "remark . --quiet --output",
     "lint:style": "stylelint \"src/**/*.{css,less,js,jsx,ts,tsx}\" --fix",
-    "prepare": "husky install",
+    "prepare": "husky",
     "prettier": "prettier -c --write \"**/**\"",
     "release": "semantic-release",
     "start": "npm run dev",
     "test": "vitest --passWithNoTests",
-    "test:coverage": "vitest run --coverage  --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
     "test:update": "vitest -u",
     "type-check": "tsc --noEmit"
   },
@@ -69,8 +70,7 @@
   "dependencies": {
     "@bluelovers/auto1111-pnginfo": "^2.0.3",
     "@icons-pack/react-simple-icons": "^9.5.0",
-    "@lobehub/ui": "^1.141.0",
-    "@rollup/rollup-win32-x64-msvc": "^4.18.0",
+    "@lobehub/ui": "1.141.0",
     "ahooks": "^3.8.0",
     "antd": "5.17.0",
     "antd-style": "^3.6.2",
@@ -79,9 +79,7 @@
     "i18next": "^23.11.5",
     "i18next-http-backend": "^2.5.2",
     "lodash-es": "^4.17.21",
-    "lucide-react": "latest",
-    "lucide-static": "latest",
-    "modern-screenshot": "^4.4.39",
+    "lucide-react": "0.263.1",
     "polished": "^4.3.1",
     "react": "^18.3.1",
     "react-dnd": "^16.0.1",
@@ -93,7 +91,7 @@
     "react-rnd": "^10.4.10",
     "react-tag-input": "6.9.0",
     "semver": "^7.6.2",
-    "shiki": "^1.6.0",
+    "shiki": "^3.7.0",
     "split-smartly2": "^2.0.1",
     "swr": "^2.2.5",
     "url-join": "^5.0.0",
@@ -130,7 +128,12 @@
     "terser": "^5.31.0",
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
+    "vite-bundle-analyzer": "^0.7.0",
     "vitest": "~1.2.2"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   },
   "publishConfig": {
     "access": "public",
