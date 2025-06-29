@@ -1,5 +1,5 @@
-import { HighlighterCore, getHighlighterCore } from 'shiki/core';
-import getWasmInlined from 'shiki/wasm';
+import { HighlighterCore, createHighlighterCore } from 'shiki/core';
+import { createOnigurumaEngine } from 'shiki/engine/oniguruma';
 import useSWR from 'swr';
 
 import prompt from '@/modules/PromptHighlight/features/grammar';
@@ -7,16 +7,25 @@ import { themeConfig } from '@/modules/PromptHighlight/features/promptTheme';
 
 let cacheHighlighter: HighlighterCore;
 
-const initHighlighter = async(): Promise<HighlighterCore> => {
+const initHighlighter = async (): Promise<HighlighterCore> => {
   let highlighter = cacheHighlighter;
 
   if (highlighter) return highlighter;
 
-  highlighter = await getHighlighterCore({
+  // Create the engine first (async operation)
+  const engine = createOnigurumaEngine(() => import('shiki/wasm'));
+
+  highlighter = await createHighlighterCore({
+    
+    engine,
     // @ts-ignore
-    langs: [prompt],
-    loadWasm: getWasmInlined,
-    themes: [themeConfig(true, false), themeConfig(false, false), themeConfig(true, true), themeConfig(false, true)],
+langs: [prompt], // Use engine instead of loadWasm
+    themes: [
+      themeConfig(true, false),
+      themeConfig(false, false),
+      themeConfig(true, true),
+      themeConfig(false, true),
+    ],
   });
 
   cacheHighlighter = highlighter;
@@ -25,7 +34,7 @@ const initHighlighter = async(): Promise<HighlighterCore> => {
 };
 
 export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boolean) =>
-  useSWR([isDarkMode ? 'dark' : 'light', text].join('-'), async() => {
+  useSWR([isDarkMode ? 'dark' : 'light', text].join('-'), async () => {
     try {
       const highlighter = await initHighlighter();
       const html = highlighter?.codeToHtml(text, {
