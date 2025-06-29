@@ -4,11 +4,12 @@ import { shallow } from 'zustand/shallow';
 
 import StructuredData from '@/components/StructuredData';
 import PromptFormator from '@/features/PromptFormator';
-import { useOptimizedSelector, usePerformanceMonitor } from '@/hooks/usePerformance';
+import { warmShikiCache } from '@/hooks/usePerformanceOptimized';
 import '@/locales/config';
 import ImageInfo from '@/modules/ImageInfo/page';
 import PromptHighlight from '@/modules/PromptHighlight/page';
 import replaceIcon from '@/scripts/replaceIcon';
+import { useAppStore } from '@/store';
 import GlobalStyle from '@/styles';
 
 import Content from '../features/Content';
@@ -33,9 +34,6 @@ const selectLayoutSettings = (state: any) => ({
 });
 
 const Index = memo(() => {
-  // Use performance monitoring
-  usePerformanceMonitor('App Index');
-
   // Use optimized selectors
   const {
     enableSidebar,
@@ -45,15 +43,23 @@ const Index = memo(() => {
     svgIcon,
     liteAnimation,
     primaryColor,
-  } = useOptimizedSelector(selectLayoutSettings, shallow);
+  } = useAppStore(selectLayoutSettings, shallow);
 
   const { cx, styles } = useStyles({
     headerHeight: HEADER_HEIGHT,
     isPrimaryColor: Boolean(primaryColor),
   });
 
+  // Initialize Shiki cache warming and other optimizations
   useEffect(() => {
-    // Batch DOM operations
+    // Warm Shiki cache early for better performance
+    if (enableHighlight) {
+      warmShikiCache();
+    }
+  }, [enableHighlight]);
+
+  useEffect(() => {
+    // Batch DOM operations to avoid blocking the main thread
     const tasks: Array<() => void> = [];
 
     if (enableHighlight) {
@@ -68,7 +74,7 @@ const Index = memo(() => {
       tasks.push(() => replaceIcon());
     }
 
-    // Execute all tasks in the next frame to avoid blocking
+    // Execute all tasks in the next frame to avoid blocking rendering
     if (tasks.length > 0) {
       requestAnimationFrame(() => {
         tasks.forEach((task) => {

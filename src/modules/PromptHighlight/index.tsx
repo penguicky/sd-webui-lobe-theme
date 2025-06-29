@@ -34,6 +34,15 @@ const Index = memo<AppProps>(({ parentId }) => {
     }
   }, [nativeTextarea.clientWidth]);
 
+  // Determine priority based on prompt type and visibility
+  const priority = useMemo(() => {
+    // Main prompt inputs get high priority, negative prompts get normal priority
+    if (parentId.includes('txt2img_prompt') && !parentId.includes('neg')) {
+      return 'high' as const;
+    }
+    return 'normal' as const;
+  }, [parentId]);
+
   useEffect(() => {
     ref.current.scroll(0, scroll?.top || 0);
   }, [scroll?.top]);
@@ -63,7 +72,13 @@ const Index = memo<AppProps>(({ parentId }) => {
       ref={ref}
       style={{ height: size?.height, width: handlePromptResize() }}
     >
-      <SyntaxHighlighter parentId={parentId}>{prompt}</SyntaxHighlighter>
+      <SyntaxHighlighter
+        maxLength={5000} // Reasonable limit for prompt highlighting
+        parentId={parentId}
+        priority={priority}
+      >
+        {prompt}
+      </SyntaxHighlighter>
     </div>
   );
 });
