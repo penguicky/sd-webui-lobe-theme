@@ -34,6 +34,15 @@ const Index = memo<AppProps>(({ parentId }) => {
     }
   }, [nativeTextarea.clientWidth]);
 
+  // Determine priority based on prompt type and visibility
+  const priority = useMemo(() => {
+    // Main prompt inputs get high priority, negative prompts get normal priority
+    if (parentId.includes('txt2img_prompt') && !parentId.includes('neg')) {
+      return 'high' as const;
+    }
+    return 'normal' as const;
+  }, [parentId]);
+
   useEffect(() => {
     ref.current.scroll(0, scroll?.top || 0);
   }, [scroll?.top]);
@@ -61,9 +70,31 @@ const Index = memo<AppProps>(({ parentId }) => {
       className={styles.container}
       data-code-type="highlighter"
       ref={ref}
-      style={{ height: size?.height, width: handlePromptResize() }}
+      style={{
+        boxSizing: 'border-box',
+        direction: 'ltr',
+        fontFamily: 'inherit',
+        fontSize: 'inherit',
+        height: size?.height,
+        left: 0,
+        lineHeight: 'inherit',
+        pointerEvents: 'none', // Ensure the main container doesn't capture events
+        position: 'absolute',
+        right: 0,
+        textAlign: 'left',
+        top: 0,
+        userSelect: 'none', // Prevent text selection on the overlay
+        width: handlePromptResize(),
+        zIndex: 1, // Keep it above the textarea but below other UI elements
+      }}
     >
-      <SyntaxHighlighter parentId={parentId}>{prompt}</SyntaxHighlighter>
+      <SyntaxHighlighter
+        maxLength={5000} // Reasonable limit for prompt highlighting
+        parentId={parentId}
+        priority={priority}
+      >
+        {prompt}
+      </SyntaxHighlighter>
     </div>
   );
 });

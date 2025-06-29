@@ -1,3 +1,4 @@
+// Shiki v3 compatible grammar definition
 export const lang = {
   $schema: 'https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json',
   fileTypes: ['prompt'],
@@ -53,14 +54,15 @@ export const lang = {
       name: 'wildcards',
     },
     {
-      match: '#.*$',
+      match: '#.*',
       name: 'comment',
     },
   ],
-
+  // Required by Shiki v3 - can be empty object if no repository patterns needed
+  repository: {},
   scopeName: 'source.prompt',
 };
 
+// Export in the format expected by your current code
 const prompt = [lang];
-
 export default prompt;

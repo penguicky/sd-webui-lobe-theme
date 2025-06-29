@@ -1,6 +1,6 @@
 {
   "name": "sd-webui-lobe-theme",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "private": true,
   "description": "LobeThem: The Modern Theme for Stable Diffusion WebUI, Exquisite interface design, Highly customizable UI, and Efficiency boosting features.",
   "keywords": [
@@ -45,10 +45,6 @@
     "type-check": "tsc --noEmit"
   },
   "lint-staged": {
-    "*.md": [
-      "remark --quiet --output --",
-      "prettier --write --no-error-on-unmatched-pattern"
-    ],
     "*.json": [
       "prettier --write --no-error-on-unmatched-pattern"
     ],
@@ -80,6 +76,8 @@
     "i18next-http-backend": "^2.5.2",
     "lodash-es": "^4.17.21",
     "lucide-react": "0.263.1",
+    "lucide-static": "^0.525.0",
+    "modern-screenshot": "^4.6.4",
     "polished": "^4.3.1",
     "react": "^18.3.1",
     "react-dnd": "^16.0.1",
@@ -138,5 +136,10 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
-  }
+  },
+  "trustedDependencies": [
+    "@swc/core",
+    "core-js",
+    "unrs-resolver"
+  ]
 }

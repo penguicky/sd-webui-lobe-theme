@@ -4,15 +4,43 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
   const prefix = `${prefixCls}-highlighter`;
   return {
     container: css`
-      pointer-events: none;
+
+      /* CSS custom properties for micro-adjustments if needed */
+      --highlight-offset-x: 0;
+      --highlight-offset-y: 0;
+
+      pointer-events: none !important;
+
       position: absolute;
+
+      /* Fine-tune positioning to match textarea exactly */
+      top: 0;
+      left: 0;
+      transform: translate(var(--highlight-offset-x), var(--highlight-offset-y));
+
       overflow: hidden auto;
+
+      box-sizing: border-box;
       padding: calc(8px + var(--input-border-width));
 
+      /* Ensure all child elements also don't capture events */
+      * {
+        pointer-events: none !important;
+      }
+
       pre {
+        margin: 0 !important;
+        padding: 0 !important;
+
         font-family: ${token.fontFamilyCode} !important;
         font-size: 13px !important;
+
+        /* Ensure exact font matching */
+        font-weight: normal !important;
         line-height: 1.5 !important;
+        text-indent: 0 !important;
+        letter-spacing: normal !important;
+        word-spacing: normal !important;
         word-wrap: break-word !important;
         white-space: pre-wrap !important;
         vertical-align: bottom !important;
@@ -21,6 +49,10 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
     loading: cx(
       stylish.blur,
       css`
+
+        /* Loading indicator should also not capture events */
+        pointer-events: none !important;
+
         position: absolute;
         z-index: 10;
         top: 0;
@@ -32,26 +64,71 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
 
         height: 34px;
         padding: 0 8px;
+        border-radius: ${token.borderRadius};
 
         font-family: ${token.fontFamilyCode};
         color: ${token.colorTextTertiary};
 
-        border-radius: ${token.borderRadius};
+        * {
+          pointer-events: none !important;
+        }
       `,
     ),
     shiki: cx(
       `${prefix}-shiki`,
       css`
+        pointer-events: none !important;
         margin: 0;
+        padding: 0;
+
+        /* Ensure all Shiki-generated content doesn't capture events */
+        * {
+          pointer-events: none !important;
+        }
 
         .shiki {
-          overflow-x: auto;
-          padding: 0;
-          background: none !important;
+          pointer-events: none !important;
 
+          overflow-x: auto;
+
+          margin: 0 !important;
+          padding: 0 !important;
+
+          /* Ensure exact positioning match */
+          border: none !important;
+
+          background: none !important;
+          outline: none !important;
+
+          /* Make sure all highlighted elements are non-interactive and aligned */
           code,
-          code span {
+          code span,
+          code *,
+          span,
+          span * {
+            pointer-events: none !important;
+
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+
             font-family: ${token.fontFamilyCode} !important;
+            font-size: 13px !important;
+            font-weight: normal !important;
+            line-height: 1.5 !important;
+            text-decoration: none !important;
+            letter-spacing: normal !important;
+            word-spacing: normal !important;
+
+            background: transparent !important;
+          }
+
+          /* Ensure code elements don't add extra spacing */
+          code {
+            display: block !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: pre-wrap !important;
           }
         }
       `,
