@@ -52,11 +52,32 @@ const Index = memo(() => {
 
   // Initialize Shiki cache warming and other optimizations
   useEffect(() => {
-    // Warm Shiki cache early for better performance
+    console.log('🚀 App initialization started');
+    console.log('Current settings:', {
+      enableExtraNetworkSidebar,
+      enableHighlight,
+      enableImageInfo,
+      enableSidebar,
+      svgIcon,
+    });
+
+    // Always warm Shiki cache if highlighting is enabled
     if (enableHighlight) {
-      warmShikiCache();
+      console.log('🔥 Highlighting enabled - triggering Shiki cache warming...');
+      warmShikiCache().catch((error) => {
+        console.error('❌ Failed to warm Shiki cache:', error);
+      });
+    } else {
+      console.log('⚠️ Prompt highlighting is DISABLED in settings');
+      console.log('💡 Enable it in: Settings → Prompt Syntax Highlighting');
     }
   }, [enableHighlight]);
+
+  // Add a one-time initialization log
+  useEffect(() => {
+    console.log('🎨 LobeHub Theme initialized');
+    console.log('📖 For debugging, run: debugShikiSetup() in browser console');
+  }, []);
 
   useEffect(() => {
     // Batch DOM operations to avoid blocking the main thread

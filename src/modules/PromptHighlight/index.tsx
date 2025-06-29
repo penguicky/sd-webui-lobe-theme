@@ -70,7 +70,23 @@ const Index = memo<AppProps>(({ parentId }) => {
       className={styles.container}
       data-code-type="highlighter"
       ref={ref}
-      style={{ height: size?.height, width: handlePromptResize() }}
+      style={{
+        boxSizing: 'border-box',
+        direction: 'ltr',
+        fontFamily: 'inherit',
+        fontSize: 'inherit',
+        height: size?.height,
+        left: 0,
+        lineHeight: 'inherit',
+        pointerEvents: 'none', // Ensure the main container doesn't capture events
+        position: 'absolute',
+        right: 0,
+        textAlign: 'left',
+        top: 0,
+        userSelect: 'none', // Prevent text selection on the overlay
+        width: handlePromptResize(),
+        zIndex: 1, // Keep it above the textarea but below other UI elements
+      }}
     >
       <SyntaxHighlighter
         maxLength={5000} // Reasonable limit for prompt highlighting

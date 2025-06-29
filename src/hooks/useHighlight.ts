@@ -18,6 +18,16 @@ const darkTheme = themeConfig(true, false);
 const darkNegTheme = themeConfig(true, true);
 const themes = [lightTheme, lightNegTheme, darkTheme, darkNegTheme];
 
+// Debug theme names
+if (process.env.NODE_ENV === 'development') {
+  console.log('🎨 Theme names registered:', {
+    dark: darkTheme.name,
+    darkNeg: darkNegTheme.name,
+    light: lightTheme.name,
+    lightNeg: lightNegTheme.name,
+  });
+}
+
 // Pre-create engine (singleton)
 const getEngine = async () => {
   if (!globalEngine) {
@@ -63,9 +73,9 @@ const initHighlighter = async (): Promise<HighlighterCore> => {
   return initPromise;
 };
 
-// Optimize theme key generation
+// Optimize theme key generation to match the original theme names
 const getThemeKey = (isDarkMode: boolean, isNegPrompt: boolean): string => {
-  return `${isDarkMode ? 'dark' : 'light'}${isNegPrompt ? '-neg' : ''}`;
+  return (isDarkMode ? 'dark' : 'light') + (isNegPrompt ? '-neg-prompt' : '');
 };
 
 // Memoized transformer to avoid recreation
@@ -132,6 +142,10 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
         const highlighter = await initHighlighter();
         const themeKey = getThemeKey(isDarkMode, isNegPrompt);
 
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🎨 Highlighting with theme: "${themeKey}"`);
+        }
+
         const html = highlighter.codeToHtml(text, {
           lang: 'prompt',
           theme: themeKey,
@@ -144,20 +158,30 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
         return html;
       } catch (error) {
         console.warn('Highlighting failed:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 Debug info:', {
+            isDarkMode,
+            isNegPrompt,
+            requestedTheme: getThemeKey(isDarkMode, isNegPrompt),
+            text: text.slice(0, 100) + '...',
+          });
+        }
         return text;
       }
     },
     {
       dedupingInterval: 5000,
-
+      
       // 5 seconds
-      errorRetryCount: 2,
+errorRetryCount: 2,
+      
 
-      errorRetryInterval: 1000,
+errorRetryInterval: 1000,
+      
 
-      fallbackData: cachedContent || text,
+fallbackData: cachedContent || text, 
       // Optimize SWR configuration
-      revalidateOnFocus: false,
+revalidateOnFocus: false,
       revalidateOnReconnect: false,
     },
   );

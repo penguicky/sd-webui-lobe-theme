@@ -95,18 +95,28 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
     return (
       <div ref={containerRef}>
         {isLoading ? (
-          <code>{textContent}</code>
+          <code style={{ pointerEvents: 'none' }}>{textContent}</code>
         ) : (
           <div
             className={styles.shiki}
             dangerouslySetInnerHTML={{
               __html: codeToHtml as any,
             }}
+            style={{
+              
+MozUserSelect: 'none',
+              
+// Prevent text selection on the overlay
+WebkitUserSelect: 'none', 
+              msUserSelect: 'none',
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}
           />
         )}
 
         {isLoading && priority === 'high' && (
-          <Center className={styles.loading} gap={8} horizontal>
+          <Center className={styles.loading} gap={8} horizontal style={{ pointerEvents: 'none' }}>
             <Icon icon={Loader2} spin />
             Highlighting...
           </Center>
