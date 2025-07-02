@@ -76,7 +76,14 @@ const Index = memo(() => {
   // Add a one-time initialization log
   useEffect(() => {
     console.log('🎨 LobeHub Theme initialized');
-    console.log('📖 For debugging, run: debugShikiSetup() in browser console');
+    console.log('📖 Debug utilities available:');
+    console.log('  - debugShikiSetup() - Full diagnostics');
+    console.log('  - testBasicHighlighting() - Test core highlighting function');
+    console.log('  - testHighlightResponsiveness() - Test highlighting speed');
+    console.log('  - clearHighlightCache() - Clear cache for immediate updates');
+    console.log('  - forceRefreshHighlighting() - Force refresh all highlighting');
+    console.log('  - forceCompleteAllHighlighting() - EMERGENCY: Force stop all loading');
+    console.log('  - adjustHighlightAlignment(x, y) - Fine-tune positioning');
   }, []);
 
   useEffect(() => {

@@ -85,10 +85,10 @@ const codeTransformer = {
   },
 };
 
-// Simple content cache
+// Simple content cache with shorter TTL for responsiveness
 const contentCache = new Map<string, { html: string; timestamp: number }>();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-const MAX_CACHE_SIZE = 100;
+const CACHE_TTL = 2 * 60 * 1000; // Reduced to 2 minutes for more frequent updates
+const MAX_CACHE_SIZE = 50; // Reduced cache size for better memory management
 
 const getCachedContent = (key: string): string | null => {
   const cached = contentCache.get(key);
@@ -117,13 +117,110 @@ const setCachedContent = (key: string, html: string) => {
   });
 };
 
+// Utility to clear cache for immediate updates (for debugging)
+export const clearHighlightCache = () => {
+  contentCache.clear();
+  console.log('🧹 Highlight cache cleared');
+};
+
+// Force refresh all highlighting
+export const forceRefreshHighlighting = () => {
+  clearHighlightCache();
+  // Trigger a re-render by dispatching input events on all textareas
+  const textareas = document.querySelectorAll('textarea');
+  textareas.forEach((textarea) => {
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  console.log('🔄 Forced highlighting refresh on all textareas');
+};
+
+// Simple test function to check if highlighting works
+export const testBasicHighlighting = async () => {
+  console.log('🧪 Testing basic highlighting...');
+
+  try {
+    const highlighter = await initHighlighter();
+    const testText = 'masterpiece, best quality, 1girl, beautiful';
+    const themeKey = 'light';
+
+    console.log('📝 Test text:', testText);
+    console.log('🎨 Theme:', themeKey);
+
+    const html = highlighter.codeToHtml(testText, {
+      lang: 'prompt',
+      theme: themeKey,
+      transformers: [codeTransformer],
+    });
+
+    console.log('✅ Highlighting successful!');
+    console.log('📄 Generated HTML length:', html.length);
+
+    return html;
+  } catch (error) {
+    console.error('❌ Basic highlighting test failed:', error);
+    return null;
+  }
+};
+
+// Force all highlighting to complete (emergency function)
+export const forceCompleteAllHighlighting = () => {
+  console.log('🚨 EMERGENCY: Forcing all highlighting to complete...');
+
+  // Clear all caches
+  clearHighlightCache();
+
+  // Find all syntax highlighter components and force them to show plain text
+  const highlightContainers = document.querySelectorAll('[data-code-type="highlighter"]');
+  highlightContainers.forEach((container, index) => {
+    console.log(`🔧 Forcing container ${index} to show plain text`);
+
+    // Find the highlighted content and replace with plain text
+    const shikiElements = container.querySelectorAll('.shiki');
+    shikiElements.forEach((element) => {
+      const parentElement = element.parentElement;
+      if (parentElement) {
+        // Create a plain code element
+        const codeElement = document.createElement('code');
+        codeElement.style.pointerEvents = 'none';
+        codeElement.style.fontFamily = 'inherit';
+        // Extract text content from the parent container
+        const textareaSelector =
+          container.dataset.codeType === 'highlighter' ? 'textarea' : null;
+        if (textareaSelector) {
+          const textarea = document.querySelector(textareaSelector) as HTMLTextAreaElement;
+          if (textarea) {
+            codeElement.textContent = textarea.value;
+          }
+        }
+
+        // Replace the highlighted content
+        element.replaceWith(codeElement);
+      }
+    });
+
+    // Remove any loading indicators
+    const loadingElements = container.querySelectorAll('[class*="loading"]');
+    loadingElements.forEach((loading) => loading.remove());
+  });
+
+  console.log('✅ Emergency highlighting completion done');
+};
+
+// Make cache clearing available globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).clearHighlightCache = clearHighlightCache;
+  (window as any).forceRefreshHighlighting = forceRefreshHighlighting;
+  (window as any).testBasicHighlighting = testBasicHighlighting;
+  (window as any).forceCompleteAllHighlighting = forceCompleteAllHighlighting;
+}
+
 export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boolean) => {
   // Memoize cache key to prevent unnecessary re-renders
   const cacheKey = useMemo(() => {
     const themeKey = getThemeKey(isDarkMode, isNegPrompt);
-    // Include text length and hash for better cache efficiency
+    // Use exact text for small content, hash for large content with better sensitivity
     const textHash =
-      text.length > 50 ? `${text.slice(0, 20)}...${text.slice(-20)}_${text.length}` : text;
+      text.length > 100 ? `${text.slice(0, 30)}...${text.slice(-30)}_${text.length}` : text;
     return `${themeKey}-${textHash}`;
   }, [text, isDarkMode, isNegPrompt]);
 
@@ -170,9 +267,9 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
       }
     },
     {
-      dedupingInterval: 5000,
+      dedupingInterval: 1000,
       
-      // 5 seconds
+      // Reduced from 5000ms for better responsiveness
 errorRetryCount: 2,
       
 
@@ -180,8 +277,14 @@ errorRetryInterval: 1000,
       
 
 fallbackData: cachedContent || text, 
-      // Optimize SWR configuration
+      
+// Disable background revalidation for immediate response
+revalidateIfStale: false,
+      
+// More responsive SWR configuration for real-time highlighting
 revalidateOnFocus: false,
+      
+      revalidateOnMount: true,
       revalidateOnReconnect: false,
     },
   );

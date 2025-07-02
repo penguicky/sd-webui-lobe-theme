@@ -165,18 +165,17 @@ export const warmShikiCache = async () => {
       await import('@/modules/PromptHighlight/features/promptTheme');
       console.log('📦 Shiki dependencies preloaded');
     } catch (depError) {
-      console.warn('⚠️ Dependency preloading failed:', depError);
+      const errorMessage = depError instanceof Error ? depError.message : String(depError);
+      console.warn('⚠️ Dependency preloading failed:', errorMessage);
     }
   } catch (error) {
-    console.error('❌ Shiki cache warming failed:', error);
-    if (typeof error === 'object' && error !== null && 'message' in error && 'stack' in error) {
-      console.error('Error details:', {
-        message: (error as { message?: string }).message,
-        stack: (error as { stack?: string }).stack,
-      });
-    } else {
-      console.error('Error details:', error);
-    }
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('❌ Shiki cache warming failed:', errorMessage);
+    console.error('Error details:', {
+      message: errorMessage,
+      stack: errorStack,
+    });
   }
 };
 
@@ -221,7 +220,8 @@ export const debugShikiSetup = async () => {
     console.log('Performance API available:', typeof performance !== 'undefined');
     console.log('Environment:', process.env.NODE_ENV);
   } catch (error) {
-    console.error('Debug check failed:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Debug check failed:', errorMessage);
   }
 
   console.groupEnd();
@@ -237,11 +237,46 @@ export const adjustHighlightAlignment = (offsetX = 0, offsetY = 0) => {
   console.log(`🎯 Highlight alignment adjusted: X: ${offsetX}px, Y: ${offsetY}px`);
 };
 
+// Test highlighting responsiveness
+export const testHighlightResponsiveness = () => {
+  console.log('🧪 Testing highlight responsiveness...');
+
+  const testInputs = document.querySelectorAll('textarea[placeholder*="prompt" i]');
+  if (testInputs.length === 0) {
+    console.log('❌ No prompt textareas found');
+    return;
+  }
+
+  const testArea = testInputs[0] as HTMLTextAreaElement;
+  const originalValue = testArea.value;
+
+  console.log('📝 Adding test text...');
+  testArea.value = 'test highlighting responsiveness';
+  testArea.dispatchEvent(new Event('input', { bubbles: true }));
+
+  setTimeout(() => {
+    console.log('🔄 Changing text...');
+    testArea.value = 'updated text for responsiveness test';
+    testArea.dispatchEvent(new Event('input', { bubbles: true }));
+
+    setTimeout(() => {
+      console.log('↩️ Restoring original text...');
+      testArea.value = originalValue;
+      testArea.dispatchEvent(new Event('input', { bubbles: true }));
+      console.log('✅ Responsiveness test complete');
+    }, 1000);
+  }, 1000);
+};
+
 // Make utilities globally available
 if (typeof window !== 'undefined') {
   (window as any).debugShikiSetup = debugShikiSetup;
   (window as any).adjustHighlightAlignment = adjustHighlightAlignment;
+  (window as any).testHighlightResponsiveness = testHighlightResponsiveness;
   console.log('🛠️ Debug utilities available:');
   console.log('  - debugShikiSetup() - Full Shiki diagnostics');
+  console.log('  - testBasicHighlighting() - Test core highlighting function');
   console.log('  - adjustHighlightAlignment(x, y) - Fine-tune text alignment');
+  console.log('  - testHighlightResponsiveness() - Test real-time highlighting');
+  console.log('  - forceCompleteAllHighlighting() - EMERGENCY: Force stop all loading');
 }
