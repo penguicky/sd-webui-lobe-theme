@@ -14,6 +14,46 @@ interface PropsWithChildrenParentId extends PropsWithChildren {
   priority?: 'high' | 'normal' | 'low';
 }
 
+// =============================================================================
+// DEBUG SYSTEM - SHARED WITH useHighlight.ts
+// =============================================================================
+
+// Access the shared debug state from useHighlight
+const getDebugState = (): boolean => {
+  try {
+    return (window as any).HIGHLIGHT_DEBUG_STATE?.get() || false;
+  } catch {
+    return false;
+  }
+};
+
+// Debug utilities that check the shared state
+const debugLog = (message: string, data?: any) => {
+  if (getDebugState()) {
+    if (data) {
+      console.log(message, data);
+    } else {
+      console.log(message);
+    }
+  }
+};
+
+const debugWarn = (message: string, ...args: any[]) => {
+  if (getDebugState()) {
+    console.warn(message, ...args);
+  }
+};
+
+const debugError = (message: string, ...args: any[]) => {
+  if (getDebugState()) {
+    console.error(message, ...args);
+  }
+};
+
+// =============================================================================
+// SYNTAX HIGHLIGHTER COMPONENT
+// =============================================================================
+
 const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
   ({ parentId, children, priority = 'normal', maxLength = 10_000 }) => {
     const { styles } = useStyles();
@@ -68,7 +108,7 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
       const timeoutDuration = priority === 'high' ? 3000 : priority === 'low' ? 8000 : 5000;
 
       const timeout = setTimeout(() => {
-        console.warn(
+        debugWarn(
           `⏰ SyntaxHighlighter timeout after ${timeoutDuration}ms (priority: ${priority}, parentId: ${parentId.slice(-20)})`,
         );
         setHasTimedOut(true);
@@ -77,8 +117,8 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
       return () => clearTimeout(timeout);
     }, [isLoading, priority, shouldHighlight, parentId]);
 
-    // Enhanced debug logging
-    console.log('🎨 SyntaxHighlighter render:', {
+    // Enhanced debug logging - controlled by shared debug flag
+    debugLog('🎨 SyntaxHighlighter render:', {
       error: !!error,
       hasHighlightedContent: !!codeToHtml,
       hasTimedOut,
@@ -112,7 +152,7 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
 
     // Error state - show plain text
     if (error) {
-      console.error('SyntaxHighlighter error:', error);
+      debugError('SyntaxHighlighter error:', error);
       return (
         <div className={styles.shiki} ref={containerRef}>
           <code style={{ opacity: 0.8 }}>{textContent}</code>

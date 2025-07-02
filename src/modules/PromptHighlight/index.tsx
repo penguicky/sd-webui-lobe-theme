@@ -13,6 +13,7 @@ interface AppProps {
 const Index = memo<AppProps>(({ parentId }) => {
   const ref: any = useRef(null);
   const [prompt, setPrompt] = useState<string>('');
+  const [overlayDimensions, setOverlayDimensions] = useState({ height: 0, width: 0 });
   const { styles, theme } = useStyles();
   const nativeTextareaValue = useExternalTextareaObserver(`${parentId} label textarea`);
   const nativeTextarea = useMemo(
@@ -26,13 +27,57 @@ const Index = memo<AppProps>(({ parentId }) => {
     setPrompt(event.target.value);
   }, []);
 
-  const handlePromptResize = useCallback(() => {
-    if (nativeTextarea.clientHeight < nativeTextarea.scrollHeight) {
-      return size?.width === undefined ? '' : size?.width + 6;
-    } else {
-      return size?.width === undefined ? '' : size?.width + 2;
-    }
-  }, [nativeTextarea.clientWidth]);
+  // Improved dimension calculation with better alignment
+  const updateOverlayDimensions = useCallback(() => {
+    if (!nativeTextarea) return;
+
+    // Get computed style for more accurate measurements
+    const computedStyle = window.getComputedStyle(nativeTextarea);
+    const borderWidth =
+      parseFloat(computedStyle.borderLeftWidth) + parseFloat(computedStyle.borderRightWidth);
+    const paddingWidth =
+      parseFloat(computedStyle.paddingLeft) + parseFloat(computedStyle.paddingRight);
+
+    // Calculate exact content area
+    const contentWidth = nativeTextarea.clientWidth - borderWidth - paddingWidth;
+    const contentHeight = nativeTextarea.clientHeight;
+
+    setOverlayDimensions({
+      height: contentHeight,
+      width: contentWidth,
+    });
+  }, [nativeTextarea]);
+
+  // Update dimensions on size changes with debouncing
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const debouncedUpdate = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateOverlayDimensions, 16); // One frame delay
+    };
+
+    updateOverlayDimensions(); // Initial update
+    debouncedUpdate(); // Also debounce for any rapid changes
+
+    return () => clearTimeout(timeoutId);
+  }, [size?.width, size?.height, updateOverlayDimensions]);
+
+  // Listen for resize events on the textarea itself
+  useEffect(() => {
+    if (!nativeTextarea) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Use requestAnimationFrame for smooth updates
+      requestAnimationFrame(updateOverlayDimensions);
+    });
+
+    resizeObserver.observe(nativeTextarea);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [nativeTextarea, updateOverlayDimensions]);
 
   // Determine priority based on prompt type and visibility
   const priority = useMemo(() => {
@@ -43,27 +88,56 @@ const Index = memo<AppProps>(({ parentId }) => {
     return 'normal' as const;
   }, [parentId]);
 
+  // Sync scroll position
   useEffect(() => {
-    ref.current.scroll(0, scroll?.top || 0);
-  }, [scroll?.top]);
+    if (ref.current && scroll) {
+      ref.current.scrollTop = scroll.top || 0;
+      ref.current.scrollLeft = scroll.left || 0;
+    }
+  }, [scroll?.top, scroll?.left]);
 
+  // Event listeners
   useEffect(() => {
+    if (!nativeTextarea) return;
+
     nativeTextarea.addEventListener('change', handlePromptChange);
     return () => {
       nativeTextarea.removeEventListener('change', handlePromptChange);
     };
-  }, []);
+  }, [nativeTextarea, handlePromptChange]);
 
+  // Apply theme styles to textarea
   useEffect(() => {
-    if (theme) {
+    if (theme && nativeTextarea) {
       nativeTextarea.style.color = 'transparent';
       nativeTextarea.style.caretColor = theme.colorSuccess;
     }
-  }, [theme]);
+  }, [theme, nativeTextarea]);
 
+  // Update prompt content
   useEffect(() => {
     setPrompt(nativeTextareaValue);
   }, [nativeTextareaValue]);
+
+  // Get textarea computed style for perfect font matching
+  const textareaStyle = useMemo(() => {
+    if (!nativeTextarea) return {};
+
+    const computedStyle = window.getComputedStyle(nativeTextarea);
+    return {
+      fontFamily: computedStyle.fontFamily,
+      fontSize: computedStyle.fontSize,
+      fontWeight: computedStyle.fontWeight,
+      letterSpacing: computedStyle.letterSpacing,
+      lineHeight: computedStyle.lineHeight,
+      padding: computedStyle.padding,
+      paddingBottom: computedStyle.paddingBottom,
+      paddingLeft: computedStyle.paddingLeft,
+      paddingRight: computedStyle.paddingRight,
+      paddingTop: computedStyle.paddingTop,
+      wordSpacing: computedStyle.wordSpacing,
+    };
+  }, [nativeTextarea, size]); // Update when size changes
 
   return (
     <div
@@ -71,32 +145,30 @@ const Index = memo<AppProps>(({ parentId }) => {
       data-code-type="highlighter"
       ref={ref}
       style={{
+        height: overlayDimensions.height || size?.height || 0,
+        left: 0,
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        position: 'absolute',
+        top: 0,
+        userSelect: 'none',
+        width: overlayDimensions.width || size?.width || 0,
+        zIndex: 1, // Prevent overlay from extending beyond textarea
+        // Match textarea styling exactly
+        ...textareaStyle,
+        // Override critical positioning properties
         boxSizing: 'border-box',
         direction: 'ltr',
-        fontFamily: 'inherit',
-        fontSize: 'inherit',
-        height: size?.height,
-        left: 0,
-        lineHeight: 'inherit',
-        pointerEvents: 'none', // Ensure the main container doesn't capture events
-        position: 'absolute',
-        right: 0,
         textAlign: 'left',
-        top: 0,
-        userSelect: 'none', // Prevent text selection on the overlay
-        width: handlePromptResize(),
-        zIndex: 1, // Keep it above the textarea but below other UI elements
       }}
     >
-      <SyntaxHighlighter
-        maxLength={5000} // Reasonable limit for prompt highlighting
-        parentId={parentId}
-        priority={priority}
-      >
+      <SyntaxHighlighter maxLength={5000} parentId={parentId} priority={priority}>
         {prompt}
       </SyntaxHighlighter>
     </div>
   );
 });
+
+Index.displayName = 'PromptHighlightIndex';
 
 export default Index;

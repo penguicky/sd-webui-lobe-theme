@@ -1,89 +1,46 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-// Performance monitoring for Shiki
-export class ShikiPerformanceMonitor {
-  private static metrics = {
-    cacheHits: 0,
-    cacheMisses: 0,
-    highlightTimes: [] as number[],
-    initTime: 0,
-  };
+// =============================================================================
+// DEBUG SYSTEM - SHARED WITH HIGHLIGHT COMPONENTS
+// =============================================================================
 
-  static recordInit(time: number) {
-    this.metrics.initTime = time;
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🚀 Shiki initialization: ${time.toFixed(2)}ms`);
-    }
+// Access the shared debug state from useHighlight
+const getDebugState = (): boolean => {
+  try {
+    return (window as any).HIGHLIGHT_DEBUG_STATE?.get() || false;
+  } catch {
+    return false;
   }
-
-  static recordHighlight(time: number) {
-    this.metrics.highlightTimes.push(time);
-
-    if (this.metrics.highlightTimes.length > 50) {
-      this.metrics.highlightTimes = this.metrics.highlightTimes.slice(-50);
-    }
-
-    if (this.metrics.highlightTimes.length % 10 === 0 && process.env.NODE_ENV === 'development') {
-      const avg =
-        this.metrics.highlightTimes.reduce((a, b) => a + b, 0) / this.metrics.highlightTimes.length;
-      console.log(`🎨 Avg highlighting time: ${avg.toFixed(2)}ms`);
-    }
-  }
-
-  static recordCacheHit() {
-    this.metrics.cacheHits++;
-  }
-  static recordCacheMiss() {
-    this.metrics.cacheMisses++;
-  }
-
-  static getStats() {
-    const total = this.metrics.cacheHits + this.metrics.cacheMisses;
-    return {
-      avgHighlightTime:
-        this.metrics.highlightTimes.length > 0
-          ? this.metrics.highlightTimes.reduce((a, b) => a + b, 0) /
-            this.metrics.highlightTimes.length
-          : 0,
-      cacheHitRate: total > 0 ? (this.metrics.cacheHits / total) * 100 : 0,
-      initTime: this.metrics.initTime,
-      totalOperations: total,
-    };
-  }
-}
-
-// Debounced callback hook
-export const useDebouncedCallback = <T extends (...args: any[]) => any>(
-  callback: T,
-  delay: number,
-): T => {
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  const debouncedCallback = useCallback(
-    (...args: Parameters<T>) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        callback(...args);
-      }, delay);
-    },
-    [callback, delay],
-  ) as T;
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  return debouncedCallback;
 };
 
-// Intersection observer hook for lazy loading
+// Debug utilities that check the shared state
+const debugLog = (message: string, data?: any) => {
+  if (getDebugState()) {
+    if (data) {
+      console.log(message, data);
+    } else {
+      console.log(message);
+    }
+  }
+};
+
+const debugWarn = (message: string, ...args: any[]) => {
+  if (getDebugState()) {
+    console.warn(message, ...args);
+  }
+};
+
+const debugError = (message: string, ...args: any[]) => {
+  if (getDebugState()) {
+    console.error(message, ...args);
+  }
+};
+
+// =============================================================================
+// PERFORMANCE UTILITIES
+// =============================================================================
+
+// Intersection observer hook
 export const useIntersectionObserver = (
   ref: React.RefObject<Element>,
   options?: IntersectionObserverInit,
@@ -134,7 +91,7 @@ export const usePerformanceMonitor = (componentName: string) => {
 
           if (renderTime > 16) {
             // 60fps threshold
-            console.warn(`🐌 ${componentName} slow render: ${renderTime.toFixed(2)}ms`);
+            debugWarn(`🐌 ${componentName} slow render: ${renderTime.toFixed(2)}ms`);
           }
         }
       };
@@ -142,9 +99,9 @@ export const usePerformanceMonitor = (componentName: string) => {
   });
 };
 
-// Cache warming utility with better logging
+// Cache warming utility with controlled logging
 export const warmShikiCache = async () => {
-  console.log('🔄 Starting Shiki cache warming...');
+  debugLog('🔄 Starting Shiki cache warming...');
 
   try {
     const startTime = performance.now();
@@ -156,23 +113,23 @@ export const warmShikiCache = async () => {
     const endTime = performance.now();
     const duration = (endTime - startTime).toFixed(2);
 
-    console.log(`✅ Shiki cache warmed successfully in ${duration}ms`);
+    debugLog(`✅ Shiki cache warmed successfully in ${duration}ms`);
 
     // Also warm the highlighter by triggering initialization
     try {
       // Import the grammar to ensure it's loaded
       await import('@/modules/PromptHighlight/features/grammar');
       await import('@/modules/PromptHighlight/features/promptTheme');
-      console.log('📦 Shiki dependencies preloaded');
+      debugLog('📦 Shiki dependencies preloaded');
     } catch (depError) {
       const errorMessage = depError instanceof Error ? depError.message : String(depError);
-      console.warn('⚠️ Dependency preloading failed:', errorMessage);
+      debugWarn('⚠️ Dependency preloading failed:', errorMessage);
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('❌ Shiki cache warming failed:', errorMessage);
-    console.error('Error details:', {
+    debugError('❌ Shiki cache warming failed:', errorMessage);
+    debugError('Error details:', {
       message: errorMessage,
       stack: errorStack,
     });
@@ -185,19 +142,19 @@ export const debugShikiSetup = async () => {
 
   try {
     // Check if Shiki modules are available
-    console.log('1. Checking module availability...');
+    debugLog('1. Checking module availability...');
 
     await import('./useHighlight');
-    console.log('✅ useHighlight module loaded');
+    debugLog('✅ useHighlight module loaded');
 
     const grammarModule = await import('@/modules/PromptHighlight/features/grammar');
-    console.log('✅ Grammar module loaded:', grammarModule.default?.[0]?.name);
+    debugLog('✅ Grammar module loaded:', grammarModule.default?.[0]?.name);
 
     const themeModule = await import('@/modules/PromptHighlight/features/promptTheme');
-    console.log('✅ Theme module loaded');
+    debugLog('✅ Theme module loaded');
 
     // Test theme generation
-    console.log('2. Testing theme generation...');
+    debugLog('2. Testing theme generation...');
     const testThemes = [
       { dark: false, neg: false },
       { dark: false, neg: true },
@@ -207,21 +164,21 @@ export const debugShikiSetup = async () => {
 
     testThemes.forEach(({ dark, neg }) => {
       const theme = themeModule.themeConfig(dark, neg);
-      console.log(`Theme ${dark ? 'dark' : 'light'}${neg ? '-neg-prompt' : ''}:`, theme.name);
+      debugLog(`Theme ${dark ? 'dark' : 'light'}${neg ? '-neg-prompt' : ''}:`, theme.name);
     });
 
     // Test cache warming
-    console.log('3. Testing cache warming...');
+    debugLog('3. Testing cache warming...');
     await warmShikiCache();
 
     // Check browser support
-    console.log('4. Browser environment check...');
-    console.log('WebAssembly supported:', typeof WebAssembly !== 'undefined');
-    console.log('Performance API available:', typeof performance !== 'undefined');
-    console.log('Environment:', process.env.NODE_ENV);
+    debugLog('4. Browser environment check...');
+    debugLog('WebAssembly supported:', typeof WebAssembly !== 'undefined');
+    debugLog('Performance API available:', typeof performance !== 'undefined');
+    debugLog('Environment:', process.env.NODE_ENV);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Debug check failed:', errorMessage);
+    debugError('Debug check failed:', errorMessage);
   }
 
   console.groupEnd();
@@ -234,36 +191,36 @@ export const adjustHighlightAlignment = (offsetX = 0, offsetY = 0) => {
     (container as HTMLElement).style.setProperty('--highlight-offset-x', `${offsetX}px`);
     (container as HTMLElement).style.setProperty('--highlight-offset-y', `${offsetY}px`);
   });
-  console.log(`🎯 Highlight alignment adjusted: X: ${offsetX}px, Y: ${offsetY}px`);
+  debugLog(`🎯 Highlight alignment adjusted: X: ${offsetX}px, Y: ${offsetY}px`);
 };
 
 // Test highlighting responsiveness
 export const testHighlightResponsiveness = () => {
-  console.log('🧪 Testing highlight responsiveness...');
+  debugLog('🧪 Testing highlight responsiveness...');
 
   const testInputs = document.querySelectorAll('textarea[placeholder*="prompt" i]');
   if (testInputs.length === 0) {
-    console.log('❌ No prompt textareas found');
+    debugLog('❌ No prompt textareas found');
     return;
   }
 
   const testArea = testInputs[0] as HTMLTextAreaElement;
   const originalValue = testArea.value;
 
-  console.log('📝 Adding test text...');
+  debugLog('📝 Adding test text...');
   testArea.value = 'test highlighting responsiveness';
   testArea.dispatchEvent(new Event('input', { bubbles: true }));
 
   setTimeout(() => {
-    console.log('🔄 Changing text...');
+    debugLog('🔄 Changing text...');
     testArea.value = 'updated text for responsiveness test';
     testArea.dispatchEvent(new Event('input', { bubbles: true }));
 
     setTimeout(() => {
-      console.log('↩️ Restoring original text...');
+      debugLog('↩️ Restoring original text...');
       testArea.value = originalValue;
       testArea.dispatchEvent(new Event('input', { bubbles: true }));
-      console.log('✅ Responsiveness test complete');
+      debugLog('✅ Responsiveness test complete');
     }, 1000);
   }, 1000);
 };
@@ -273,10 +230,14 @@ if (typeof window !== 'undefined') {
   (window as any).debugShikiSetup = debugShikiSetup;
   (window as any).adjustHighlightAlignment = adjustHighlightAlignment;
   (window as any).testHighlightResponsiveness = testHighlightResponsiveness;
-  console.log('🛠️ Debug utilities available:');
-  console.log('  - debugShikiSetup() - Full Shiki diagnostics');
-  console.log('  - testBasicHighlighting() - Test core highlighting function');
-  console.log('  - adjustHighlightAlignment(x, y) - Fine-tune text alignment');
-  console.log('  - testHighlightResponsiveness() - Test real-time highlighting');
-  console.log('  - forceCompleteAllHighlighting() - EMERGENCY: Force stop all loading');
+
+  // Only show debug utilities info if debug is enabled
+  if (getDebugState()) {
+    debugLog('🛠️ Debug utilities available:');
+    debugLog('  - debugShikiSetup() - Full Shiki diagnostics');
+    debugLog('  - testBasicHighlighting() - Test core highlighting function');
+    debugLog('  - adjustHighlightAlignment(x, y) - Fine-tune text alignment');
+    debugLog('  - testHighlightResponsiveness() - Test real-time highlighting');
+    debugLog('  - forceCompleteAllHighlighting() - EMERGENCY: Force stop all loading');
+  }
 }

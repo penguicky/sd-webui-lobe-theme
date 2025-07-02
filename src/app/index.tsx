@@ -22,6 +22,30 @@ import { useStyles } from './style';
 
 export const HEADER_HEIGHT = 64;
 
+// =============================================================================
+// DEBUG SYSTEM - SHARED WITH HIGHLIGHT COMPONENTS
+// =============================================================================
+
+// Access the shared debug state from useHighlight
+const getDebugState = (): boolean => {
+  try {
+    return (window as any).HIGHLIGHT_DEBUG_STATE?.get() || false;
+  } catch {
+    return false;
+  }
+};
+
+// Debug utilities that check the shared state
+const debugLog = (message: string, data?: any) => {
+  if (getDebugState()) {
+    if (data) {
+      console.log(message, data);
+    } else {
+      console.log(message);
+    }
+  }
+};
+
 // Optimized selectors
 const selectLayoutSettings = (state: any) => ({
   enableExtraNetworkSidebar: state.setting.enableExtraNetworkSidebar,
@@ -52,8 +76,8 @@ const Index = memo(() => {
 
   // Initialize Shiki cache warming and other optimizations
   useEffect(() => {
-    console.log('🚀 App initialization started');
-    console.log('Current settings:', {
+    debugLog('🚀 App initialization started');
+    debugLog('Current settings:', {
       enableExtraNetworkSidebar,
       enableHighlight,
       enableImageInfo,
@@ -63,27 +87,27 @@ const Index = memo(() => {
 
     // Always warm Shiki cache if highlighting is enabled
     if (enableHighlight) {
-      console.log('🔥 Highlighting enabled - triggering Shiki cache warming...');
+      debugLog('🔥 Highlighting enabled - triggering Shiki cache warming...');
       warmShikiCache().catch((error) => {
         console.error('❌ Failed to warm Shiki cache:', error);
       });
     } else {
-      console.log('⚠️ Prompt highlighting is DISABLED in settings');
-      console.log('💡 Enable it in: Settings → Prompt Syntax Highlighting');
+      debugLog('⚠️ Prompt highlighting is DISABLED in settings');
+      debugLog('💡 Enable it in: Settings → Prompt Syntax Highlighting');
     }
   }, [enableHighlight]);
 
   // Add a one-time initialization log
   useEffect(() => {
-    console.log('🎨 LobeHub Theme initialized');
-    console.log('📖 Debug utilities available:');
-    console.log('  - debugShikiSetup() - Full diagnostics');
-    console.log('  - testBasicHighlighting() - Test core highlighting function');
-    console.log('  - testHighlightResponsiveness() - Test highlighting speed');
-    console.log('  - clearHighlightCache() - Clear cache for immediate updates');
-    console.log('  - forceRefreshHighlighting() - Force refresh all highlighting');
-    console.log('  - forceCompleteAllHighlighting() - EMERGENCY: Force stop all loading');
-    console.log('  - adjustHighlightAlignment(x, y) - Fine-tune positioning');
+    debugLog('🎨 LobeHub Theme initialized');
+    debugLog('📖 Debug utilities available:');
+    debugLog('  - debugShikiSetup() - Full diagnostics');
+    debugLog('  - testBasicHighlighting() - Test core highlighting function');
+    debugLog('  - testHighlightResponsiveness() - Test highlighting speed');
+    debugLog('  - clearHighlightCache() - Clear cache for immediate updates');
+    debugLog('  - forceRefreshHighlighting() - Force refresh all highlighting');
+    debugLog('  - forceCompleteAllHighlighting() - EMERGENCY: Force stop all loading');
+    debugLog('  - adjustHighlightAlignment(x, y) - Fine-tune positioning');
   }, []);
 
   useEffect(() => {

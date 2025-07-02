@@ -6,6 +6,66 @@ import useSWR from 'swr';
 import prompt from '@/modules/PromptHighlight/features/grammar';
 import { themeConfig } from '@/modules/PromptHighlight/features/promptTheme';
 
+// =============================================================================
+// CENTRALIZED DEBUG SYSTEM
+// =============================================================================
+
+// Global debug state - controls ALL highlight debug messages
+let HIGHLIGHT_DEBUG_ENABLED = false;
+
+// Store globally for cross-component access
+if (typeof window !== 'undefined') {
+  (window as any).HIGHLIGHT_DEBUG_STATE = {
+    get: () => HIGHLIGHT_DEBUG_ENABLED,
+    set: (value: boolean) => {
+      HIGHLIGHT_DEBUG_ENABLED = value;
+    },
+  };
+}
+
+// Debug utility functions
+const debugLog = (message: string, ...args: any[]) => {
+  if (HIGHLIGHT_DEBUG_ENABLED) {
+    console.log(message, ...args);
+  }
+};
+
+const debugError = (message: string, ...args: any[]) => {
+  if (HIGHLIGHT_DEBUG_ENABLED) {
+    console.error(message, ...args);
+  }
+};
+
+// Global control functions
+export const enableHighlightDebug = () => {
+  HIGHLIGHT_DEBUG_ENABLED = true;
+  if (typeof window !== 'undefined') {
+    (window as any).HIGHLIGHT_DEBUG_STATE?.set(true);
+  }
+  console.log('🔧 Highlight debugging ENABLED - all components will now log debug info');
+};
+
+export const disableHighlightDebug = () => {
+  HIGHLIGHT_DEBUG_ENABLED = false;
+  if (typeof window !== 'undefined') {
+    (window as any).HIGHLIGHT_DEBUG_STATE?.set(false);
+  }
+  console.log('🔇 Highlight debugging DISABLED - debug messages turned off');
+};
+
+export const toggleHighlightDebug = () => {
+  HIGHLIGHT_DEBUG_ENABLED = !HIGHLIGHT_DEBUG_ENABLED;
+  if (typeof window !== 'undefined') {
+    (window as any).HIGHLIGHT_DEBUG_STATE?.set(HIGHLIGHT_DEBUG_ENABLED);
+  }
+  console.log(`🔄 Highlight debugging ${HIGHLIGHT_DEBUG_ENABLED ? 'ENABLED' : 'DISABLED'}`);
+  console.log(`💡 Debug messages are now: ${HIGHLIGHT_DEBUG_ENABLED ? 'ON' : 'OFF'}`);
+};
+
+// =============================================================================
+// HIGHLIGHT SYSTEM
+// =============================================================================
+
 // Optimize theme key generation to match the original theme names
 const getThemeKey = (isDarkMode: boolean, isNegPrompt: boolean): string => {
   return (isDarkMode ? 'dark' : 'light') + (isNegPrompt ? '-neg-prompt' : '');
@@ -32,7 +92,7 @@ const themes = [lightTheme, lightNegTheme, darkTheme, darkNegTheme];
 
 // Debug theme names
 if (process.env.NODE_ENV === 'development') {
-  console.log('🎨 Theme names registered:', {
+  debugLog('🎨 Theme names registered:', {
     dark: darkTheme.name,
     darkNeg: darkNegTheme.name,
     light: lightTheme.name,
@@ -122,7 +182,7 @@ const setCachedContent = (key: string, html: string) => {
 // Clear cache utility
 export const clearHighlightCache = () => {
   contentCache.clear();
-  console.log('🧹 Highlight cache cleared');
+  debugLog('🧹 Highlight cache cleared');
 };
 
 // Force refresh all highlighting
@@ -133,12 +193,12 @@ export const forceRefreshHighlighting = () => {
   textareas.forEach((textarea) => {
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   });
-  console.log('🔄 Forced highlighting refresh on all textareas');
+  debugLog('🔄 Forced highlighting refresh on all textareas');
 };
 
 // Force all highlighting to complete (emergency function)
 export const forceCompleteAllHighlighting = () => {
-  console.log('🚨 EMERGENCY: Forcing all highlighting to complete...');
+  debugLog('🚨 EMERGENCY: Forcing all highlighting to complete...');
 
   // Clear all caches
   clearHighlightCache();
@@ -146,7 +206,7 @@ export const forceCompleteAllHighlighting = () => {
   // Find all syntax highlighter components and force them to show plain text
   const highlightContainers = document.querySelectorAll('[data-code-type="highlighter"]');
   highlightContainers.forEach((container, index) => {
-    console.log(`🔧 Forcing container ${index} to show plain text`);
+    debugLog(`🔧 Forcing container ${index} to show plain text`);
 
     // Find the highlighted content and replace with plain text
     const shikiElements = container.querySelectorAll('.shiki');
@@ -179,7 +239,7 @@ export const forceCompleteAllHighlighting = () => {
     loadingElements.forEach((loading) => loading.remove());
   });
 
-  console.log('✅ Emergency highlighting completion done');
+  debugLog('✅ Emergency highlighting completion done');
 };
 
 export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boolean) => {
@@ -201,14 +261,14 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
     // Key logic: Only use SWR when we need to fetch (no cache and valid content)
     cacheKey && !cachedContent ? cacheKey : null,
     async (key: string) => {
-      console.log(`🎨 Starting highlighting for key: ${key.slice(0, 50)}...`);
+      debugLog(`🎨 Starting highlighting for key: ${key.slice(0, 50)}...`);
 
       try {
         const highlighter = await initHighlighter();
         const themeKey = getThemeKey(isDarkMode, isNegPrompt);
 
         if (process.env.NODE_ENV === 'development') {
-          console.log(`🎨 Highlighting with theme: "${themeKey}"`);
+          debugLog(`🎨 Highlighting with theme: "${themeKey}"`);
         }
 
         const startTime = performance.now();
@@ -219,16 +279,16 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
         });
         const duration = performance.now() - startTime;
 
-        console.log(`✅ Highlighting completed in ${duration.toFixed(2)}ms`);
+        debugLog(`✅ Highlighting completed in ${duration.toFixed(2)}ms`);
 
         // Cache the result
         setCachedContent(key, html);
 
         return html;
       } catch (error) {
-        console.error('❌ Highlighting failed:', error);
+        debugError('❌ Highlighting failed:', error);
         if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 Debug info:', {
+          debugLog('🔍 Debug info:', {
             isDarkMode,
             isNegPrompt,
             requestedTheme: getThemeKey(isDarkMode, isNegPrompt),
@@ -244,29 +304,23 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
       // Optimized SWR configuration for highlighting
       dedupingInterval: 2000, // Prevent duplicate requests for 2 seconds
       errorRetryCount: 1, // Only retry once on error
-      errorRetryInterval: 2000, 
-      
-// Don't retry on error automatically
-// Important: Return cached content immediately if available
-fallbackData: cachedContent || undefined, 
-      
+      errorRetryInterval: 2000,
 
+      // Don't retry on error automatically
+      // Important: Return cached content immediately if available
+      fallbackData: cachedContent || undefined,
 
+      // Don't revalidate on network reconnect
+      revalidateIfStale: false,
 
-// Don't revalidate on network reconnect
-revalidateIfStale: false, 
-      
+      // Wait 2 seconds before retry
+      revalidateOnFocus: false,
 
+      // Don't revalidate when window gains focus
+      revalidateOnReconnect: false,
 
-// Wait 2 seconds before retry
-revalidateOnFocus: false, 
-      
-
-// Don't revalidate when window gains focus
-revalidateOnReconnect: false, 
-      
       // Don't revalidate stale data automatically
-shouldRetryOnError: false, // Use undefined instead of text for better loading state
+      shouldRetryOnError: false, // Use undefined instead of text for better loading state
     },
   );
 
@@ -297,15 +351,15 @@ shouldRetryOnError: false, // Use undefined instead of text for better loading s
 
 // Test basic highlighting functionality
 export const testBasicHighlighting = async () => {
-  console.log('🧪 Testing basic highlighting...');
+  debugLog('🧪 Testing basic highlighting...');
 
   try {
     const highlighter = await initHighlighter();
     const testText = 'masterpiece, best quality, 1girl, beautiful';
     const themeKey = 'light';
 
-    console.log('📝 Test text:', testText);
-    console.log('🎨 Theme:', themeKey);
+    debugLog('📝 Test text:', testText);
+    debugLog('🎨 Theme:', themeKey);
 
     const html = highlighter.codeToHtml(testText, {
       lang: 'prompt',
@@ -313,12 +367,12 @@ export const testBasicHighlighting = async () => {
       transformers: [codeTransformer],
     });
 
-    console.log('✅ Highlighting successful!');
-    console.log('📄 Generated HTML length:', html.length);
+    debugLog('✅ Highlighting successful!');
+    debugLog('📄 Generated HTML length:', html.length);
 
     return html;
   } catch (error) {
-    console.error('❌ Basic highlighting test failed:', error);
+    debugError('❌ Basic highlighting test failed:', error);
     return null;
   }
 };
@@ -330,9 +384,37 @@ if (typeof window !== 'undefined') {
   (window as any).testBasicHighlighting = testBasicHighlighting;
   (window as any).forceCompleteAllHighlighting = forceCompleteAllHighlighting;
 
-  console.log('🛠️ Highlight debug utilities available:');
-  console.log('  - clearHighlightCache() - Clear all cached highlighting');
-  console.log('  - forceRefreshHighlighting() - Force refresh all textareas');
-  console.log('  - testBasicHighlighting() - Test core highlighting function');
-  console.log('  - forceCompleteAllHighlighting() - Emergency: Force stop all loading');
+  // Debug toggle functions
+  (window as any).enableHighlightDebug = enableHighlightDebug;
+  (window as any).disableHighlightDebug = disableHighlightDebug;
+  (window as any).toggleHighlightDebug = toggleHighlightDebug;
+
+  // Status check function
+  (window as any).checkHighlightDebugStatus = () => {
+    const isEnabled = HIGHLIGHT_DEBUG_ENABLED;
+    console.log(`🔍 Highlight debugging is currently: ${isEnabled ? '🟢 ENABLED' : '🔴 DISABLED'}`);
+    console.log(
+      `💡 Use ${isEnabled ? 'disableHighlightDebug()' : 'enableHighlightDebug()'} to ${isEnabled ? 'turn off' : 'turn on'}`,
+    );
+    return isEnabled;
+  };
+
+  console.log('🛠️ Highlight system loaded with debug controls:');
+  console.log('  🎛️ DEBUG CONTROLS (use these to toggle debug messages):');
+  console.log('    - enableHighlightDebug() - Turn ON all debug messages');
+  console.log('    - disableHighlightDebug() - Turn OFF all debug messages');
+  console.log('    - toggleHighlightDebug() - Toggle debug on/off');
+  console.log('    - checkHighlightDebugStatus() - Check current debug state');
+  console.log('  📋 UTILITIES:');
+  console.log('    - clearHighlightCache() - Clear all cached highlighting');
+  console.log('    - forceRefreshHighlighting() - Force refresh all textareas');
+  console.log('    - testBasicHighlighting() - Test core highlighting function');
+  console.log('    - forceCompleteAllHighlighting() - Emergency: Force stop all loading');
+  console.log('');
+  console.log(
+    '💡 Debug messages are currently: ' + (HIGHLIGHT_DEBUG_ENABLED ? '🟢 ENABLED' : '🔴 DISABLED'),
+  );
+  if (!HIGHLIGHT_DEBUG_ENABLED) {
+    console.log('🔧 Run enableHighlightDebug() to see detailed debug information');
+  }
 }
