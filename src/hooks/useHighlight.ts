@@ -3,6 +3,7 @@ import { HighlighterCore, createHighlighterCore } from 'shiki/core';
 import { createOnigurumaEngine } from 'shiki/engine/oniguruma';
 import useSWR from 'swr';
 
+import { createDynamicGrammar } from '@/modules/PromptHighlight/features/dynamicGrammar';
 import prompt from '@/modules/PromptHighlight/features/grammar';
 import { themeConfig } from '@/modules/PromptHighlight/features/promptTheme';
 
@@ -11,7 +12,7 @@ import { themeConfig } from '@/modules/PromptHighlight/features/promptTheme';
 // =============================================================================
 
 // Global debug state - controls ALL highlight debug messages
-let HIGHLIGHT_DEBUG_ENABLED = false;
+let HIGHLIGHT_DEBUG_ENABLED = true; // Enable debug logging to troubleshoot issues
 
 // Store globally for cross-component access
 if (typeof window !== 'undefined') {
@@ -33,6 +34,12 @@ const debugLog = (message: string, ...args: any[]) => {
 const debugError = (message: string, ...args: any[]) => {
   if (HIGHLIGHT_DEBUG_ENABLED) {
     console.error(message, ...args);
+  }
+};
+
+const debugWarn = (message: string, ...args: any[]) => {
+  if (HIGHLIGHT_DEBUG_ENABLED) {
+    console.warn(message, ...args);
   }
 };
 
@@ -109,12 +116,47 @@ const getEngine = async () => {
 };
 
 // Optimized highlighter initialization with proper error handling
-const initHighlighter = async (): Promise<HighlighterCore> => {
+const initHighlighter = async (text?: string): Promise<HighlighterCore> => {
+  // For dynamic grammar, we need to create a new highlighter instance per text
+  // to ensure the grammar matches the specific content
+  // Always use dynamic grammar for plain text embedding detection
+  const shouldUseDynamicGrammar = text && text.length > 0;
+
+  if (!shouldUseDynamicGrammar && globalHighlighter) {
+    return globalHighlighter;
+  }
+
+  // For dynamic grammar, don't use global cache
+  if (shouldUseDynamicGrammar) {
+    try {
+      const engine = await getEngine();
+      const dynamicGrammar = await createDynamicGrammar(text);
+
+      const highlighter = await createHighlighterCore({
+        engine,
+        langs: [
+          {
+            ...dynamicGrammar,
+            repository: {}, // Add required repository property for Shiki v3
+          },
+        ],
+        themes,
+      });
+
+      debugLog('✅ Created dynamic highlighter with embedding verification');
+      return highlighter;
+    } catch (error) {
+      debugWarn('⚠️ Failed to create dynamic highlighter, falling back to static:', error);
+      // Fall through to static highlighter
+    }
+  }
+
+  // Static highlighter initialization
   if (globalHighlighter) {
     return globalHighlighter;
   }
 
-  // Ensure only one initialization happens
+  // Ensure only one initialization happens for static highlighter
   if (initPromise) {
     return initPromise;
   }
@@ -129,7 +171,7 @@ const initHighlighter = async (): Promise<HighlighterCore> => {
           {
             ...prompt[0],
             repository: {}, // Add required repository property for Shiki v3
-          },
+          } as any, // Type assertion to handle complex grammar structure
         ],
         themes,
       });
@@ -264,7 +306,7 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
       debugLog(`🎨 Starting highlighting for key: ${key.slice(0, 50)}...`);
 
       try {
-        const highlighter = await initHighlighter();
+        const highlighter = await initHighlighter(text);
         const themeKey = getThemeKey(isDarkMode, isNegPrompt);
 
         if (process.env.NODE_ENV === 'development') {

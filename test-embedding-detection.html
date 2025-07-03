@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Embedding Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-input {
+            width: 100%;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            min-height: 100px;
+            resize: vertical;
+        }
+        .debug-output {
+            background: #f8f8f8;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #005a87;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Embedding Detection Test</h1>
+        <p>This page tests the plain text embedding detection functionality.</p>
+        
+        <div class="test-section">
+            <h3>Test Input</h3>
+            <textarea class="test-input" id="testInput" placeholder="Enter a prompt with potential embeddings...">masterpiece, my_custom_embedding, best quality, another_embedding, beautiful</textarea>
+            <br>
+            <button class="button" onclick="testEmbeddingDetection()">Test Embedding Detection</button>
+            <button class="button" onclick="clearOutput()">Clear Output</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Debug Output</h3>
+            <div class="debug-output" id="debugOutput">Click "Test Embedding Detection" to see results...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Instructions</h3>
+            <ol>
+                <li>Enter a prompt with potential embedding terms in the text area above</li>
+                <li>Click "Test Embedding Detection" to see what terms are extracted</li>
+                <li>Check the browser console for detailed debug logs</li>
+                <li>The debug output will show which terms are identified as potential embeddings</li>
+            </ol>
+            <p><strong>Note:</strong> This test only shows term extraction. Full API verification requires the WebUI environment.</p>
+        </div>
+    </div>
+
+    <script>
+        // Mock the embedding detection function for testing
+        function extractPotentialEmbeddingTerms(text) {
+            // Split text by common delimiters and clean up terms
+            const terms = text
+                .split(/[\s,]+/) // Split by commas and whitespace
+                .map(term => term.trim())
+                .filter(term => term.length > 0)
+                .filter(term => {
+                    // Filter out common prompt terms that are unlikely to be embeddings
+                    const commonTerms = [
+                        'masterpiece', 'best', 'quality', 'high', 'ultra', 'detailed',
+                        'beautiful', 'amazing', 'stunning', 'perfect', 'realistic',
+                        'photorealistic', 'cinematic', 'dramatic', 'lighting', 'shadows',
+                        'colors', 'vibrant', 'soft', 'hard', 'sharp', 'blurry', 'focus',
+                        'background', 'foreground', 'portrait', 'landscape', 'close-up',
+                        'wide', 'angle', 'shot', 'view', 'perspective', 'composition',
+                        'framing', 'depth', 'field', 'bokeh', 'lens', 'camera', 'photo',
+                        'image', 'picture', 'art', 'artwork', 'painting', 'drawing',
+                        'sketch', 'illustration', 'digital', 'traditional', 'style',
+                        'anime', 'manga', 'cartoon', 'realistic', 'abstract', 'surreal',
+                        'fantasy', 'sci-fi', 'horror', 'cute', 'sexy', 'elegant',
+                        'graceful', 'powerful', 'strong', 'weak', 'small', 'large',
+                        'huge', 'tiny'
+                    ];
+
+                    const lowerTerm = term.toLowerCase();
+
+                    // Skip very short terms (likely not embeddings)
+                    if (term.length < 3) return false;
+
+                    // Skip common terms
+                    if (commonTerms.includes(lowerTerm)) return false;
+
+                    // Skip pure numbers
+                    if (/^\d+$/.test(term)) return false;
+
+                    // Skip terms that are just punctuation or special characters
+                    if (/^\W+$/.test(term)) return false;
+
+                    // Skip terms with colons (likely weight syntax like :1.2)
+                    if (term.includes(':')) return false;
+
+                    return true;
+                });
+
+            // Remove duplicates and return
+            return [...new Set(terms)];
+        }
+
+        function testEmbeddingDetection() {
+            const input = document.getElementById('testInput').value;
+            const output = document.getElementById('debugOutput');
+            
+            console.log('🧪 Testing embedding detection with input:', input);
+            
+            const potentialEmbeddings = extractPotentialEmbeddingTerms(input);
+            
+            let result = `Input: "${input}"\n\n`;
+            result += `Potential embedding terms found: ${potentialEmbeddings.length}\n`;
+            result += `Terms: ${JSON.stringify(potentialEmbeddings, null, 2)}\n\n`;
+            
+            if (potentialEmbeddings.length > 0) {
+                result += `These terms would be verified against the WebUI API:\n`;
+                potentialEmbeddings.forEach(term => {
+                    result += `- ${term}\n`;
+                });
+            } else {
+                result += `No potential embedding terms found.\n`;
+                result += `This could mean:\n`;
+                result += `- All terms were filtered out as common prompt terms\n`;
+                result += `- The input contains only short terms or numbers\n`;
+                result += `- The input is empty or contains only punctuation\n`;
+            }
+            
+            output.textContent = result;
+            console.log('🧪 Test results:', { input, potentialEmbeddings });
+        }
+        
+        function clearOutput() {
+            document.getElementById('debugOutput').textContent = 'Click "Test Embedding Detection" to see results...';
+        }
+        
+        // Enable debug logging
+        window.enableHighlightDebug = true;
+        
+        // Test with default input on page load
+        setTimeout(() => {
+            testEmbeddingDetection();
+        }, 500);
+    </script>
+</body>
+</html>

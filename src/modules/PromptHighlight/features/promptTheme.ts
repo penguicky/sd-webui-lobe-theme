@@ -2,7 +2,7 @@ import { colors as colorScales } from '@lobehub/ui';
 import { ThemeAppearance } from 'antd-style';
 
 export const themeConfig: any = (isDarkMode: ThemeAppearance, isNegPrompt: boolean) => {
-  const type = (isDarkMode ? 'dark' : 'light');
+  const type = isDarkMode ? 'dark' : 'light';
   const name = type + (isNegPrompt ? '-neg-prompt' : '');
 
   const colorYellow = isDarkMode ? colorScales.yellow[type][9] : colorScales.gold[type][10];
@@ -77,7 +77,35 @@ export const themeConfig: any = (isDarkMode: ThemeAppearance, isNegPrompt: boole
         scope: 'comment',
         settings: {
           foreground: colorGray,
-        }
+        },
+      },
+      {
+        scope: 'embedding-valid',
+        settings: {
+          fontStyle: 'italic',
+          foreground: colorBlue,
+        },
+      },
+      {
+        scope: 'embedding-invalid',
+        settings: {
+          fontStyle: 'italic',
+          foreground: colorVolcano,
+          textDecoration: 'line-through',
+        },
+      },
+      {
+        scope: 'embedding-unknown',
+        settings: {
+          fontStyle: 'italic',
+          foreground: colorOrange,
+        },
+      },
+      {
+        scope: 'embedding-bracket',
+        settings: {
+          foreground: colorPurple,
+        },
       },
     ],
     type,

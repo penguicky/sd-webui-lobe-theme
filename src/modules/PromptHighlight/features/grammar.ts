@@ -34,6 +34,17 @@ export const lang = {
       match: '<([^:]+):([^:]+):([^>]+)>',
     },
     {
+      captures: {
+        0: {
+          name: 'embedding-bracket',
+        },
+        1: {
+          name: 'embedding-name',
+        },
+      },
+      match: '<(embedding:[^>]+)>',
+    },
+    {
       match: '[<|>]',
       name: 'model-bracket',
     },

@@ -37,45 +37,95 @@ const Index = memo<AppProps>(({ parentId }) => {
       parseFloat(computedStyle.borderLeftWidth) + parseFloat(computedStyle.borderRightWidth);
     const paddingWidth =
       parseFloat(computedStyle.paddingLeft) + parseFloat(computedStyle.paddingRight);
+    const borderHeight =
+      parseFloat(computedStyle.borderTopWidth) + parseFloat(computedStyle.borderBottomWidth);
+    const paddingHeight =
+      parseFloat(computedStyle.paddingTop) + parseFloat(computedStyle.paddingBottom);
 
-    // Calculate exact content area
+    // Calculate exact content area including all borders and padding
     const contentWidth = nativeTextarea.clientWidth - borderWidth - paddingWidth;
-    const contentHeight = nativeTextarea.clientHeight;
+    const contentHeight = nativeTextarea.clientHeight - borderHeight - paddingHeight;
+
+    // Ensure dimensions are positive
+    const finalWidth = Math.max(0, contentWidth);
+    const finalHeight = Math.max(0, contentHeight);
 
     setOverlayDimensions({
-      height: contentHeight,
-      width: contentWidth,
+      height: finalHeight,
+      width: finalWidth,
+    });
+
+    // Debug logging for dimension updates
+    console.log('📐 Overlay dimensions updated:', {
+      borders: { height: borderHeight, width: borderWidth },
+      finalDimensions: { height: finalHeight, width: finalWidth },
+      padding: { height: paddingHeight, width: paddingWidth },
+      textareaSize: { height: nativeTextarea.clientHeight, width: nativeTextarea.clientWidth },
     });
   }, [nativeTextarea]);
 
-  // Update dimensions on size changes with debouncing
+  // Update dimensions on size changes with improved debouncing
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+    let animationFrameId: number;
 
     const debouncedUpdate = () => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(updateOverlayDimensions, 16); // One frame delay
+      cancelAnimationFrame(animationFrameId);
+
+      // Use both timeout and animation frame for smooth updates
+      timeoutId = setTimeout(() => {
+        animationFrameId = requestAnimationFrame(updateOverlayDimensions);
+      }, 10); // Reduced delay for more responsive updates
     };
 
     updateOverlayDimensions(); // Initial update
     debouncedUpdate(); // Also debounce for any rapid changes
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      cancelAnimationFrame(animationFrameId);
+    };
   }, [size?.width, size?.height, updateOverlayDimensions]);
 
-  // Listen for resize events on the textarea itself
+  // Listen for resize events on the textarea itself with improved handling
   useEffect(() => {
     if (!nativeTextarea) return;
 
+    let resizeTimeoutId: NodeJS.Timeout;
+
     const resizeObserver = new ResizeObserver(() => {
-      // Use requestAnimationFrame for smooth updates
-      requestAnimationFrame(updateOverlayDimensions);
+      // Clear any pending updates
+      clearTimeout(resizeTimeoutId);
+
+      // Debounce resize updates to avoid excessive calls
+      resizeTimeoutId = setTimeout(() => {
+        requestAnimationFrame(() => {
+          updateOverlayDimensions();
+          console.log('🔄 ResizeObserver triggered overlay update');
+        });
+      }, 5); // Very short delay for responsive updates
     });
 
     resizeObserver.observe(nativeTextarea);
 
+    // Also listen for manual resize events (like when user drags resize handle)
+    const handleManualResize = () => {
+      clearTimeout(resizeTimeoutId);
+      resizeTimeoutId = setTimeout(() => {
+        requestAnimationFrame(updateOverlayDimensions);
+      }, 10);
+    };
+
+    // Listen for various resize-related events
+    window.addEventListener('resize', handleManualResize);
+    nativeTextarea.addEventListener('input', handleManualResize); // Text changes can affect height
+
     return () => {
       resizeObserver.disconnect();
+      clearTimeout(resizeTimeoutId);
+      window.removeEventListener('resize', handleManualResize);
+      nativeTextarea.removeEventListener('input', handleManualResize);
     };
   }, [nativeTextarea, updateOverlayDimensions]);
 
@@ -125,19 +175,41 @@ const Index = memo<AppProps>(({ parentId }) => {
 
     const computedStyle = window.getComputedStyle(nativeTextarea);
     return {
+      border: 'none',
+      direction: computedStyle.direction,
       fontFamily: computedStyle.fontFamily,
       fontSize: computedStyle.fontSize,
       fontWeight: computedStyle.fontWeight,
+
       letterSpacing: computedStyle.letterSpacing,
+
       lineHeight: computedStyle.lineHeight,
-      padding: computedStyle.padding,
+
+      // Remove border to avoid double borders
+      margin: '0',
+
       paddingBottom: computedStyle.paddingBottom,
+
       paddingLeft: computedStyle.paddingLeft,
+
       paddingRight: computedStyle.paddingRight,
+
+      // Copy padding exactly from textarea
       paddingTop: computedStyle.paddingTop,
+
+      // Ensure text alignment matches
+      textAlign: computedStyle.textAlign,
+
+      textIndent: computedStyle.textIndent,
+
+      whiteSpace: 'pre-wrap' as const,
+
       wordSpacing: computedStyle.wordSpacing,
+
+      // Ensure text wrapping matches
+      wordWrap: 'break-word' as const,
     };
-  }, [nativeTextarea, size]); // Update when size changes
+  }, [nativeTextarea, size, overlayDimensions]); // Update when size or dimensions change
 
   return (
     <div

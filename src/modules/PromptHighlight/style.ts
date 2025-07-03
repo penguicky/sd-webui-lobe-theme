@@ -4,7 +4,6 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
   const prefix = `${prefixCls}-highlighter`;
   return {
     container: css`
-
       /* CSS custom properties for micro-adjustments if needed */
       --highlight-offset-x: 0;
       --highlight-offset-y: 0;
@@ -21,7 +20,9 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
       overflow: hidden auto;
 
       box-sizing: border-box;
-      padding: calc(8px + var(--input-border-width));
+
+      /* Remove hardcoded padding - will be set dynamically to match textarea */
+      padding: 0;
 
       /* Ensure all child elements also don't capture events */
       * {
@@ -32,15 +33,18 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
         margin: 0 !important;
         padding: 0 !important;
 
-        font-family: ${token.fontFamilyCode} !important;
-        font-size: 13px !important;
+        /* Font properties will be inherited from parent container */
 
-        /* Ensure exact font matching */
-        font-weight: normal !important;
-        line-height: 1.5 !important;
+        /* which gets them dynamically from the textarea */
+        font-family: inherit !important;
+        font-size: inherit !important;
+        font-weight: inherit !important;
+        line-height: inherit !important;
+
+        /* Text layout properties */
         text-indent: 0 !important;
-        letter-spacing: normal !important;
-        word-spacing: normal !important;
+        letter-spacing: inherit !important;
+        word-spacing: inherit !important;
         word-wrap: break-word !important;
         white-space: pre-wrap !important;
         vertical-align: bottom !important;
@@ -49,7 +53,6 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
     loading: cx(
       stylish.blur,
       css`
-
         /* Loading indicator should also not capture events */
         pointer-events: none !important;
 
@@ -112,13 +115,14 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
             padding: 0 !important;
             border: none !important;
 
-            font-family: ${token.fontFamilyCode} !important;
-            font-size: 13px !important;
-            font-weight: normal !important;
-            line-height: 1.5 !important;
+            /* Inherit font properties from parent container */
+            font-family: inherit !important;
+            font-size: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
             text-decoration: none !important;
-            letter-spacing: normal !important;
-            word-spacing: normal !important;
+            letter-spacing: inherit !important;
+            word-spacing: inherit !important;
 
             background: transparent !important;
           }
