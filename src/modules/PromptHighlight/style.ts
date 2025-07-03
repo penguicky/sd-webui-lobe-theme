@@ -17,12 +17,17 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
       left: 0;
       transform: translate(var(--highlight-offset-x), var(--highlight-offset-y));
 
-      overflow: hidden auto;
+      /* Allow content to be visible even if it extends beyond container */
+      overflow: visible;
 
       box-sizing: border-box;
 
-      /* Remove hardcoded padding - will be set dynamically to match textarea */
+      /* Remove hardcoded padding and margins - will be set dynamically to match textarea */
+      margin: 0;
       padding: 0;
+
+      /* Ensure perfect text baseline alignment */
+      vertical-align: baseline;
 
       /* Ensure all child elements also don't capture events */
       * {
@@ -39,15 +44,32 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
         font-family: inherit !important;
         font-size: inherit !important;
         font-weight: inherit !important;
+        font-style: inherit !important;
+        font-variant: inherit !important;
+        font-stretch: inherit !important;
         line-height: inherit !important;
+        hyphens: inherit !important;
+        text-align: inherit !important;
 
-        /* Text layout properties */
-        text-indent: 0 !important;
+        /* Text layout properties - inherit from parent to match textarea exactly */
+        text-indent: inherit !important;
+        text-transform: inherit !important;
+        text-rendering: inherit !important;
         letter-spacing: inherit !important;
+        word-break: inherit !important;
         word-spacing: inherit !important;
-        word-wrap: break-word !important;
-        white-space: pre-wrap !important;
-        vertical-align: bottom !important;
+        word-wrap: inherit !important;
+        overflow-wrap: inherit !important;
+
+        /* Tab size */
+        tab-size: inherit !important;
+        tab-size: inherit !important;
+
+        /* Critical: inherit wrapping behavior from parent instead of forcing */
+        white-space: inherit !important;
+
+        /* Vertical alignment */
+        vertical-align: inherit !important;
       }
     `,
     loading: cx(
@@ -115,24 +137,49 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
             padding: 0 !important;
             border: none !important;
 
-            /* Inherit font properties from parent container */
+            /* Inherit ALL font and text properties from parent container */
             font-family: inherit !important;
             font-size: inherit !important;
             font-weight: inherit !important;
+            font-style: inherit !important;
+            font-variant: inherit !important;
+            font-stretch: inherit !important;
             line-height: inherit !important;
+            hyphens: inherit !important;
+            text-align: inherit !important;
             text-decoration: none !important;
+            text-indent: inherit !important;
+            text-transform: inherit !important;
+            text-rendering: inherit !important;
             letter-spacing: inherit !important;
+            word-break: inherit !important;
             word-spacing: inherit !important;
+            word-wrap: inherit !important;
+            overflow-wrap: inherit !important;
+
+            /* Tab size */
+            tab-size: inherit !important;
+            tab-size: inherit !important;
+
+            /* Inherit wrapping behavior */
+            white-space: inherit !important;
+
+            /* Vertical alignment */
+            vertical-align: inherit !important;
 
             background: transparent !important;
           }
 
-          /* Ensure code elements don't add extra spacing */
+          /* Ensure code elements don't add extra spacing and inherit all layout */
           code {
             display: block !important;
-            word-wrap: break-word !important;
-            overflow-wrap: break-word !important;
-            white-space: pre-wrap !important;
+
+            word-break: inherit !important;
+            word-wrap: inherit !important;
+            overflow-wrap: inherit !important;
+
+            /* Critical: inherit wrapping behavior instead of forcing */
+            white-space: inherit !important;
           }
         }
       `,

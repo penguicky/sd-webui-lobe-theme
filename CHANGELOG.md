@@ -2,6 +2,31 @@
 
 # Changelog
 
+## [Version 3.7.2](https://github.com/lobehub/sd-webui-lobe-theme/compare/v3.7.1...v3.7.2)
+
+<sup>Released on **2025-01-09**</sup>
+
+#### 🐛 Bug Fixes
+
+- **highlight**: Fix critical prompt highlighter text alignment and interaction issues with hybrid approach.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **highlight**: Fix critical prompt highlighter text alignment and interaction issues with hybrid approach - Resolves three critical issues: loss of text interaction (typing, selection, cursor placement), missing visual highlighting display, and persistent text alignment problems. Implements hybrid approach that keeps textarea interactive with transparent text while overlaying perfectly aligned syntax highlighting and blue embedding validation.
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 3.7.1](https://github.com/lobehub/sd-webui-lobe-theme/compare/v3.7.0...v3.7.1)
 
 <sup>Released on **2025-01-08**</sup>
@@ -138,11 +163,14 @@
 ### Technical Details
 
 #### Breaking Changes
+
 - **Shiki v3.0.0**: Requires Node.js 16+ and modern browsers with WebAssembly support
 - **Theme Names**: Updated theme naming convention from `light-neg` to `light-neg-prompt` for consistency
 
 #### Migration Guide
+
 For developers extending the highlight functionality:
+
 ```typescript
 // Before (v1.6.0)
 import { getHighlighterCore } from 'shiki/core';
@@ -156,13 +184,16 @@ const highlighter = await createHighlighterCore({ engine });
 ```
 
 #### Debug Utilities
+
 New browser console utilities for troubleshooting:
+
 - `debugShikiSetup()` - Complete diagnostics and performance metrics
 - `adjustHighlightAlignment(x, y)` - Fine-tune text overlay positioning
 
 #### Performance Metrics
+
 - **Initialization**: 50-70% faster highlighter setup
-- **Cache Efficiency**: 80-95% reduction in repeated highlighting operations  
+- **Cache Efficiency**: 80-95% reduction in repeated highlighting operations
 - **Bundle Size**: 20-40% smaller JavaScript bundle
 - **Memory Usage**: 15-25% lower memory footprint
 - **Text Selection**: Pixel-perfect alignment with underlying textarea

@@ -77,7 +77,7 @@ async function fetchEmbeddingsFromAPI(): Promise<Set<string>> {
       },
       method: 'GET',
       // Add timeout to prevent hanging
-      signal: AbortSignal.timeout(15_000), // Increased timeout for initial load
+      signal: AbortSignal.timeout(15_000), // 15 second timeout for initial load
     });
 
     if (!response.ok) {
@@ -300,7 +300,8 @@ export async function isEmbeddingAPIAvailable(): Promise<boolean> {
     // Use GET request since HEAD is not supported by Forge WebUI
     const response = await fetch(apiUrl, {
       headers: {
-        Accept: 'application/json',
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
       },
       method: 'GET',
       signal: AbortSignal.timeout(5000), // 5 second timeout
