@@ -396,11 +396,61 @@ export async function testEmbeddingAPI(): Promise<void> {
   }
 }
 
+/**
+ * Test function to verify LoRA API endpoint - can be called from browser console
+ * Usage: window.testLoRAAPI()
+ */
+export async function testLoRAAPI(): Promise<void> {
+  const baseUrl = getWebUIBaseUrl();
+  const apiUrl = `${baseUrl}/sdapi/v1/loras`;
+
+  console.log('🧪 Testing LoRA API...');
+  console.log('📍 API URL:', apiUrl);
+
+  try {
+    const response = await fetch(apiUrl, {
+      headers: {
+        Accept: 'application/json',
+      },
+      method: 'GET',
+    });
+
+    console.log('📊 Response Status:', response.status, response.statusText);
+    console.log('📋 Response Headers:', Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ LoRA API Response:', data);
+
+    if (Array.isArray(data)) {
+      console.log('📈 Total LoRAs:', data.length);
+      if (data.length > 0) {
+        console.log('📝 Sample LoRAs:', data.slice(0, 5));
+        console.log('🔍 LoRA Structure:', data[0]);
+      }
+    } else {
+      console.log('📋 LoRA Data Structure:', data);
+    }
+  } catch (error) {
+    console.error('❌ LoRA API Test Failed:', error);
+
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      console.error('🔌 Network Error - Check if WebUI is running and accessible');
+    } else if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('⏱️ Request Timeout');
+    }
+  }
+}
+
 // Initialize cache on module load
 initializeCache();
 
-// Make test function available globally for debugging
+// Make test functions available globally for debugging
 (window as any).testEmbeddingAPI = testEmbeddingAPI;
+(window as any).testLoRAAPI = testLoRAAPI;
 
 // Log initial status in development
 if (process.env.NODE_ENV === 'development') {

@@ -2,6 +2,31 @@
 
 # Changelog
 
+## [Version 3.7.3](https://github.com/lobehub/sd-webui-lobe-theme/compare/v3.7.2...v3.7.3)
+
+<sup>Released on **2025-07-03**</sup>
+
+#### 🐛 Bug Fixes
+
+- **highlight**: Fix weight value editing refresh failure in Monaco editor.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### What's fixed
+
+- **highlight**: Fix weight value editing refresh failure in Monaco editor - Resolves critical issue where editing weight values like `(term:1.1)` to `(term:1.5)` or `(term:-0.8)` would not trigger immediate highlighting updates. Enhanced `useExternalTextareaObserver` hook with comprehensive event listeners for `input`, `change`, `keyup`, `paste`, and `cut` events to capture all possible text modifications. Previously only monitored attribute changes, missing actual user input events that occur during weight value editing.
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 3.7.2](https://github.com/lobehub/sd-webui-lobe-theme/compare/v3.7.1...v3.7.2)
 
 <sup>Released on **2025-01-09**</sup>

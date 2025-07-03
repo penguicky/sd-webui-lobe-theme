@@ -14,6 +14,29 @@ import { themeConfig } from '@/modules/PromptHighlight/features/promptTheme';
 // Global debug state - controls ALL highlight debug messages
 let HIGHLIGHT_DEBUG_ENABLED = true; // Enable debug logging to troubleshoot issues
 
+// =============================================================================
+// CACHE KEY UTILITIES
+// =============================================================================
+
+/**
+ * Generate a hash for weight syntax patterns to ensure cache invalidation
+ * when weight values change (e.g., :1.1 to :1.5)
+ */
+function getWeightSyntaxHash(text: string): string {
+  // Extract all weight syntax patterns like (term:1.2), [term:0.8], or (term:-0.5)
+  // Fixed regex to properly match weight patterns with optional negative signs
+  const weightPatterns = text.match(/[([]\s*[^():[\]]+\s*:-?\d*\.?\d+\s*[)\]]/g) || [];
+
+  // Create a simple hash from the weight patterns
+  if (weightPatterns.length === 0) return '0';
+
+  return weightPatterns
+    .map((pattern) => pattern.replaceAll(/\s+/g, '')) // Remove whitespace for consistency
+    .sort() // Sort for consistent hashing
+    .join('|')
+    .slice(0, 20); // Limit length to prevent overly long cache keys
+}
+
 // Store globally for cross-component access
 if (typeof window !== 'undefined') {
   (window as any).HIGHLIGHT_DEBUG_STATE = {
@@ -21,6 +44,15 @@ if (typeof window !== 'undefined') {
     set: (value: boolean) => {
       HIGHLIGHT_DEBUG_ENABLED = value;
     },
+  };
+
+  // Global function to test weight syntax hash
+  (window as any).testWeightSyntaxHash = (text: string) => {
+    console.log('🧪 Testing weight syntax hash:', {
+      input: text,
+      result: getWeightSyntaxHash(text),
+    });
+    return getWeightSyntaxHash(text);
   };
 }
 
@@ -290,38 +322,45 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
     if (!text || text.length < 2) return null; // Don't highlight very short text
 
     const themeKey = getThemeKey(isDarkMode, isNegPrompt);
-    // Optimize hash for better cache efficiency
+    // Create a more sensitive hash that includes weight syntax patterns
+    // This ensures cache invalidation when weight values change
+    const weightHash = getWeightSyntaxHash(text);
     const textHash =
-      text.length > 80 ? `${text.slice(0, 25)}...${text.slice(-25)}_${text.length}` : text;
-    return `${themeKey}-${textHash}`;
+      text.length > 80
+        ? `${text.slice(0, 25)}...${text.slice(-25)}_${text.length}_${weightHash}`
+        : text;
+    const key = `${themeKey}-${textHash}`;
+
+    return key;
   }, [text, isDarkMode, isNegPrompt]);
 
-  // Check cache first
-  const cachedContent = cacheKey ? getCachedContent(cacheKey) : null;
+  // Cache will be handled inside SWR fetcher for better invalidation control
 
   const swrResult = useSWR(
-    // Key logic: Only use SWR when we need to fetch (no cache and valid content)
-    cacheKey && !cachedContent ? cacheKey : null,
+    // Key logic: Always use SWR with cache key to ensure proper invalidation
+    cacheKey,
     async (key: string) => {
-      debugLog(`🎨 Starting highlighting for key: ${key.slice(0, 50)}...`);
+      // Check if we have cached content for this exact key
+      const existingCache = getCachedContent(key);
+      if (existingCache) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📦 Using cached content:', {
+            cacheExists: true,
+            key: key.slice(0, 60) + (key.length > 60 ? '...' : ''),
+          });
+        }
+        return existingCache;
+      }
 
       try {
         const highlighter = await initHighlighter(text);
         const themeKey = getThemeKey(isDarkMode, isNegPrompt);
 
-        if (process.env.NODE_ENV === 'development') {
-          debugLog(`🎨 Highlighting with theme: "${themeKey}"`);
-        }
-
-        const startTime = performance.now();
         const html = highlighter.codeToHtml(text, {
           lang: 'prompt',
           theme: themeKey,
           transformers: [codeTransformer],
         });
-        const duration = performance.now() - startTime;
-
-        debugLog(`✅ Highlighting completed in ${duration.toFixed(2)}ms`);
 
         // Cache the result
         setCachedContent(key, html);
@@ -329,51 +368,32 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
         return html;
       } catch (error) {
         debugError('❌ Highlighting failed:', error);
-        if (process.env.NODE_ENV === 'development') {
-          debugLog('🔍 Debug info:', {
-            isDarkMode,
-            isNegPrompt,
-            requestedTheme: getThemeKey(isDarkMode, isNegPrompt),
-            textLength: text.length,
-            textPreview: text.slice(0, 100) + '...',
-          });
-        }
+
         // Return original text on error
         return text;
       }
     },
     {
       // Optimized SWR configuration for highlighting
-      dedupingInterval: 2000, // Prevent duplicate requests for 2 seconds
+      dedupingInterval: 1000, // Reduced for faster cache invalidation
       errorRetryCount: 1, // Only retry once on error
       errorRetryInterval: 2000,
 
-      // Don't retry on error automatically
-      // Important: Return cached content immediately if available
-      fallbackData: cachedContent || undefined,
+      // IMPORTANT: Allow revalidation when cache key changes
+      revalidateIfStale: true,
 
-      // Don't revalidate on network reconnect
-      revalidateIfStale: false,
-
-      // Wait 2 seconds before retry
+      // Enable to allow cache invalidation
+      // Don't revalidate on focus/reconnect to avoid unnecessary requests
       revalidateOnFocus: false,
 
-      // Don't revalidate when window gains focus
       revalidateOnReconnect: false,
 
-      // Don't revalidate stale data automatically
-      shouldRetryOnError: false, // Use undefined instead of text for better loading state
+      // Don't retry on error automatically
+      shouldRetryOnError: false,
     },
   );
 
-  // Return cached content immediately if available, otherwise use SWR result
-  if (cachedContent) {
-    return {
-      data: cachedContent,
-      error: null,
-      isLoading: false,
-    };
-  }
+  // Let SWR handle caching and invalidation properly
 
   // If we have very short text, just return it without highlighting
   if (!text || text.length < 2) {
@@ -384,79 +404,11 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
     };
   }
 
-  return {
+  const result = {
     data: swrResult.data,
     error: swrResult.error,
     isLoading: swrResult.isLoading,
   };
+
+  return result;
 };
-
-// Test basic highlighting functionality
-export const testBasicHighlighting = async () => {
-  debugLog('🧪 Testing basic highlighting...');
-
-  try {
-    const highlighter = await initHighlighter();
-    const testText = 'masterpiece, best quality, 1girl, beautiful';
-    const themeKey = 'light';
-
-    debugLog('📝 Test text:', testText);
-    debugLog('🎨 Theme:', themeKey);
-
-    const html = highlighter.codeToHtml(testText, {
-      lang: 'prompt',
-      theme: themeKey,
-      transformers: [codeTransformer],
-    });
-
-    debugLog('✅ Highlighting successful!');
-    debugLog('📄 Generated HTML length:', html.length);
-
-    return html;
-  } catch (error) {
-    debugError('❌ Basic highlighting test failed:', error);
-    return null;
-  }
-};
-
-// Make utilities globally available for debugging
-if (typeof window !== 'undefined') {
-  (window as any).clearHighlightCache = clearHighlightCache;
-  (window as any).forceRefreshHighlighting = forceRefreshHighlighting;
-  (window as any).testBasicHighlighting = testBasicHighlighting;
-  (window as any).forceCompleteAllHighlighting = forceCompleteAllHighlighting;
-
-  // Debug toggle functions
-  (window as any).enableHighlightDebug = enableHighlightDebug;
-  (window as any).disableHighlightDebug = disableHighlightDebug;
-  (window as any).toggleHighlightDebug = toggleHighlightDebug;
-
-  // Status check function
-  (window as any).checkHighlightDebugStatus = () => {
-    const isEnabled = HIGHLIGHT_DEBUG_ENABLED;
-    console.log(`🔍 Highlight debugging is currently: ${isEnabled ? '🟢 ENABLED' : '🔴 DISABLED'}`);
-    console.log(
-      `💡 Use ${isEnabled ? 'disableHighlightDebug()' : 'enableHighlightDebug()'} to ${isEnabled ? 'turn off' : 'turn on'}`,
-    );
-    return isEnabled;
-  };
-
-  console.log('🛠️ Highlight system loaded with debug controls:');
-  console.log('  🎛️ DEBUG CONTROLS (use these to toggle debug messages):');
-  console.log('    - enableHighlightDebug() - Turn ON all debug messages');
-  console.log('    - disableHighlightDebug() - Turn OFF all debug messages');
-  console.log('    - toggleHighlightDebug() - Toggle debug on/off');
-  console.log('    - checkHighlightDebugStatus() - Check current debug state');
-  console.log('  📋 UTILITIES:');
-  console.log('    - clearHighlightCache() - Clear all cached highlighting');
-  console.log('    - forceRefreshHighlighting() - Force refresh all textareas');
-  console.log('    - testBasicHighlighting() - Test core highlighting function');
-  console.log('    - forceCompleteAllHighlighting() - Emergency: Force stop all loading');
-  console.log('');
-  console.log(
-    '💡 Debug messages are currently: ' + (HIGHLIGHT_DEBUG_ENABLED ? '🟢 ENABLED' : '🔴 DISABLED'),
-  );
-  if (!HIGHLIGHT_DEBUG_ENABLED) {
-    console.log('🔧 Run enableHighlightDebug() to see detailed debug information');
-  }
-}

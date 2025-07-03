@@ -47,3 +47,4 @@ bun.lockb
 
 # automated test, build, restart docker script
 build.sh
+.augment

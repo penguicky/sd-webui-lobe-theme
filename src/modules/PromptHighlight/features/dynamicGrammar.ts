@@ -48,18 +48,18 @@ const basePatterns = [
         name: 'number',
       },
     },
-    match: '<([^:]+):([^:]+):([^>]+)>',
+    match: '<([^:>\\s]+):([^:>\\s]+):([^>\\s]+)>',
   },
   {
     match: '[<|>]',
     name: 'model-bracket',
   },
   {
-    match: '[(|)|\\[|\\]|{|}\\\\]',
+    match: '[()\\[\\]{}]',
     name: 'bracket',
   },
   {
-    match: ':\\d*\\.?\\d+|:\\.\\d+',
+    match: ':-?\\d*\\.?\\d+|:-?\\.\\d+',
     name: 'number',
   },
   {
@@ -89,110 +89,250 @@ const GRAMMAR_CACHE_SIZE = 50; // Limit cache size to prevent memory issues
  * This function identifies words/terms that could be embeddings
  */
 function extractPotentialEmbeddingTerms(text: string): string[] {
+  // First, extract terms from weight syntax like (term:1.2) or [term:0.8]
+  const weightSyntaxTerms: string[] = [];
+
+  // Match weight syntax patterns and extract the term part
+  const weightMatches = text.match(/[([]\s*([^():[\]]+)\s*:[^():[\]]*[)\]]/g);
+  if (weightMatches) {
+    for (const match of weightMatches) {
+      // Extract the term part before the colon
+      const termMatch = match.match(/[([]\s*([^():[\]]+)\s*:/);
+      if (termMatch && termMatch[1]) {
+        const term = termMatch[1].trim();
+        if (term.length > 0) {
+          weightSyntaxTerms.push(term);
+        }
+      }
+    }
+  }
+
   // Split text by common delimiters and clean up terms
-  const terms = text
+  const regularTerms = text
     .split(/[\s,]+/) // Split by commas and whitespace
     .map((term) => term.trim())
-    .filter((term) => term.length > 0)
-    .filter((term) => {
-      // Filter out common prompt terms that are unlikely to be embeddings
-      const commonTerms = [
-        'masterpiece',
-        'best',
-        'quality',
-        'high',
-        'ultra',
-        'detailed',
-        'beautiful',
-        'amazing',
-        'stunning',
-        'perfect',
-        'realistic',
-        'photorealistic',
-        'cinematic',
-        'dramatic',
-        'lighting',
-        'shadows',
-        'colors',
-        'vibrant',
-        'soft',
-        'hard',
-        'sharp',
-        'blurry',
-        'focus',
-        'background',
-        'foreground',
-        'portrait',
-        'landscape',
-        'close-up',
-        'wide',
-        'angle',
-        'shot',
-        'view',
-        'perspective',
-        'composition',
-        'framing',
-        'depth',
-        'field',
-        'bokeh',
-        'lens',
-        'camera',
-        'photo',
-        'image',
-        'picture',
-        'art',
-        'artwork',
-        'painting',
-        'drawing',
-        'sketch',
-        'illustration',
-        'digital',
-        'traditional',
-        'style',
-        'anime',
-        'manga',
-        'cartoon',
-        'realistic',
-        'abstract',
-        'surreal',
-        'fantasy',
-        'sci-fi',
-        'horror',
-        'cute',
-        'sexy',
-        'elegant',
-        'graceful',
-        'powerful',
-        'strong',
-        'weak',
-        'small',
-        'large',
-        'huge',
-        'tiny',
-      ];
+    // Remove parentheses, brackets, and weight syntax from terms
+    .map((term) => term.replaceAll(/^[([]+|[)\]]+$/g, '').replace(/:[^():[\]]*$/, ''))
+    .filter((term) => term.length > 0);
 
-      const lowerTerm = term.toLowerCase();
+  // Combine both sets of terms and remove duplicates
+  const allTerms = [...new Set([...weightSyntaxTerms, ...regularTerms])];
 
-      // Skip very short terms (likely not embeddings)
-      if (term.length < 3) return false;
+  // Filter terms based on common criteria
+  const filteredTerms = allTerms.filter((term) => {
+    // Filter out common prompt terms that are unlikely to be embeddings
+    const commonTerms = [
+      'masterpiece',
+      'best',
+      'quality',
+      'high',
+      'ultra',
+      'detailed',
+      'beautiful',
+      'amazing',
+      'stunning',
+      'perfect',
+      'realistic',
+      'photorealistic',
+      'cinematic',
+      'dramatic',
+      'lighting',
+      'shadows',
+      'colors',
+      'vibrant',
+      'soft',
+      'hard',
+      'sharp',
+      'blurry',
+      'focus',
+      'background',
+      'foreground',
+      'portrait',
+      'landscape',
+      'close-up',
+      'wide',
+      'angle',
+      'shot',
+      'view',
+      'perspective',
+      'composition',
+      'framing',
+      'depth',
+      'field',
+      'bokeh',
+      'lens',
+      'camera',
+      'photo',
+      'image',
+      'picture',
+      'art',
+      'artwork',
+      'painting',
+      'drawing',
+      'sketch',
+      'illustration',
+      'digital',
+      'traditional',
+      'style',
+      'anime',
+      'manga',
+      'cartoon',
+      'realistic',
+      'abstract',
+      'surreal',
+      'fantasy',
+      'sci-fi',
+      'horror',
+      'cute',
+      'sexy',
+      'elegant',
+      'graceful',
+      'powerful',
+      'strong',
+      'weak',
+      'small',
+      'large',
+      'huge',
+      'tiny',
+      // Add common terms that were causing highlighting issues
+      'girl',
+      'boy',
+      'man',
+      'woman',
+      'person',
+      'people',
+      'up',
+      'down',
+      'left',
+      'right',
+      'top',
+      'bottom',
+      'front',
+      'back',
+      'side',
+      'center',
+      'middle',
+      'x',
+      'y',
+      'z',
+      'a',
+      'an',
+      'the',
+      'and',
+      'or',
+      'but',
+      'in',
+      'on',
+      'at',
+      'to',
+      'for',
+      'of',
+      'with',
+      'by',
+      'from',
+      'as',
+      'is',
+      'are',
+      'was',
+      'were',
+      'be',
+      'been',
+      'being',
+      'have',
+      'has',
+      'had',
+      'do',
+      'does',
+      'did',
+      'will',
+      'would',
+      'could',
+      'should',
+      'may',
+      'might',
+      'can',
+      'must',
+      'shall',
+      'lora', // Add 'lora' as a common term to prevent it from being treated as an embedding
+      'hair',
+      'eyes',
+      'face',
+      'body',
+      'hand',
+      'hands',
+      'arm',
+      'arms',
+      'leg',
+      'legs',
+      'foot',
+      'feet',
+      'head',
+      'neck',
+      'shoulder',
+      'shoulders',
+      'chest',
+      'back',
+      'waist',
+      'hip',
+      'hips',
+      'long',
+      'short',
+      'tall',
+      'big',
+      'small',
+      'red',
+      'blue',
+      'green',
+      'yellow',
+      'orange',
+      'purple',
+      'pink',
+      'black',
+      'white',
+      'gray',
+      'grey',
+      'brown',
+      'blonde',
+      'brunette',
+      'dark',
+      'light',
+      'bright',
+      'dim',
+      'full',
+      'empty',
+      'open',
+      'closed',
+      'new',
+      'old',
+      'young',
+      'adult',
+      'teen',
+      'child',
+      'baby',
+    ];
 
-      // Skip common terms
-      if (commonTerms.includes(lowerTerm)) return false;
+    const lowerTerm = term.toLowerCase();
 
-      // Skip pure numbers
-      if (/^\d+$/.test(term)) return false;
+    // Skip very short terms (likely not embeddings)
+    if (term.length < 3) return false;
 
-      // Skip terms that are just punctuation or special characters
-      if (/^\W+$/.test(term)) return false;
+    // Skip common terms
+    if (commonTerms.includes(lowerTerm)) return false;
 
-      // Skip terms with colons (likely weight syntax like :1.2)
-      if (term.includes(':')) return false;
+    // Skip pure numbers
+    if (/^\d+$/.test(term)) return false;
 
-      return true;
-    });
+    // Skip terms that are just punctuation or special characters
+    if (/^\W+$/.test(term)) return false;
 
-  // Remove duplicates and return
-  return [...new Set(terms)];
+    // Note: We no longer skip terms with colons here since we've already
+    // extracted terms from weight syntax properly above
+
+    return true;
+  });
+
+  // Return the filtered terms
+  return filteredTerms;
 }
 
 /**
@@ -265,29 +405,34 @@ function generateEmbeddingPatterns(verifiedTerms: Map<string, boolean>): any[] {
     }
   }
 
-  // Create pattern for valid embeddings (plain text)
+  // Create pattern for valid embeddings (plain text and within weight syntax)
   if (validEmbeddings.length > 0) {
     const validTermsPattern = validEmbeddings
       .map((term) => term.replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&')) // Escape regex special chars
       .join('|');
 
-    patterns.push({
-      match: `\\b(${validTermsPattern})\\b`,
-      name: 'embedding-valid',
-    });
+    // Pattern for plain embeddings
+    patterns.push(
+      {
+        match: `\\b(${validTermsPattern})\\b`,
+        name: 'embedding-valid',
+      },
+      {
+        captures: {
+          1: { name: 'bracket' }, // Opening bracket
+          2: { name: 'embedding-valid' }, // Embedding name
+          3: { name: 'func' }, // Colon
+          4: { name: 'number' }, // Weight value
+          5: { name: 'bracket' }, // Closing bracket
+        },
+        match: `([\\(\\[])\\s*(${validTermsPattern})\\s*(:)(-?[0-9]*\\.?[0-9]+)\\s*([\\)\\]])`,
+      },
+    );
   }
 
-  // Create pattern for invalid embeddings (plain text)
-  if (invalidEmbeddings.length > 0) {
-    const invalidTermsPattern = invalidEmbeddings
-      .map((term) => term.replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&')) // Escape regex special chars
-      .join('|');
-
-    patterns.push({
-      match: `\\b(${invalidTermsPattern})\\b`,
-      name: 'embedding-invalid',
-    });
-  }
+  // Note: Removed red highlighting for invalid embeddings
+  // Invalid embeddings will now fall back to default green text color
+  // This provides a cleaner user experience without distracting red strikethrough text
 
   return patterns;
 }
@@ -366,7 +511,7 @@ export async function createDynamicGrammar(text: string): Promise<any> {
       $schema: 'https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json',
       fileTypes: ['prompt'],
       name: 'prompt',
-      patterns: [...basePatterns, ...embeddingPatterns],
+      patterns: [...embeddingPatterns, ...basePatterns],
       repository: {},
       scopeName: 'source.prompt',
     };
