@@ -1,40 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 // =============================================================================
-// DEBUG SYSTEM - SHARED WITH HIGHLIGHT COMPONENTS
+// DEBUG SYSTEM - USE CENTRALIZED DEBUG UTILITIES
 // =============================================================================
 
-// Access the shared debug state from useHighlight
-const getDebugState = (): boolean => {
-  try {
-    return (window as any).HIGHLIGHT_DEBUG_STATE?.get() || false;
-  } catch {
-    return false;
-  }
-};
-
-// Debug utilities that check the shared state
-const debugLog = (message: string, data?: any) => {
-  if (getDebugState()) {
-    if (data) {
-      console.log(message, data);
-    } else {
-      console.log(message);
-    }
-  }
-};
-
-const debugWarn = (message: string, ...args: any[]) => {
-  if (getDebugState()) {
-    console.warn(message, ...args);
-  }
-};
-
-const debugError = (message: string, ...args: any[]) => {
-  if (getDebugState()) {
-    console.error(message, ...args);
-  }
-};
+import {
+  debugError,
+  debugLog,
+  debugWarn,
+  isDebugEnabled,
+} from '../modules/PromptHighlight/utils/debug';
 
 // =============================================================================
 // PERFORMANCE UTILITIES
@@ -232,7 +207,7 @@ if (typeof window !== 'undefined') {
   (window as any).testHighlightResponsiveness = testHighlightResponsiveness;
 
   // Only show debug utilities info if debug is enabled
-  if (getDebugState()) {
+  if (isDebugEnabled()) {
     debugLog('🛠️ Debug utilities available:');
     debugLog('  - debugShikiSetup() - Full Shiki diagnostics');
     debugLog('  - testBasicHighlighting() - Test core highlighting function');

@@ -3,11 +3,6 @@ import { isEmbeddingAPIAvailable, isValidEmbedding } from '@/services/embeddingS
 
 import { debugLog, debugWarn } from '../utils/debug';
 
-// Enable debug logging by default for now to help troubleshoot
-if (typeof window !== 'undefined') {
-  (window as any).enableHighlightDebug = true;
-}
-
 // Base grammar patterns (static)
 const basePatterns = [
   // Category patterns must come first to take precedence over general bracket matching

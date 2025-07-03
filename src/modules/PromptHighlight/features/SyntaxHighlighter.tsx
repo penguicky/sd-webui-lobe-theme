@@ -7,48 +7,17 @@ import { Center } from 'react-layout-kit';
 import { useHighlight } from '@/hooks/useHighlight';
 
 import { useStyles } from '../style';
+// =============================================================================
+// DEBUG SYSTEM - USE CENTRALIZED DEBUG UTILITIES
+// =============================================================================
+
+import { debugError, debugWarn } from '../utils/debug';
 
 interface PropsWithChildrenParentId extends PropsWithChildren {
   maxLength?: number;
   parentId: string;
   priority?: 'high' | 'normal' | 'low';
 }
-
-// =============================================================================
-// DEBUG SYSTEM - SHARED WITH useHighlight.ts
-// =============================================================================
-
-// Access the shared debug state from useHighlight
-const getDebugState = (): boolean => {
-  try {
-    return (window as any).HIGHLIGHT_DEBUG_STATE?.get() || false;
-  } catch {
-    return false;
-  }
-};
-
-// Debug utilities that check the shared state
-const debugLog = (message: string, data?: any) => {
-  if (getDebugState()) {
-    if (data) {
-      console.log(message, data);
-    } else {
-      console.log(message);
-    }
-  }
-};
-
-const debugWarn = (message: string, ...args: any[]) => {
-  if (getDebugState()) {
-    console.warn(message, ...args);
-  }
-};
-
-const debugError = (message: string, ...args: any[]) => {
-  if (getDebugState()) {
-    console.error(message, ...args);
-  }
-};
 
 // =============================================================================
 // SYNTAX HIGHLIGHTER COMPONENT
@@ -117,18 +86,19 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
       return () => clearTimeout(timeout);
     }, [isLoading, priority, shouldHighlight, parentId]);
 
-    // Enhanced debug logging - controlled by shared debug flag
-    debugLog('🎨 SyntaxHighlighter render:', {
-      error: !!error,
-      hasHighlightedContent: !!codeToHtml,
-      hasTimedOut,
-      isLoading,
-      isVisible,
-      parentId: parentId.slice(-20),
-      priority,
-      shouldHighlight,
-      textLength: textContent.length,
-    });
+    // Enhanced debug logging - controlled by shared debug flag (commented out for production)
+    // This was extremely verbose, logging on every render
+    // debugLog('🎨 SyntaxHighlighter render:', {
+    //   error: !!error,
+    //   hasHighlightedContent: !!codeToHtml,
+    //   hasTimedOut,
+    //   isLoading,
+    //   isVisible,
+    //   parentId: parentId.slice(-20),
+    //   priority,
+    //   shouldHighlight,
+    //   textLength: textContent.length,
+    // });
 
     // Fallback for very long content
     if (textContent.length > maxLength) {

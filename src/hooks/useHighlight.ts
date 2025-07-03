@@ -7,6 +7,9 @@ import { createDynamicGrammar } from '@/modules/PromptHighlight/features/dynamic
 import prompt from '@/modules/PromptHighlight/features/grammar';
 import { themeConfig } from '@/modules/PromptHighlight/features/promptTheme';
 
+// Import centralized debug utilities
+import { debugError, debugLog, debugWarn } from '../modules/PromptHighlight/utils/debug';
+
 // =============================================================================
 // CENTRALIZED DEBUG SYSTEM
 // =============================================================================
@@ -55,42 +58,6 @@ if (typeof window !== 'undefined') {
     return getWeightSyntaxHash(text);
   };
 }
-
-// Debug utility functions
-const debugLog = (message: string, ...args: any[]) => {
-  if (HIGHLIGHT_DEBUG_ENABLED) {
-    console.log(message, ...args);
-  }
-};
-
-const debugError = (message: string, ...args: any[]) => {
-  if (HIGHLIGHT_DEBUG_ENABLED) {
-    console.error(message, ...args);
-  }
-};
-
-const debugWarn = (message: string, ...args: any[]) => {
-  if (HIGHLIGHT_DEBUG_ENABLED) {
-    console.warn(message, ...args);
-  }
-};
-
-// Global control functions
-export const enableHighlightDebug = () => {
-  HIGHLIGHT_DEBUG_ENABLED = true;
-  if (typeof window !== 'undefined') {
-    (window as any).HIGHLIGHT_DEBUG_STATE?.set(true);
-  }
-  console.log('🔧 Highlight debugging ENABLED - all components will now log debug info');
-};
-
-export const disableHighlightDebug = () => {
-  HIGHLIGHT_DEBUG_ENABLED = false;
-  if (typeof window !== 'undefined') {
-    (window as any).HIGHLIGHT_DEBUG_STATE?.set(false);
-  }
-  console.log('🔇 Highlight debugging DISABLED - debug messages turned off');
-};
 
 export const toggleHighlightDebug = () => {
   HIGHLIGHT_DEBUG_ENABLED = !HIGHLIGHT_DEBUG_ENABLED;
@@ -175,7 +142,8 @@ const initHighlighter = async (text?: string): Promise<HighlighterCore> => {
         themes,
       });
 
-      debugLog('✅ Created dynamic highlighter with embedding verification');
+      // Only log highlighter creation when debug is enabled - this is verbose
+      // debugLog('✅ Created dynamic highlighter with embedding verification');
       return highlighter;
     } catch (error) {
       debugWarn('⚠️ Failed to create dynamic highlighter, falling back to static:', error);
@@ -256,6 +224,7 @@ const setCachedContent = (key: string, html: string) => {
 // Clear cache utility
 export const clearHighlightCache = () => {
   contentCache.clear();
+  // Only log cache clearing when debug is enabled
   debugLog('🧹 Highlight cache cleared');
 };
 
@@ -267,6 +236,7 @@ export const forceRefreshHighlighting = () => {
   textareas.forEach((textarea) => {
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   });
+  // Only log refresh when debug is enabled
   debugLog('🔄 Forced highlighting refresh on all textareas');
 };
 
