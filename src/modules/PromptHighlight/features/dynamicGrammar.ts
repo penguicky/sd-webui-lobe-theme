@@ -648,11 +648,6 @@ export function clearVerificationCache(): void {
   verificationPromises.clear();
 }
 
-// Make test function available globally
-if (typeof window !== 'undefined') {
-  (window as any).testEmbeddingPipeline = testEmbeddingPipeline;
-}
-
 /**
  * Clear grammar cache
  */
