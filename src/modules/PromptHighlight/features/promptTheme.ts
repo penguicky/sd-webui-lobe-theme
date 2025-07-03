@@ -9,9 +9,11 @@ export const themeConfig: any = (isDarkMode: ThemeAppearance, isNegPrompt: boole
   const colorOrange = isDarkMode ? colorScales.gold[type][9] : colorScales.orange[type][10];
   const colorVolcano = isDarkMode ? colorScales.volcano[type][10] : colorScales.volcano[type][8];
   const colorGreen = isDarkMode ? colorScales.lime[type][9] : colorScales.green[type][10];
+  const colorLightGreen = isDarkMode ? colorScales.lime[type][7] : colorScales.green[type][8];
   const colorBlue = isDarkMode ? colorScales.blue[type][9] : colorScales.geekblue[type][9];
   const colorPurple = isDarkMode ? colorScales.purple[type][11] : colorScales.purple[type][8];
   const colorGray = isDarkMode ? colorScales.gray[type][8] : colorScales.gray[type][9];
+  const colorRed = isDarkMode ? colorScales.red[type][9] : colorScales.red[type][8];
   return {
     colors: {
       'editor.foreground': isNegPrompt ? colorVolcano : colorGreen,
@@ -105,6 +107,24 @@ export const themeConfig: any = (isDarkMode: ThemeAppearance, isNegPrompt: boole
         scope: 'embedding-bracket',
         settings: {
           foreground: colorPurple,
+        },
+      },
+      {
+        scope: 'category-name',
+        settings: {
+          foreground: colorRed,
+        },
+      },
+      {
+        scope: 'category-bracket',
+        settings: {
+          foreground: colorPurple,
+        },
+      },
+      {
+        scope: 'term',
+        settings: {
+          foreground: colorLightGreen,
         },
       },
     ],

@@ -21,6 +21,95 @@ if (typeof window !== 'undefined') {
 
 // Base grammar patterns (static)
 const basePatterns = [
+  // Category patterns must come first to take precedence over general bracket matching
+  // Category reference pattern: {category} (no colon)
+  {
+    captures: {
+      1: {
+        name: 'category-bracket',
+      },
+      2: {
+        name: 'category-name',
+      },
+      3: {
+        name: 'category-bracket',
+      },
+    },
+    match: '({)([^:{}]+)(})',
+  },
+  // Category definition pattern: {category:content}
+  // Using begin/end to allow content to be processed by other patterns
+  {
+    begin: '({)([^:{}]+)(:)',
+    beginCaptures: {
+      1: {
+        name: 'category-bracket',
+      },
+      2: {
+        name: 'category-name',
+      },
+      3: {
+        name: 'func', // colon
+      },
+    },
+    end: '(})',
+    endCaptures: {
+      1: {
+        name: 'category-bracket',
+      },
+    },
+    patterns: [
+      {
+        match: '[,]',
+        name: 'comma',
+      },
+      // Weight syntax patterns - must come before regular term pattern
+      {
+        match: ':-?\\d*\\.?\\d+|:-?\\.\\d+',
+        name: 'number',
+      },
+      {
+        match: '[()\\[\\]]',
+        name: 'bracket',
+      },
+      // LoRA pattern: <lora:name:weight>
+      {
+        captures: {
+          0: {
+            name: 'model-bracket',
+          },
+          1: {
+            name: 'model-type',
+          },
+          2: {
+            name: 'model-name',
+          },
+          3: {
+            name: 'number',
+          },
+        },
+        match: '<([^:]+):([^:]+):([^>]+)>',
+      },
+      // Embedding pattern: <embedding:name>
+      {
+        captures: {
+          0: {
+            name: 'embedding-bracket',
+          },
+          1: {
+            name: 'embedding-name',
+          },
+        },
+        match: '<(embedding:[^>]+)>',
+      },
+      // Pattern for regular terms (will be highlighted in lighter green)
+      {
+        match: '\\b[a-zA-Z_][a-zA-Z0-9_]*\\b',
+        name: 'term',
+      },
+      // Additional patterns will be added dynamically for verified embeddings
+    ],
+  },
   {
     match: '[,]',
     name: 'comma',
@@ -55,7 +144,7 @@ const basePatterns = [
     name: 'model-bracket',
   },
   {
-    match: '[()\\[\\]{}]',
+    match: '[()\\[\\]]',
     name: 'bracket',
   },
   {
@@ -107,6 +196,25 @@ function extractPotentialEmbeddingTerms(text: string): string[] {
     }
   }
 
+  // Extract terms from category definitions like {category:term1, term2, embedding1}
+  const categoryTerms: string[] = [];
+  const categoryMatches = text.match(/{[^:{}]+:[^{}]*}/g);
+  if (categoryMatches) {
+    for (const match of categoryMatches) {
+      // Extract the content after the colon
+      const contentMatch = match.match(/{[^:{}]+:([^{}]*)}/);
+      if (contentMatch && contentMatch[1]) {
+        const content = contentMatch[1].trim();
+        // Split the content by commas and extract individual terms
+        const terms = content
+          .split(',')
+          .map((term) => term.trim())
+          .filter((term) => term.length > 0);
+        categoryTerms.push(...terms);
+      }
+    }
+  }
+
   // Split text by common delimiters and clean up terms
   const regularTerms = text
     .split(/[\s,]+/) // Split by commas and whitespace
@@ -115,8 +223,8 @@ function extractPotentialEmbeddingTerms(text: string): string[] {
     .map((term) => term.replaceAll(/^[([]+|[)\]]+$/g, '').replace(/:[^():[\]]*$/, ''))
     .filter((term) => term.length > 0);
 
-  // Combine both sets of terms and remove duplicates
-  const allTerms = [...new Set([...weightSyntaxTerms, ...regularTerms])];
+  // Combine all sets of terms and remove duplicates
+  const allTerms = [...new Set([...weightSyntaxTerms, ...categoryTerms, ...regularTerms])];
 
   // Filter terms based on common criteria
   const filteredTerms = allTerms.filter((term) => {
@@ -372,8 +480,6 @@ async function verifyEmbeddingTerms(terms: string[]): Promise<Map<string, boolea
       // Cache the result
       verifiedEmbeddings.set(term, isValid);
       results.set(term, isValid);
-
-      debugLog(`✅ Embedding "${term}" verification: ${isValid ? 'VALID' : 'INVALID'}`);
     } catch (error) {
       debugWarn(`⚠️ Error verifying embedding "${term}":`, error);
       verifiedEmbeddings.set(term, false);
@@ -467,7 +573,6 @@ function cacheGrammar(key: string, grammar: any): void {
   }
 
   grammarCache.set(key, grammar);
-  debugLog(`📦 Cached grammar for key: ${key} (cache size: ${grammarCache.size})`);
 }
 
 /**
@@ -481,7 +586,6 @@ export async function createDynamicGrammar(text: string): Promise<any> {
 
     // Check grammar cache first
     if (grammarCache.has(cacheKey)) {
-      debugLog('📦 Using cached grammar for embedding terms:', embeddingTerms);
       return grammarCache.get(cacheKey);
     }
 
@@ -489,8 +593,6 @@ export async function createDynamicGrammar(text: string): Promise<any> {
       // No embeddings found, use base grammar with static embedding pattern
       return createStaticGrammar();
     }
-
-    debugLog(`🔍 Found ${embeddingTerms.length} embedding terms to verify:`, embeddingTerms);
 
     // Check if API is available before attempting verification
     const apiAvailable = await isEmbeddingAPIAvailable();
@@ -505,13 +607,26 @@ export async function createDynamicGrammar(text: string): Promise<any> {
     // Generate dynamic patterns
     const embeddingPatterns = generateEmbeddingPatterns(verifiedTerms);
 
-    debugLog(`✅ Generated ${embeddingPatterns.length} dynamic embedding patterns`);
+    // Create modified base patterns with embedding patterns added to category definition
+    const modifiedBasePatterns = basePatterns.map((pattern) => {
+      // Find the category definition pattern and add embedding patterns to its nested patterns
+      if (pattern.begin && pattern.begin === '({)([^:{}]+)(:)') {
+        return {
+          ...pattern,
+          patterns: [
+            ...embeddingPatterns, // Add embedding patterns to category content
+            ...pattern.patterns, // Keep existing patterns (comma, etc.)
+          ],
+        };
+      }
+      return pattern;
+    });
 
     const grammar = {
       $schema: 'https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json',
       fileTypes: ['prompt'],
       name: 'prompt',
-      patterns: [...embeddingPatterns, ...basePatterns],
+      patterns: [...embeddingPatterns, ...modifiedBasePatterns],
       repository: {},
       scopeName: 'source.prompt',
     };
@@ -531,77 +646,6 @@ export async function createDynamicGrammar(text: string): Promise<any> {
 export function clearVerificationCache(): void {
   verifiedEmbeddings.clear();
   verificationPromises.clear();
-  debugLog('🧹 Cleared embedding verification cache');
-}
-
-/**
- * Test function to debug the complete embedding detection pipeline
- * Usage: window.testEmbeddingPipeline("test text with 2b_Cosplay_HDA embedding")
- */
-export async function testEmbeddingPipeline(testText: string): Promise<void> {
-  console.log('🧪 Testing Embedding Detection Pipeline');
-  console.log('📝 Test text:', testText);
-
-  try {
-    // Step 1: Extract potential terms
-    console.log('\n🔍 Step 1: Extracting potential embedding terms...');
-    const potentialTerms = extractPotentialEmbeddingTerms(testText);
-    console.log('📝 Potential terms:', potentialTerms);
-
-    if (potentialTerms.length === 0) {
-      console.log('❌ No potential terms found - pipeline will use static grammar');
-      return;
-    }
-
-    // Step 2: Check API availability
-    console.log('\n🌐 Step 2: Checking API availability...');
-    const apiAvailable = await isEmbeddingAPIAvailable();
-    console.log('📡 API available:', apiAvailable);
-
-    if (!apiAvailable) {
-      console.log('❌ API not available - pipeline will use static grammar');
-      return;
-    }
-
-    // Step 3: Verify embeddings
-    console.log('\n🔍 Step 3: Verifying embeddings...');
-    const verifiedTerms = await verifyEmbeddingTerms(potentialTerms);
-    console.log('✅ Verification results:');
-    for (const [term, isValid] of verifiedTerms) {
-      console.log(`  - "${term}": ${isValid ? '✅ VALID' : '❌ INVALID'}`);
-    }
-
-    // Step 4: Generate patterns
-    console.log('\n📋 Step 4: Generating grammar patterns...');
-    const patterns = generateEmbeddingPatterns(verifiedTerms);
-    console.log('🎯 Generated patterns:', patterns);
-
-    // Step 5: Create complete grammar
-    console.log('\n🏗️ Step 5: Creating dynamic grammar...');
-    const grammar = await createDynamicGrammar(testText);
-    console.log('📄 Grammar structure:', {
-      patternNames: grammar.patterns.map((p: any) => p.name).filter(Boolean),
-      totalPatterns: grammar.patterns.length,
-    });
-
-    console.log('\n✅ Pipeline test completed successfully!');
-
-    // Summary
-    const validEmbeddings = Array.from(verifiedTerms.entries())
-      .filter(([, isValid]) => isValid)
-      .map(([term]) => term);
-    const invalidEmbeddings = Array.from(verifiedTerms.entries())
-      .filter(([, isValid]) => !isValid)
-      .map(([term]) => term);
-
-    console.log('\n📊 Summary:');
-    console.log(`  - Potential terms found: ${potentialTerms.length}`);
-    console.log(`  - Valid embeddings: ${validEmbeddings.length}`, validEmbeddings);
-    console.log(`  - Invalid terms: ${invalidEmbeddings.length}`, invalidEmbeddings);
-    console.log(`  - Grammar patterns generated: ${patterns.length}`);
-  } catch (error) {
-    console.error('❌ Pipeline test failed:', error);
-  }
 }
 
 // Make test function available globally
@@ -614,7 +658,6 @@ if (typeof window !== 'undefined') {
  */
 export function clearGrammarCache(): void {
   grammarCache.clear();
-  debugLog('🧹 Cleared grammar cache');
 }
 
 /**
@@ -623,7 +666,6 @@ export function clearGrammarCache(): void {
 export function clearAllCaches(): void {
   clearVerificationCache();
   clearGrammarCache();
-  debugLog('🧹 Cleared all dynamic grammar caches');
 }
 
 /**
