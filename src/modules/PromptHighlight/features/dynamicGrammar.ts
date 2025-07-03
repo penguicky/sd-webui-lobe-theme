@@ -1,18 +1,7 @@
 // Dynamic grammar system that updates based on API verification
 import { isEmbeddingAPIAvailable, isValidEmbedding } from '@/services/embeddingService';
 
-// Safe debug functions that work in both runtime and test environments
-const debugLog = (msg: string, ...args: any[]) => {
-  if (typeof window !== 'undefined' && (window as any).enableHighlightDebug) {
-    console.log(msg, ...args);
-  }
-};
-
-const debugWarn = (msg: string, ...args: any[]) => {
-  if (typeof window !== 'undefined' && (window as any).enableHighlightDebug) {
-    console.warn(msg, ...args);
-  }
-};
+import { debugLog, debugWarn } from '../utils/debug';
 
 // Enable debug logging by default for now to help troubleshoot
 if (typeof window !== 'undefined') {

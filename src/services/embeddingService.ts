@@ -1,23 +1,5 @@
 // Service for managing embedding verification via WebUI API
-
-// Safe debug functions that work in both runtime and test environments
-const debugError = (msg: string, ...args: any[]) => {
-  if (typeof window !== 'undefined' && (window as any).enableHighlightDebug) {
-    console.error(msg, ...args);
-  }
-};
-
-const debugLog = (msg: string, ...args: any[]) => {
-  if (typeof window !== 'undefined' && (window as any).enableHighlightDebug) {
-    console.log(msg, ...args);
-  }
-};
-
-const debugWarn = (msg: string, ...args: any[]) => {
-  if (typeof window !== 'undefined' && (window as any).enableHighlightDebug) {
-    console.warn(msg, ...args);
-  }
-};
+import { debugError, debugLog, debugWarn } from '../modules/PromptHighlight/utils/debug';
 
 // Types for embedding data from WebUI API
 export interface EmbeddingInfo {
@@ -56,7 +38,7 @@ function getWebUIBaseUrl(): string {
   // This ensures we're connecting to the same server that served the page
   const currentUrl = window.location.origin;
 
-  debugLog('🌐 Using WebUI base URL:', currentUrl);
+  // Only log base URL on first call or when debug is explicitly enabled
   return currentUrl;
 }
 
@@ -67,7 +49,7 @@ async function fetchEmbeddingsFromAPI(): Promise<Set<string>> {
   const baseUrl = getWebUIBaseUrl();
   const apiUrl = `${baseUrl}/sdapi/v1/embeddings`;
 
-  debugLog('🔍 Fetching embeddings from WebUI API:', apiUrl);
+  // Only log API calls when debug is enabled - this is very verbose
 
   try {
     const response = await fetch(apiUrl, {
@@ -99,8 +81,8 @@ async function fetchEmbeddingsFromAPI(): Promise<Set<string>> {
       embeddingNames.add(name);
     });
 
+    // Only log success when debug is enabled - this is very verbose
     debugLog(`✅ Successfully fetched ${embeddingNames.size} embeddings from WebUI API`);
-    debugLog('📋 Available embeddings:', Array.from(embeddingNames).slice(0, 10));
 
     return embeddingNames;
   } catch (error) {
@@ -125,12 +107,14 @@ async function getEmbeddings(): Promise<Set<string>> {
 
   // Check if we have valid cached data
   if (embeddingCache && now - embeddingCache.timestamp < CACHE_DURATION) {
+    // Only log cache usage when debug is enabled
     debugLog('📦 Using cached embeddings data');
     return embeddingCache.embeddings;
   }
 
   // Prevent multiple simultaneous fetches
   if (fetchPromise) {
+    // Only log waiting when debug is enabled
     debugLog('⏳ Waiting for ongoing embeddings fetch...');
     return fetchPromise;
   }
@@ -142,6 +126,7 @@ async function getEmbeddings(): Promise<Set<string>> {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        // Only log retry attempts when debug is enabled
         debugLog(`🔄 Fetching embeddings from API (attempt ${attempt}/${maxRetries})`);
         const embeddings = await fetchEmbeddingsFromAPI();
 
@@ -159,6 +144,7 @@ async function getEmbeddings(): Promise<Set<string>> {
           debugWarn('⚠️ Failed to store embeddings in localStorage:', storageError);
         }
 
+        // Only log success when debug is enabled
         debugLog(`✅ Successfully fetched and cached ${embeddings.size} embeddings`);
         return embeddings;
       } catch (error) {
@@ -244,7 +230,8 @@ export async function isValidEmbedding(term: string): Promise<boolean> {
     const embeddings = await getEmbeddings();
     const isValid = embeddings.has(term);
 
-    debugLog(`🔍 Embedding verification for "${term}": ${isValid ? 'VALID' : 'INVALID'}`);
+    // Only log individual verifications when debug is enabled - this is extremely verbose
+    // debugLog(`🔍 Embedding verification for "${term}": ${isValid ? 'VALID' : 'INVALID'}`);
 
     return isValid;
   } catch (error) {
