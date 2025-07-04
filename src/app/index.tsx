@@ -2,6 +2,7 @@ import { LayoutHeader, LayoutMain, LayoutSidebar } from '@lobehub/ui';
 import { Suspense, lazy, memo, useEffect } from 'react';
 import { shallow } from 'zustand/shallow';
 
+import { AppErrorBoundary, FeatureErrorBoundary } from '@/components/ErrorBoundary';
 import StructuredData from '@/components/StructuredData';
 import PromptFormator from '@/features/PromptFormator';
 import { warmShikiCache } from '@/hooks/usePerformanceOptimized';
@@ -147,11 +148,13 @@ const Index = memo(() => {
   }, [enableHighlight, enableImageInfo, svgIcon]);
 
   return (
-    <>
+    <AppErrorBoundary>
       <StructuredData />
       <GlobalStyle />
       <LayoutHeader headerHeight={HEADER_HEIGHT}>
-        <Header />
+        <FeatureErrorBoundary feature="Header">
+          <Header />
+        </FeatureErrorBoundary>
       </LayoutHeader>
       <LayoutMain>
         <div className={liteAnimation ? styles.backgroundLite : styles.background} />
@@ -161,13 +164,21 @@ const Index = memo(() => {
             headerHeight={HEADER_HEIGHT}
             style={{ flex: 0, zIndex: 50 }}
           >
-            <QuickSettingSidebar headerHeight={HEADER_HEIGHT} />
+            <FeatureErrorBoundary feature="QuickSettingSidebar">
+              <QuickSettingSidebar headerHeight={HEADER_HEIGHT} />
+            </FeatureErrorBoundary>
           </LayoutSidebar>
         )}
-        <Content className={cx(!enableSidebar && styles.quicksettings)} />
-        <PromptFormator />
+        <FeatureErrorBoundary feature="Content">
+          <Content className={cx(!enableSidebar && styles.quicksettings)} />
+        </FeatureErrorBoundary>
+        <FeatureErrorBoundary feature="PromptFormator">
+          <PromptFormator />
+        </FeatureErrorBoundary>
         <Suspense fallback={null}>
-          <Share />
+          <FeatureErrorBoundary feature="Share">
+            <Share />
+          </FeatureErrorBoundary>
         </Suspense>
         {enableExtraNetworkSidebar && (
           <LayoutSidebar
@@ -175,12 +186,16 @@ const Index = memo(() => {
             headerHeight={HEADER_HEIGHT}
             style={{ flex: 0, zIndex: 50 }}
           >
-            <ExtraNetworkSidebar headerHeight={HEADER_HEIGHT} />
+            <FeatureErrorBoundary feature="ExtraNetworkSidebar">
+              <ExtraNetworkSidebar headerHeight={HEADER_HEIGHT} />
+            </FeatureErrorBoundary>
           </LayoutSidebar>
         )}
       </LayoutMain>
-      <Footer />
-    </>
+      <FeatureErrorBoundary feature="Footer">
+        <Footer />
+      </FeatureErrorBoundary>
+    </AppErrorBoundary>
   );
 });
 

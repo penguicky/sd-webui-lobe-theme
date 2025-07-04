@@ -3,6 +3,9 @@ import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
+import { withGracefulDegradation } from '@/utils/errorHandling';
+import { safeGetUiCurrentTabContent } from '@/utils/safeDom';
+
 import TagList, { PromptType, TagItem } from './TagList';
 import { useStyles } from './style';
 import { formatPrompt } from './utils';
@@ -20,34 +23,83 @@ const Prompt = memo<PromptProps>(({ type }) => {
     type === 'positive' ? "[id$='2img_prompt'] textarea" : "[id$='2img_neg_prompt'] textarea";
 
   const getValue = useCallback(() => {
-    try {
-      const textarea = get_uiCurrentTabContent().querySelector(id) as HTMLTextAreaElement;
-      if (textarea) setTags(formatPrompt(textarea.value));
-    } catch (error) {
-      consola.error('🤯 [prompt]', error);
-    }
-  }, []);
+    withGracefulDegradation(
+      () => {
+        const currentTabContent = safeGetUiCurrentTabContent();
+        if (!currentTabContent) {
+          throw new Error('Current tab content not found');
+        }
+
+        const textarea = currentTabContent.querySelector(id) as HTMLTextAreaElement;
+        if (!textarea) {
+          throw new Error(`Textarea not found for selector: ${id}`);
+        }
+
+        setTags(formatPrompt(textarea.value));
+      },
+      () => {
+        consola.warn('🤯 [prompt] getValue fallback - unable to get textarea value');
+        setTags([]);
+      },
+      {
+        onError: (error) => consola.error('🤯 [prompt] getValue error:', error.message),
+      },
+    );
+  }, [id]);
 
   const setValue = useCallback(() => {
-    try {
-      const newValue = tags.map((t) => t.text).join(', ');
-      const textarea = get_uiCurrentTabContent().querySelector(id) as HTMLTextAreaElement;
-      if (textarea) textarea.value = newValue;
-      updateInput(textarea);
-    } catch (error) {
-      consola.error('🤯 [prompt]', error);
-    }
-  }, [tags, type]);
+    withGracefulDegradation(
+      () => {
+        const newValue = tags.map((t) => t.text).join(', ');
+        const currentTabContent = safeGetUiCurrentTabContent();
+        if (!currentTabContent) {
+          throw new Error('Current tab content not found');
+        }
 
-  const setCurrentValue = useCallback((currentTags: TagItem[]) => {
-    try {
-      const textarea = get_uiCurrentTabContent().querySelector(id) as HTMLTextAreaElement;
-      if (textarea) textarea.value = currentTags.map((t) => t.text).join(', ');
-      updateInput(textarea);
-    } catch (error) {
-      consola.error('🤯 [prompt]', error);
-    }
-  }, []);
+        const textarea = currentTabContent.querySelector(id) as HTMLTextAreaElement;
+        if (!textarea) {
+          throw new Error(`Textarea not found for selector: ${id}`);
+        }
+
+        textarea.value = newValue;
+        updateInput(textarea);
+      },
+      () => {
+        consola.warn('🤯 [prompt] setValue fallback - unable to set textarea value');
+      },
+      {
+        onError: (error) => consola.error('🤯 [prompt] setValue error:', error.message),
+      },
+    );
+  }, [tags, id]);
+
+  const setCurrentValue = useCallback(
+    (currentTags: TagItem[]) => {
+      withGracefulDegradation(
+        () => {
+          const currentTabContent = safeGetUiCurrentTabContent();
+          if (!currentTabContent) {
+            throw new Error('Current tab content not found');
+          }
+
+          const textarea = currentTabContent.querySelector(id) as HTMLTextAreaElement;
+          if (!textarea) {
+            throw new Error(`Textarea not found for selector: ${id}`);
+          }
+
+          textarea.value = currentTags.map((t) => t.text).join(', ');
+          updateInput(textarea);
+        },
+        () => {
+          consola.warn('🤯 [prompt] setCurrentValue fallback - unable to set textarea value');
+        },
+        {
+          onError: (error) => consola.error('🤯 [prompt] setCurrentValue error:', error.message),
+        },
+      );
+    },
+    [id],
+  );
 
   return (
     <div className={styles.promptView}>

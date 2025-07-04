@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Center } from 'react-layout-kit';
 
+import { ComponentErrorBoundary } from '@/components/ErrorBoundary';
 import { useHighlight } from '@/hooks/useHighlight';
 import { usePooledIntersectionObserver } from '@/hooks/useObserverPool';
 
@@ -135,44 +136,46 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
     const showLoading = isLoading && !hasHighlightedContent && !hasTimedOut;
 
     return (
-      <div ref={containerRef}>
-        {showHighlighted ? (
-          // Show highlighted content
-          <div
-            className={styles.shiki}
-            dangerouslySetInnerHTML={{
-              __html: codeToHtml as string,
-            }}
-            style={{
-              MozUserSelect: 'none',
-              WebkitUserSelect: 'none',
-              msUserSelect: 'none',
-              pointerEvents: 'none',
-              userSelect: 'none',
-            }}
-          />
-        ) : (
-          // Show plain text while loading or as fallback
-          <div className={styles.shiki}>
-            <code
-              style={{
-                opacity: showFallback ? 0.8 : 1,
-                pointerEvents: 'none',
+      <ComponentErrorBoundary component="SyntaxHighlighter">
+        <div ref={containerRef}>
+          {showHighlighted ? (
+            // Show highlighted content
+            <div
+              className={styles.shiki}
+              dangerouslySetInnerHTML={{
+                __html: codeToHtml as string,
               }}
-            >
-              {textContent}
-            </code>
-          </div>
-        )}
+              style={{
+                MozUserSelect: 'none',
+                WebkitUserSelect: 'none',
+                msUserSelect: 'none',
+                pointerEvents: 'none',
+                userSelect: 'none',
+              }}
+            />
+          ) : (
+            // Show plain text while loading or as fallback
+            <div className={styles.shiki}>
+              <code
+                style={{
+                  opacity: showFallback ? 0.8 : 1,
+                  pointerEvents: 'none',
+                }}
+              >
+                {textContent}
+              </code>
+            </div>
+          )}
 
-        {/* Loading indicator only for high priority items */}
-        {showLoading && priority === 'high' && (
-          <Center className={styles.loading} gap={8} horizontal style={{ pointerEvents: 'none' }}>
-            <Icon icon={Loader2} spin />
-            Highlighting...
-          </Center>
-        )}
-      </div>
+          {/* Loading indicator only for high priority items */}
+          {showLoading && priority === 'high' && (
+            <Center className={styles.loading} gap={8} horizontal style={{ pointerEvents: 'none' }}>
+              <Icon icon={Loader2} spin />
+              Highlighting...
+            </Center>
+          )}
+        </div>
+      </ComponentErrorBoundary>
     );
   },
 );
