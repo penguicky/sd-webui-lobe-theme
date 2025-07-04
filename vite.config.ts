@@ -3,6 +3,7 @@ import { consola } from 'consola';
 import dotenv from 'dotenv';
 import { resolve } from 'node:path';
 import process from 'node:process';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { type PluginOption, defineConfig } from 'vite';
 
 dotenv.config();
@@ -33,9 +34,19 @@ export default defineConfig({
         // Single file output - no code splitting for compatibility
         assetFileNames: `[name].[ext]`,
         chunkFileNames: `[name].js`,
-        entryFileNames: `[name].js`,
-        inlineDynamicImports: true,
         // Force everything into a single bundle
+compact: true,
+        
+entryFileNames: `[name].js`,
+        
+        // Aggressive minification settings
+generatedCode: {
+          arrowFunctions: true,
+          constBindings: true,
+          objectShorthand: true,
+        },
+        
+        inlineDynamicImports: true,
       },
 
       // Enhanced tree-shaking configuration
@@ -45,14 +56,33 @@ export default defineConfig({
           if (
             id.includes('src/locales/config') ||
             id.includes('i18next-http-backend') ||
-            id.includes('react-i18next')
+            id.includes('react-i18next') ||
+            id.includes('antd/es/config-provider') ||
+            id.includes('antd-style') ||
+            id.includes('@lobehub/ui')
           ) {
             return true;
           }
+
+          // Aggressive tree-shaking for large libraries
+          if (
+            id.includes('lodash-es') ||
+            id.includes('lucide-react') ||
+            id.includes('lucide-static') ||
+            id.includes('@icons-pack/react-simple-icons')
+          ) {
+            return false;
+          }
+
           return false;
         },
-        propertyReadSideEffects: false,
-        tryCatchDeoptimization: false,
+        // More aggressive tree-shaking options
+preset: 'smallest',
+        
+propertyReadSideEffects: false,
+        
+tryCatchDeoptimization: false,
+        
         unknownGlobalSideEffects: false,
       },
     },
@@ -66,16 +96,32 @@ export default defineConfig({
   },
 
   optimizeDeps: {
-    exclude: ['fast-deep-equal'],
+    // Exclude problematic dependencies that should be bundled at build time
+    exclude: [
+      'fast-deep-equal',
+      'shiki', // Large WebAssembly dependency - better to bundle at build time
+      '@lobehub/ui/node_modules/shiki', // Nested shiki dependency
+    ],
     include: [
+      // Core React dependencies
       'react',
       'react-dom',
+      'react/jsx-runtime',
+
+      // UI and styling libraries
       'antd-style',
       '@lobehub/ui',
+
+      // State management
       'zustand',
+      'zustand/shallow',
+
+      // Utilities (tree-shakeable)
       'lodash-es',
       'dayjs',
-      // Include specific antd components for better tree-shaking
+      'consola',
+
+      // Specific antd components for better tree-shaking
       'antd/es/button',
       'antd/es/input',
       'antd/es/select',
@@ -90,6 +136,14 @@ export default defineConfig({
       'antd/es/input-number',
       'antd/es/popconfirm',
       'antd/es/notification',
+      'antd/es/form',
+      'antd/es/modal',
+      'antd/es/drawer',
+      'antd/es/tooltip',
+      'antd/es/dropdown',
+
+      // Lucide icons (commonly used)
+      'lucide-react',
     ],
   },
 
@@ -98,6 +152,19 @@ export default defineConfig({
       devTarget: 'esnext',
       tsDecorators: true,
     }),
+
+    // Bundle analyzer for production builds
+    ...(isProduction
+      ? [
+          visualizer({
+            brotliSize: true,
+            filename: 'javascript/bundle-analysis.html',
+            gzipSize: true,
+            open: false,
+            template: 'treemap', // 'treemap', 'sunburst', 'network'
+          }) as PluginOption,
+        ]
+      : []),
 
     // Development-only plugins
     ...(isProduction

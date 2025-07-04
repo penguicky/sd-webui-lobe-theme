@@ -2,12 +2,16 @@ import { consola } from 'consola';
 import { createRoot } from 'react-dom/client';
 
 import Page from './app/page';
+import { trackDynamicImport } from './utils/bundleAnalysis';
 
-// Pre-warm Shiki engine for better performance
+// Optimized Shiki engine pre-warming with performance tracking
 const preWarmShiki = async () => {
   try {
-    // Dynamic import to avoid blocking main thread
-    const { ShikiEngineManager } = await import('./hooks/useHighlight');
+    // Track the dynamic import performance
+    const { ShikiEngineManager } = await trackDynamicImport(
+      'useHighlight',
+      import('./hooks/useHighlight'),
+    );
     const manager = ShikiEngineManager.getInstance();
     await manager.preWarm();
   } catch (error) {
@@ -25,8 +29,10 @@ if (!skipLoad) {
     () => {
       consola.start(`🤯 Lobe Theme load in ${process.env.NODE_ENV}`);
 
-      // Pre-warm Shiki engine in background for better performance
-      preWarmShiki();
+      // Pre-warm Shiki engine in background with delay to avoid blocking initial render
+      setTimeout(() => {
+        preWarmShiki();
+      }, 1000); // Delay to allow initial UI to render first
 
       const root = document.createElement('div');
       root.setAttribute('id', 'root');

@@ -1,5 +1,5 @@
 import { LayoutHeader, LayoutMain, LayoutSidebar } from '@lobehub/ui';
-import { Suspense, lazy, memo, useEffect } from 'react';
+import { Suspense, memo, useEffect } from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { AppErrorBoundary, FeatureErrorBoundary } from '@/components/ErrorBoundary';
@@ -13,6 +13,7 @@ import replaceIcon from '@/scripts/replaceIcon';
 import { useAppStore } from '@/store';
 import GlobalStyle from '@/styles';
 import { getBrowserCompatibilityReport } from '@/utils/browserCompat';
+import { lazyOptimized } from '@/utils/lazyOptimized';
 
 import Content from '../features/Content';
 import ExtraNetworkSidebar from '../features/ExtraNetworkSidebar';
@@ -21,8 +22,13 @@ import Header from '../features/Header';
 import QuickSettingSidebar from '../features/QuickSettingSidebar';
 import { useStyles } from './style';
 
-// Lazy load non-critical components
-const Share = lazy(() => import('../features/Share'));
+// Optimized lazy loading for non-critical components
+const Share = lazyOptimized(() => import('../features/Share'), {
+  // Preload after 3 seconds of app initialization
+  preloadDelay: 3000,
+  // Preload when user shows intent to interact (hover, focus)
+  preloadOnHover: true,
+});
 
 export const HEADER_HEIGHT = 64;
 
