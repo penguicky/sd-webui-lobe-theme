@@ -3,14 +3,12 @@ import { Space } from 'antd';
 import { useResponsive } from 'antd-style';
 import { Github, LayoutGrid, LucideIcon, Moon, Settings, Sun } from 'lucide-react';
 import qs from 'query-string';
-import { Suspense, lazy, memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Giscus } from '@/components';
+import Setting from '@/features/Setting';
 import { selectors, useAppStore } from '@/store';
-
-// Lazy load Setting component since it's only needed when user clicks settings
-const Setting = lazy(() => import('@/features/Setting'));
 
 const CivitaiLogo: LucideIcon | any = ({ size }: any) => (
   <svg fill="currentColor" height={size} viewBox="0 0 16 16" width={size}>
@@ -79,9 +77,7 @@ const Actions = memo<ActionsProps>(() => {
         <ActionIcon icon={themeIcon} onClick={handleSetTheme} title={switchThemeTitle} />
         <ActionIcon icon={Settings} onClick={handleOpenSettings} title={settingTitle} />
       </Space.Compact>
-      <Suspense fallback={null}>
-        <Setting onCancel={handleCloseSettings} open={isSettingOpen} />
-      </Suspense>
+      <Setting onCancel={handleCloseSettings} open={isSettingOpen} />
       <Giscus onCancel={handleCloseModal} open={isModalOpen} />
     </>
   );

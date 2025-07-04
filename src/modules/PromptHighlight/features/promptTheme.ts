@@ -1,7 +1,6 @@
 import { colors as colorScales } from '@lobehub/ui';
-import { ThemeAppearance } from 'antd-style';
 
-export const themeConfig: any = (isDarkMode: ThemeAppearance, isNegPrompt: boolean) => {
+export const themeConfig: any = (isDarkMode: boolean, isNegPrompt: boolean) => {
   const type = isDarkMode ? 'dark' : 'light';
   const name = type + (isNegPrompt ? '-neg-prompt' : '');
 

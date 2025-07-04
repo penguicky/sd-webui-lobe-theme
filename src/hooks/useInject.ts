@@ -26,6 +26,9 @@ export const useInject = (
   const [isLoading, setIsLoading] = useState(true);
   const [element, setElement] = useState<HTMLDivElement>();
   const isInject = useRef(false);
+  const retryCount = useRef(0);
+  const maxRetries = 3;
+
   useEffect(() => {
     if (isInject.current) return;
 
@@ -45,7 +48,7 @@ export const useInject = (
           throw new Error(`Parent element not found: ${parent}`);
         }
 
-        // Safely query for the target element
+        // Safely query for the target element with enhanced error handling
         const ele = safeQuerySelector<HTMLDivElement>(selectors, root);
 
         if (ele) {
@@ -82,27 +85,60 @@ export const useInject = (
           setIsLoading(false);
           if (debug) consola.success(`🤯 ${debug}`);
         } else {
-          const errorMsg = `Element not found for selector: ${selectors}`;
-          if (debug) consola.error(`🤯 ${debug}`, errorMsg);
-          throw new Error(errorMsg);
+          // Enhanced error handling: reduce console spam for missing elements
+          retryCount.current++;
+
+          if (retryCount.current <= maxRetries) {
+            // Silently retry for the first few attempts
+            setTimeout(() => {
+              performInjection();
+            }, 1000 * retryCount.current); // Exponential backoff
+            return;
+          }
+
+          // Only log error after max retries to reduce console spam
+          const errorMsg = `Element not found for selector: ${selectors} (after ${maxRetries} retries)`;
+          if (debug) {
+            consola.warn(`🤯 ${debug} - Element may not exist in current WebUI version:`, errorMsg);
+          }
+
+          // Don't throw error for missing elements - just mark as failed silently
+          setIsLoading(false);
+          return;
         }
       } catch (error: any) {
         const err = error instanceof Error ? error : new Error(String(error));
-        console.error('useInject error:', err);
+
+        // Enhanced error handling: reduce console spam
+        retryCount.current++;
+
+        if (retryCount.current <= maxRetries && err.message.includes('not found')) {
+          // Silently retry for "not found" errors
+          setTimeout(() => {
+            performInjection();
+          }, 1000 * retryCount.current);
+          return;
+        }
+
+        // Only log persistent errors
+        console.warn('useInject persistent error:', err.message);
         onError?.(err);
         setIsLoading(false);
-        if (debug) consola.error(`🤯 ${debug}`, err.message);
+        if (debug) consola.warn(`🤯 ${debug} - Injection failed:`, err.message);
       }
     };
 
-    // Use safe DOM operation wrapper
+    // Use safe DOM operation wrapper with reduced error logging
     safeDomOperation(performInjection, {
       onError: (error) => {
-        console.error('DOM injection operation failed:', error);
+        // Only log if it's not a "not found" error to reduce console spam
+        if (!error.message.includes('not found')) {
+          console.warn('DOM injection operation failed:', error.message);
+        }
         setIsLoading(false);
       },
-      retries: 2,
-      timeout: 5000,
+      retries: 0, // Handle retries internally to avoid double retry logic
+      timeout: 8000, // Increased timeout for slower loading
     });
   }, []);
   return {

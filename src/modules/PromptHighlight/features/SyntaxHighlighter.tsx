@@ -60,11 +60,13 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
     // Only highlight when visible and content is reasonable size
     const shouldHighlight = textContent.length > 0 && textContent.length <= maxLength && isVisible;
 
+    // Always pass the actual text content to useHighlight, but control rendering based on shouldHighlight
+    // This prevents SWR cache issues when visibility changes
     const {
       data: codeToHtml,
       isLoading,
       error,
-    } = useHighlight(shouldHighlight ? textContent : '', isDarkMode, isNegPrompt);
+    } = useHighlight(textContent, isDarkMode, isNegPrompt);
 
     // Timeout mechanism - but allow recovery when highlighting completes
     useEffect(() => {
@@ -110,8 +112,8 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
       );
     }
 
-    // If not visible or shouldn't highlight, show plain text
-    if (!shouldHighlight) {
+    // If content is too short or too long, don't highlight
+    if (textContent.length === 0 || textContent.length > maxLength) {
       return (
         <div ref={containerRef}>
           <code>{textContent}</code>
@@ -129,17 +131,17 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
       );
     }
 
-    // Key fix: Show highlighted content if available, even if timed out
+    // Show highlighted content when available, fallback to plain text when not visible
     const hasHighlightedContent = !!codeToHtml;
-    const showHighlighted = hasHighlightedContent && !error;
+    const showHighlighted = hasHighlightedContent && !error && isVisible;
     const showFallback = hasTimedOut && !hasHighlightedContent;
-    const showLoading = isLoading && !hasHighlightedContent && !hasTimedOut;
+    const showLoading = isLoading && !hasHighlightedContent && !hasTimedOut && isVisible;
 
     return (
       <ComponentErrorBoundary component="SyntaxHighlighter">
         <div ref={containerRef}>
           {showHighlighted ? (
-            // Show highlighted content
+            // Show highlighted content when visible and ready
             <div
               className={styles.shiki}
               dangerouslySetInnerHTML={{
@@ -154,7 +156,7 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
               }}
             />
           ) : (
-            // Show plain text while loading or as fallback
+            // Show plain text when not visible, loading, or as fallback
             <div className={styles.shiki}>
               <code
                 style={{
