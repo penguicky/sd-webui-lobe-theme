@@ -40,8 +40,8 @@ function getWeightSyntaxHash(text: string): string {
     .slice(0, 20); // Limit length to prevent overly long cache keys
 }
 
-// Store globally for cross-component access
-if (typeof window !== 'undefined') {
+// Store globally for cross-component access (development only)
+if (__DEV__ && typeof window !== 'undefined') {
   (window as any).HIGHLIGHT_DEBUG_STATE = {
     get: () => HIGHLIGHT_DEBUG_ENABLED,
     set: (value: boolean) => {
@@ -61,11 +61,13 @@ if (typeof window !== 'undefined') {
 
 export const toggleHighlightDebug = () => {
   HIGHLIGHT_DEBUG_ENABLED = !HIGHLIGHT_DEBUG_ENABLED;
-  if (typeof window !== 'undefined') {
+  if (__DEV__ && typeof window !== 'undefined') {
     (window as any).HIGHLIGHT_DEBUG_STATE?.set(HIGHLIGHT_DEBUG_ENABLED);
   }
-  console.log(`🔄 Highlight debugging ${HIGHLIGHT_DEBUG_ENABLED ? 'ENABLED' : 'DISABLED'}`);
-  console.log(`💡 Debug messages are now: ${HIGHLIGHT_DEBUG_ENABLED ? 'ON' : 'OFF'}`);
+  if (__DEV__) {
+    console.log(`🔄 Highlight debugging ${HIGHLIGHT_DEBUG_ENABLED ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`💡 Debug messages are now: ${HIGHLIGHT_DEBUG_ENABLED ? 'ON' : 'OFF'}`);
+  }
 };
 
 // =============================================================================

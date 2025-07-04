@@ -1,5 +1,5 @@
 import { LayoutHeader, LayoutMain, LayoutSidebar } from '@lobehub/ui';
-import { memo, useEffect } from 'react';
+import { Suspense, lazy, memo, useEffect } from 'react';
 import { shallow } from 'zustand/shallow';
 
 import StructuredData from '@/components/StructuredData';
@@ -18,8 +18,10 @@ import ExtraNetworkSidebar from '../features/ExtraNetworkSidebar';
 import Footer from '../features/Footer';
 import Header from '../features/Header';
 import QuickSettingSidebar from '../features/QuickSettingSidebar';
-import Share from '../features/Share';
 import { useStyles } from './style';
+
+// Lazy load non-critical components
+const Share = lazy(() => import('../features/Share'));
 
 export const HEADER_HEIGHT = 64;
 
@@ -164,7 +166,9 @@ const Index = memo(() => {
         )}
         <Content className={cx(!enableSidebar && styles.quicksettings)} />
         <PromptFormator />
-        <Share />
+        <Suspense fallback={null}>
+          <Share />
+        </Suspense>
         {enableExtraNetworkSidebar && (
           <LayoutSidebar
             className={styles.sidebar}

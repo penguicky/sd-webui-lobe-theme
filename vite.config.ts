@@ -2,7 +2,7 @@ import react from '@vitejs/plugin-react-swc';
 import { consola } from 'consola';
 import dotenv from 'dotenv';
 import { resolve } from 'node:path';
-import * as process from 'node:process';
+import process from 'node:process';
 import { type PluginOption, defineConfig } from 'vite';
 
 dotenv.config();
@@ -21,25 +21,43 @@ export default defineConfig({
     emptyOutDir: true,
     minify: 'esbuild',
     outDir: './javascript',
+    reportCompressedSize: true,
 
-    // Increase limit since we're using single bundle
-reportCompressedSize: true,
-
-    
-rollupOptions: {
-      input: resolve(__dirname, 'src/main.tsx'),
-      output: {
+    rollupOptions: {
+      // External dependencies that should not be bundled (if any)
+external: [],
+      
+input: resolve(__dirname, 'src/main.tsx'),
+      
+      
+output: {
         // Single file output - no code splitting for compatibility
         assetFileNames: `[name].[ext]`,
         chunkFileNames: `[name].js`,
         entryFileNames: `[name].js`,
-
-        
         inlineDynamicImports: true,
         // Force everything into a single bundle
-manualChunks: undefined,
+        manualChunks: undefined,
       },
-    }, 
+      
+      // Enhanced tree-shaking configuration
+treeshake: {
+        moduleSideEffects: (id) => {
+          // Preserve side effects only for critical initialization modules
+          if (
+            id.includes('src/locales/config') ||
+            id.includes('i18next-http-backend') ||
+            id.includes('react-i18next')
+          ) {
+            return true;
+          }
+          return false;
+        },
+        propertyReadSideEffects: false,
+        tryCatchDeoptimization: false,
+        unknownGlobalSideEffects: false,
+      },
+    },
     sourcemap: !isProduction,
     target: 'es2020',
   },
@@ -54,12 +72,26 @@ manualChunks: undefined,
     include: [
       'react',
       'react-dom',
-      'antd',
       'antd-style',
       '@lobehub/ui',
       'zustand',
       'lodash-es',
       'dayjs',
+      // Include specific antd components for better tree-shaking
+      'antd/es/button',
+      'antd/es/input',
+      'antd/es/select',
+      'antd/es/switch',
+      'antd/es/segmented',
+      'antd/es/space',
+      'antd/es/skeleton',
+      'antd/es/slider',
+      'antd/es/tag',
+      'antd/es/menu',
+      'antd/es/config-provider',
+      'antd/es/input-number',
+      'antd/es/popconfirm',
+      'antd/es/notification',
     ],
   },
 

@@ -17,7 +17,9 @@ const Share = memo<{ type: 'txt' | 'img' }>(({ type }) => {
   return <ShareModal onCancel={() => setOpen(false)} open={open} type={type} />;
 });
 
-export default memo(() => {
+Share.displayName = 'Share';
+
+const ShareContainer = memo(() => {
   return (
     <>
       <Share type={'txt'} />
@@ -25,3 +27,7 @@ export default memo(() => {
     </>
   );
 });
+
+ShareContainer.displayName = 'ShareContainer';
+
+export default ShareContainer;

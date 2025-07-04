@@ -135,4 +135,6 @@ const Setting = memo<SettingProps>(({ open, onCancel }) => {
   );
 });
 
+Setting.displayName = 'Setting';
+
 export default Setting;
