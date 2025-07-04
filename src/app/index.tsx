@@ -5,6 +5,7 @@ import { shallow } from 'zustand/shallow';
 import { AppErrorBoundary, FeatureErrorBoundary } from '@/components/ErrorBoundary';
 import StructuredData from '@/components/StructuredData';
 import PromptFormator from '@/features/PromptFormator';
+import { useComponentPerformance, usePerformanceDashboard } from '@/hooks/usePerformanceMonitoring';
 import { warmShikiCache } from '@/hooks/usePerformanceOptimized';
 import '@/locales/config';
 import ImageInfo from '@/modules/ImageInfo/page';
@@ -12,6 +13,7 @@ import PromptHighlight from '@/modules/PromptHighlight/page';
 import replaceIcon from '@/scripts/replaceIcon';
 import { useAppStore } from '@/store';
 import GlobalStyle from '@/styles';
+import { auditAccessibility } from '@/utils/accessibilityTesting';
 import { getBrowserCompatibilityReport } from '@/utils/browserCompat';
 import { lazyOptimized } from '@/utils/lazyOptimized';
 
@@ -84,6 +86,10 @@ const Index = memo(() => {
     isPrimaryColor: Boolean(primaryColor),
   });
 
+  // Performance monitoring
+  const { getMetrics } = useComponentPerformance('App');
+  const performanceDashboard = usePerformanceDashboard();
+
   // Initialize Shiki cache warming and other optimizations
   useEffect(() => {
     debugLog('🚀 App initialization started');
@@ -121,7 +127,35 @@ const Index = memo(() => {
     debugLog('  - forceRefreshHighlighting() - Force refresh all highlighting');
     debugLog('  - forceCompleteAllHighlighting() - EMERGENCY: Force stop all loading');
     debugLog('  - adjustHighlightAlignment(x, y) - Fine-tune positioning');
+
+    // Run accessibility audit in development
+    if (process.env.NODE_ENV === 'development') {
+      setTimeout(() => {
+        auditAccessibility().then(() => {
+          debugLog('🧪 Accessibility audit completed');
+        });
+      }, 3000); // Wait for components to render
+    }
   }, []);
+
+  // Performance monitoring in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const interval = setInterval(() => {
+        const metrics = getMetrics();
+        if (metrics.warnings.length > 0) {
+          console.warn('📊 App Performance Issues:', metrics.warnings);
+        }
+
+        // Log performance dashboard every 60 seconds
+        performanceDashboard.logReport();
+      }, 60_000);
+
+      return () => clearInterval(interval);
+    }
+
+    return undefined;
+  }, [getMetrics, performanceDashboard]);
 
   useEffect(() => {
     // Batch DOM operations to avoid blocking the main thread
@@ -157,17 +191,22 @@ const Index = memo(() => {
     <AppErrorBoundary>
       <StructuredData />
       <GlobalStyle />
-      <LayoutHeader headerHeight={HEADER_HEIGHT}>
+      <LayoutHeader aria-label="Main navigation header" headerHeight={HEADER_HEIGHT} role="banner">
         <FeatureErrorBoundary feature="Header">
           <Header />
         </FeatureErrorBoundary>
       </LayoutHeader>
-      <LayoutMain>
-        <div className={liteAnimation ? styles.backgroundLite : styles.background} />
+      <LayoutMain aria-label="Main content area" role="main">
+        <div
+          aria-hidden="true"
+          className={liteAnimation ? styles.backgroundLite : styles.background}
+        />
         {enableSidebar && (
           <LayoutSidebar
+            aria-label="Quick settings sidebar"
             className={styles.sidebar}
             headerHeight={HEADER_HEIGHT}
+            role="complementary"
             style={{ flex: 0, zIndex: 50 }}
           >
             <FeatureErrorBoundary feature="QuickSettingSidebar">
@@ -188,8 +227,10 @@ const Index = memo(() => {
         </Suspense>
         {enableExtraNetworkSidebar && (
           <LayoutSidebar
+            aria-label="Extra networks sidebar"
             className={styles.sidebar}
             headerHeight={HEADER_HEIGHT}
+            role="complementary"
             style={{ flex: 0, zIndex: 50 }}
           >
             <FeatureErrorBoundary feature="ExtraNetworkSidebar">
@@ -198,9 +239,11 @@ const Index = memo(() => {
           </LayoutSidebar>
         )}
       </LayoutMain>
-      <FeatureErrorBoundary feature="Footer">
-        <Footer />
-      </FeatureErrorBoundary>
+      <footer aria-label="Application footer" role="contentinfo">
+        <FeatureErrorBoundary feature="Footer">
+          <Footer />
+        </FeatureErrorBoundary>
+      </footer>
     </AppErrorBoundary>
   );
 });
