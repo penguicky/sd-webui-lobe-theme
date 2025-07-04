@@ -1,4 +1,6 @@
 // Service for managing embedding verification via WebUI API
+import { isLocalStorageSupported } from '@/utils/browserCompat';
+
 import { debugError, debugLog, debugWarn } from '../modules/PromptHighlight/utils/debug';
 
 // Types for embedding data from WebUI API
@@ -137,11 +139,17 @@ async function getEmbeddings(): Promise<Set<string>> {
         };
 
         // Store in localStorage for persistence across page reloads
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(Array.from(embeddings)));
-          localStorage.setItem(LAST_FETCH_KEY, now.toString());
-        } catch (storageError) {
-          debugWarn('⚠️ Failed to store embeddings in localStorage:', storageError);
+        if (isLocalStorageSupported()) {
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(Array.from(embeddings)));
+            localStorage.setItem(LAST_FETCH_KEY, now.toString());
+          } catch (storageError) {
+            debugWarn('⚠️ Failed to store embeddings in localStorage:', storageError);
+          }
+        } else {
+          debugWarn(
+            '⚠️ localStorage is not supported - embeddings will not persist across page reloads',
+          );
         }
 
         // Only log success when debug is enabled
@@ -170,16 +178,18 @@ async function getEmbeddings(): Promise<Set<string>> {
     }
 
     // Try localStorage as last resort
-    try {
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      if (cachedData) {
-        const parsedData = JSON.parse(cachedData) as string[];
-        const embeddings = new Set<string>(parsedData);
-        debugLog(`📦 Using localStorage fallback with ${embeddings.size} embeddings`);
-        return embeddings;
+    if (isLocalStorageSupported()) {
+      try {
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData) as string[];
+          const embeddings = new Set<string>(parsedData);
+          debugLog(`📦 Using localStorage fallback with ${embeddings.size} embeddings`);
+          return embeddings;
+        }
+      } catch (storageError) {
+        debugWarn('⚠️ Failed to read localStorage fallback:', storageError);
       }
-    } catch (storageError) {
-      debugWarn('⚠️ Failed to read localStorage fallback:', storageError);
     }
 
     // Log the final error for debugging
@@ -199,6 +209,11 @@ async function getEmbeddings(): Promise<Set<string>> {
  * Initialize embeddings cache from localStorage if available
  */
 function initializeCache(): void {
+  if (!isLocalStorageSupported()) {
+    debugWarn('⚠️ localStorage not supported - embeddings cache will not persist');
+    return;
+  }
+
   try {
     const cachedData = localStorage.getItem(CACHE_KEY);
     const lastFetch = localStorage.getItem(LAST_FETCH_KEY);
@@ -265,11 +280,13 @@ export async function refreshEmbeddings(): Promise<void> {
   fetchPromise = null;
 
   // Clear localStorage
-  try {
-    localStorage.removeItem(CACHE_KEY);
-    localStorage.removeItem(LAST_FETCH_KEY);
-  } catch (error) {
-    debugWarn('⚠️ Failed to clear embeddings cache from localStorage:', error);
+  if (isLocalStorageSupported()) {
+    try {
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(LAST_FETCH_KEY);
+    } catch (error) {
+      debugWarn('⚠️ Failed to clear embeddings cache from localStorage:', error);
+    }
   }
 
   // Fetch fresh data

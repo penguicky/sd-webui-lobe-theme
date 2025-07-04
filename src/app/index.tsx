@@ -11,6 +11,7 @@ import PromptHighlight from '@/modules/PromptHighlight/page';
 import replaceIcon from '@/scripts/replaceIcon';
 import { useAppStore } from '@/store';
 import GlobalStyle from '@/styles';
+import { getBrowserCompatibilityReport } from '@/utils/browserCompat';
 
 import Content from '../features/Content';
 import ExtraNetworkSidebar from '../features/ExtraNetworkSidebar';
@@ -84,6 +85,9 @@ const Index = memo(() => {
       enableSidebar,
       svgIcon,
     });
+
+    // Check browser compatibility
+    getBrowserCompatibilityReport();
 
     // Always warm Shiki cache if highlighting is enabled
     if (enableHighlight) {

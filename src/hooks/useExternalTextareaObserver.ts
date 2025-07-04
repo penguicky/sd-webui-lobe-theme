@@ -1,58 +1,58 @@
 import { useEffect, useState } from 'react';
 
+import { useManagedEventListeners } from './useEventListenerManager';
+import { usePooledMutationObserver } from './useObserverPool';
+
 export const useExternalTextareaObserver = (textareaSelector: string) => {
   const [value, setValue] = useState('');
+  const [externalTextarea, setExternalTextarea] = useState<HTMLTextAreaElement | null>(null);
 
+  // Find and track the textarea element
   useEffect(() => {
-    const externalTextarea = document.querySelector(textareaSelector) as HTMLTextAreaElement | null;
+    const textarea = document.querySelector(textareaSelector) as HTMLTextAreaElement | null;
+    setExternalTextarea(textarea);
 
-    if (!externalTextarea) {
-      return;
+    if (textarea) {
+      setValue(textarea.value);
     }
+  }, [textareaSelector]);
 
-    // Set initial value
-    setValue(externalTextarea.value);
-
-    // Enhanced change detection for immediate weight value updates
-    const updateValue = () => {
+  // Enhanced change detection for immediate weight value updates
+  const updateValue = () => {
+    if (externalTextarea) {
       const currentValue = externalTextarea.value;
       setValue(currentValue);
-    };
+    }
+  };
 
-    // Listen for all possible input events that could change textarea value
-    const inputEvents = ['input', 'change', 'keyup', 'paste', 'cut'];
-    inputEvents.forEach((eventType) => {
-      externalTextarea.addEventListener(eventType, updateValue);
-    });
+  // Use managed event listeners to prevent memory leaks
+  useManagedEventListeners(externalTextarea, [
+    { listener: updateValue, type: 'input' },
+    { listener: updateValue, type: 'change' },
+    { listener: updateValue, type: 'keyup' },
+    { listener: updateValue, type: 'paste' },
+    { listener: updateValue, type: 'cut' },
+  ]);
 
-    // MutationObserver for attribute changes (fallback)
-    const observerCallback: MutationCallback = (mutationsList) => {
+  // Use pooled MutationObserver for attribute changes (fallback)
+  usePooledMutationObserver(
+    externalTextarea,
+    (mutationsList) => {
       for (const mutation of mutationsList) {
         if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
           updateValue();
         }
       }
-    };
-
-    const observerOptions: MutationObserverInit = {
+    },
+    {
       attributeFilter: ['value'],
-      attributes: true, // Only watch value attribute changes
+      attributes: true,
       characterData: true,
       childList: true,
       subtree: true,
-    };
-
-    const observer = new MutationObserver(observerCallback);
-    observer.observe(externalTextarea, observerOptions);
-
-    // Cleanup function
-    return () => {
-      inputEvents.forEach((eventType) => {
-        externalTextarea.removeEventListener(eventType, updateValue);
-      });
-      observer.disconnect();
-    };
-  }, [textareaSelector]);
+    },
+    `textarea-observer-${textareaSelector}`,
+  );
 
   return value;
 };

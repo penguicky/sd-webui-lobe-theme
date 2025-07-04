@@ -5,6 +5,7 @@ import { PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'r
 import { Center } from 'react-layout-kit';
 
 import { useHighlight } from '@/hooks/useHighlight';
+import { usePooledIntersectionObserver } from '@/hooks/useObserverPool';
 
 import { useStyles } from '../style';
 // =============================================================================
@@ -40,23 +41,18 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
       };
     }, [children, parentId]);
 
-    // Intersection Observer for performance optimization (except high priority)
-    useEffect(() => {
-      if (priority === 'high' || !containerRef.current) return;
-
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          setIsVisible(entry.isIntersecting);
-        },
-        {
-          rootMargin: '50px', // Start highlighting slightly before entering view
-          threshold: 0.1,
-        },
-      );
-
-      observer.observe(containerRef.current);
-      return () => observer.disconnect();
-    }, [priority]);
+    // Use pooled intersection observer for performance optimization (except high priority)
+    usePooledIntersectionObserver(
+      priority === 'high' ? null : containerRef.current,
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      {
+        rootMargin: '50px', // Start highlighting slightly before entering view
+        threshold: 0.1,
+      },
+      `syntax-highlighter-${parentId || 'default'}`,
+    );
 
     // Only highlight when visible and content is reasonable size
     const shouldHighlight = textContent.length > 0 && textContent.length <= maxLength && isVisible;

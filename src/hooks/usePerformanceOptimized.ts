@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { isIntersectionObserverSupported, isPerformanceAPISupported } from '@/utils/browserCompat';
+
 // =============================================================================
 // DEBUG SYSTEM - USE CENTRALIZED DEBUG UTILITIES
 // =============================================================================
@@ -23,7 +25,7 @@ export const useIntersectionObserver = (
   const [isIntersecting, setIsIntersecting] = useState(false);
 
   useEffect(() => {
-    if (!ref.current || typeof IntersectionObserver === 'undefined') {
+    if (!ref.current || !isIntersectionObserverSupported()) {
       setIsIntersecting(true); // Fallback for SSR or unsupported browsers
       return;
     }
@@ -57,7 +59,7 @@ export const usePerformanceMonitor = (componentName: string) => {
   const startTimeRef = useRef<number>();
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' && isPerformanceAPISupported()) {
       startTimeRef.current = performance.now();
 
       return () => {
@@ -79,13 +81,13 @@ export const warmShikiCache = async () => {
   debugLog('🔄 Starting Shiki cache warming...');
 
   try {
-    const startTime = performance.now();
+    const startTime = isPerformanceAPISupported() ? performance.now() : Date.now();
 
     // Trigger cache warming by importing the highlighting module
     // This will initialize the global highlighter and engine
     await import('./useHighlight');
 
-    const endTime = performance.now();
+    const endTime = isPerformanceAPISupported() ? performance.now() : Date.now();
     const duration = (endTime - startTime).toFixed(2);
 
     debugLog(`✅ Shiki cache warmed successfully in ${duration}ms`);

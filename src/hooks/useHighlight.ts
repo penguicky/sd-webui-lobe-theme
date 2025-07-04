@@ -84,148 +84,339 @@ const codeTransformer = {
   },
 };
 
-// Global state for optimization
-let globalHighlighter: HighlighterCore | null = null;
-let globalEngine: any = null;
-let initPromise: Promise<HighlighterCore> | null = null;
+// Enhanced Shiki Engine Singleton with improved caching and performance
+class ShikiEngineManager {
+  private static instance: ShikiEngineManager | null = null;
+  private engine: any = null;
+  private staticHighlighter: HighlighterCore | null = null;
+  private dynamicHighlighterCache = new Map<string, HighlighterCore>();
+  private grammarCache = new Map<string, any>();
+  private initPromise: Promise<any> | null = null;
+  private enginePromise: Promise<any> | null = null;
 
-// Pre-compute themes to avoid recreation
-const lightTheme = themeConfig(false, false);
-const lightNegTheme = themeConfig(false, true);
-const darkTheme = themeConfig(true, false);
-const darkNegTheme = themeConfig(true, true);
-const themes = [lightTheme, lightNegTheme, darkTheme, darkNegTheme];
+  // Pre-computed themes for performance
+  private readonly themes = [
+    themeConfig(false, false), // light
+    themeConfig(false, true), // lightNeg
+    themeConfig(true, false), // dark
+    themeConfig(true, true), // darkNeg
+  ];
 
-// Debug theme names
-if (process.env.NODE_ENV === 'development') {
-  debugLog('🎨 Theme names registered:', {
-    dark: darkTheme.name,
-    darkNeg: darkNegTheme.name,
-    light: lightTheme.name,
-    lightNeg: lightNegTheme.name,
-  });
-}
-
-// Pre-create engine (singleton)
-const getEngine = async () => {
-  if (!globalEngine) {
-    globalEngine = await createOnigurumaEngine(() => import('shiki/wasm'));
-  }
-  return globalEngine;
-};
-
-// Optimized highlighter initialization with proper error handling
-const initHighlighter = async (text?: string): Promise<HighlighterCore> => {
-  // For dynamic grammar, we need to create a new highlighter instance per text
-  // to ensure the grammar matches the specific content
-  // Always use dynamic grammar for plain text embedding detection
-  const shouldUseDynamicGrammar = text && text.length > 0;
-
-  if (!shouldUseDynamicGrammar && globalHighlighter) {
-    return globalHighlighter;
+  private constructor() {
+    // Debug theme names in development
+    if (process.env.NODE_ENV === 'development') {
+      debugLog('🎨 ShikiEngineManager initialized with themes:', {
+        dark: this.themes[2].name,
+        darkNeg: this.themes[3].name,
+        light: this.themes[0].name,
+        lightNeg: this.themes[1].name,
+      });
+    }
   }
 
-  // For dynamic grammar, don't use global cache
-  if (shouldUseDynamicGrammar) {
+  static getInstance(): ShikiEngineManager {
+    if (!ShikiEngineManager.instance) {
+      ShikiEngineManager.instance = new ShikiEngineManager();
+    }
+    return ShikiEngineManager.instance;
+  }
+
+  // Singleton engine creation with proper error handling
+  private async getEngine() {
+    if (this.engine) {
+      return this.engine;
+    }
+
+    if (this.enginePromise) {
+      return this.enginePromise;
+    }
+
+    this.enginePromise = (async () => {
+      try {
+        this.engine = await createOnigurumaEngine(() => import('shiki/wasm'));
+        debugLog('✅ Shiki engine initialized successfully');
+        return this.engine;
+      } catch (error) {
+        debugWarn('❌ Failed to initialize Shiki engine:', error);
+        this.enginePromise = null; // Reset to allow retry
+        throw error;
+      }
+    })();
+
+    return this.enginePromise;
+  }
+
+  // Cache compiled grammars for better performance
+  private getCachedGrammar(text: string): any | null {
+    const cacheKey = this.generateGrammarCacheKey(text);
+    return this.grammarCache.get(cacheKey) || null;
+  }
+
+  private setCachedGrammar(text: string, grammar: any): void {
+    const cacheKey = this.generateGrammarCacheKey(text);
+    // Limit cache size to prevent memory bloat
+    if (this.grammarCache.size >= 50) {
+      const firstKey = this.grammarCache.keys().next().value;
+      if (firstKey !== undefined) {
+        this.grammarCache.delete(firstKey);
+      }
+    }
+    this.grammarCache.set(cacheKey, grammar);
+  }
+
+  private generateGrammarCacheKey(text: string): string {
+    // Create a hash-like key based on unique terms in the text
+    const terms = text.match(/[A-Z_a-z][\w.-]*/g) || [];
+    const uniqueTerms = [...new Set(terms)].sort();
+    return uniqueTerms.slice(0, 20).join('|'); // Limit key length
+  }
+
+  // Get or create dynamic highlighter with caching
+  async getDynamicHighlighter(text: string): Promise<HighlighterCore> {
+    const cacheKey = this.generateGrammarCacheKey(text);
+
+    // Check if we have a cached highlighter for this text pattern
+    if (this.dynamicHighlighterCache.has(cacheKey)) {
+      return this.dynamicHighlighterCache.get(cacheKey)!;
+    }
+
     try {
-      const engine = await getEngine();
-      const dynamicGrammar = await createDynamicGrammar(text);
+      const engine = await this.getEngine();
+
+      // Try to get cached grammar first
+      let grammar = this.getCachedGrammar(text);
+      if (!grammar) {
+        grammar = await createDynamicGrammar(text);
+        this.setCachedGrammar(text, grammar);
+      }
 
       const highlighter = await createHighlighterCore({
         engine,
         langs: [
           {
-            ...dynamicGrammar,
-            repository: {}, // Add required repository property for Shiki v3
+            ...grammar,
+            repository: {}, // Required for Shiki v3
           },
         ],
-        themes,
+        themes: this.themes,
       });
 
-      // Only log highlighter creation when debug is enabled - this is verbose
-      // debugLog('✅ Created dynamic highlighter with embedding verification');
+      // Cache the highlighter (limit cache size)
+      if (this.dynamicHighlighterCache.size >= 10) {
+        const firstKey = this.dynamicHighlighterCache.keys().next().value;
+        if (firstKey !== undefined) {
+          this.dynamicHighlighterCache.delete(firstKey);
+        }
+      }
+      this.dynamicHighlighterCache.set(cacheKey, highlighter);
+
       return highlighter;
     } catch (error) {
       debugWarn('⚠️ Failed to create dynamic highlighter, falling back to static:', error);
-      // Fall through to static highlighter
+      return this.getStaticHighlighter();
     }
   }
 
-  // Static highlighter initialization
-  if (globalHighlighter) {
-    return globalHighlighter;
+  // Get or create static highlighter (singleton)
+  async getStaticHighlighter(): Promise<HighlighterCore> {
+    if (this.staticHighlighter) {
+      return this.staticHighlighter;
+    }
+
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+
+    this.initPromise = (async () => {
+      try {
+        const engine = await this.getEngine();
+
+        const highlighter = await createHighlighterCore({
+          engine,
+          langs: [
+            {
+              ...prompt[0],
+              repository: {}, // Required for Shiki v3
+            } as any,
+          ],
+          themes: this.themes,
+        });
+
+        this.staticHighlighter = highlighter;
+        debugLog('✅ Static highlighter initialized successfully');
+        return highlighter;
+      } catch (error) {
+        this.initPromise = null; // Allow retry on failure
+        debugWarn('❌ Failed to initialize static highlighter:', error);
+        throw error;
+      }
+    })();
+
+    return this.initPromise;
   }
 
-  // Ensure only one initialization happens for static highlighter
-  if (initPromise) {
-    return initPromise;
-  }
-
-  initPromise = (async () => {
+  // Pre-warm the engine and static highlighter for better performance
+  async preWarm(): Promise<void> {
     try {
-      const engine = await getEngine();
-
-      const highlighter = await createHighlighterCore({
-        engine,
-        langs: [
-          {
-            ...prompt[0],
-            repository: {}, // Add required repository property for Shiki v3
-          } as any, // Type assertion to handle complex grammar structure
-        ],
-        themes,
+      await this.getEngine();
+      // Don't await static highlighter to avoid blocking
+      this.getStaticHighlighter().catch((error) => {
+        debugWarn('⚠️ Failed to pre-warm static highlighter:', error);
       });
-
-      globalHighlighter = highlighter;
-      return highlighter;
     } catch (error) {
-      initPromise = null; // Allow retry on failure
-      throw error;
+      debugWarn('⚠️ Failed to pre-warm Shiki engine:', error);
     }
-  })();
-
-  return initPromise;
-};
-
-// Improved cache with better cleanup
-const contentCache = new Map<string, { html: string; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes (reduced from 10)
-const MAX_CACHE_SIZE = 80; // Slightly reduced for better memory management
-
-const getCachedContent = (key: string): string | null => {
-  const cached = contentCache.get(key);
-  if (!cached) return null;
-
-  if (Date.now() - cached.timestamp > CACHE_TTL) {
-    contentCache.delete(key);
-    return null;
   }
 
-  return cached.html;
-};
-
-const setCachedContent = (key: string, html: string) => {
-  // Clean up old entries if cache is full
-  if (contentCache.size >= MAX_CACHE_SIZE) {
-    const entries = Array.from(contentCache.entries());
-    // Sort by timestamp and remove oldest 30%
-    entries
-      .sort((a, b) => a[1].timestamp - b[1].timestamp)
-      .slice(0, Math.floor(MAX_CACHE_SIZE * 0.3))
-      .forEach(([k]) => contentCache.delete(k));
+  // Clear caches for memory management
+  clearCaches(): void {
+    this.dynamicHighlighterCache.clear();
+    this.grammarCache.clear();
+    debugLog('🧹 Shiki caches cleared');
   }
 
-  contentCache.set(key, {
-    html,
-    timestamp: Date.now(),
-  });
+  // Get cache statistics for debugging
+  getCacheStats() {
+    return {
+      dynamicHighlighters: this.dynamicHighlighterCache.size,
+      grammars: this.grammarCache.size,
+      hasEngine: !!this.engine,
+      hasStaticHighlighter: !!this.staticHighlighter,
+    };
+  }
+}
+
+// Global instance
+const shikiManager = ShikiEngineManager.getInstance();
+
+// Export for external access (e.g., pre-warming)
+export { ShikiEngineManager };
+
+// Optimized highlighter initialization function
+const initHighlighter = async (text?: string): Promise<HighlighterCore> => {
+  const shouldUseDynamicGrammar = text && text.length > 0;
+
+  if (shouldUseDynamicGrammar) {
+    return shikiManager.getDynamicHighlighter(text);
+  } else {
+    return shikiManager.getStaticHighlighter();
+  }
 };
+
+// Enhanced cache with WeakMap for automatic cleanup and better memory management
+class HighlightCache {
+  private contentCache = new Map<string, { html: string; timestamp: number }>();
+  private elementCache = new WeakMap<Element, string>(); // Automatic cleanup when elements are removed
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly MAX_CACHE_SIZE = 80;
+  private cleanupInterval: NodeJS.Timeout | null = null;
+
+  constructor() {
+    // Start periodic cleanup
+    this.startPeriodicCleanup();
+  }
+
+  private startPeriodicCleanup(): void {
+    // Clean up expired entries every 2 minutes
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanupExpiredEntries();
+      },
+      2 * 60 * 1000,
+    );
+  }
+
+  private cleanupExpiredEntries(): void {
+    const now = Date.now();
+    const expiredKeys: string[] = [];
+
+    for (const [key, value] of this.contentCache.entries()) {
+      if (now - value.timestamp > this.CACHE_TTL) {
+        expiredKeys.push(key);
+      }
+    }
+
+    expiredKeys.forEach((key) => this.contentCache.delete(key));
+
+    if (expiredKeys.length > 0) {
+      debugLog(`🧹 Cleaned up ${expiredKeys.length} expired cache entries`);
+    }
+  }
+
+  getCachedContent(key: string): string | null {
+    const cached = this.contentCache.get(key);
+    if (!cached) return null;
+
+    if (Date.now() - cached.timestamp > this.CACHE_TTL) {
+      this.contentCache.delete(key);
+      return null;
+    }
+
+    return cached.html;
+  }
+
+  setCachedContent(key: string, html: string): void {
+    // Clean up old entries if cache is full
+    if (this.contentCache.size >= this.MAX_CACHE_SIZE) {
+      const entries = Array.from(this.contentCache.entries());
+      // Sort by timestamp and remove oldest 30%
+      entries
+        .sort((a, b) => a[1].timestamp - b[1].timestamp)
+        .slice(0, Math.floor(this.MAX_CACHE_SIZE * 0.3))
+        .forEach(([k]) => this.contentCache.delete(k));
+    }
+
+    this.contentCache.set(key, { html, timestamp: Date.now() });
+  }
+
+  // WeakMap-based element caching for automatic cleanup
+  getElementCache(element: Element): string | undefined {
+    return this.elementCache.get(element);
+  }
+
+  setElementCache(element: Element, value: string): void {
+    this.elementCache.set(element, value);
+  }
+
+  // Clear all caches
+  clearAll(): void {
+    this.contentCache.clear();
+    // WeakMap doesn't need manual clearing
+    debugLog('🧹 All highlight caches cleared');
+  }
+
+  // Get cache statistics
+  getStats() {
+    return {
+      cacheTTL: this.CACHE_TTL,
+      contentCacheSize: this.contentCache.size,
+      maxCacheSize: this.MAX_CACHE_SIZE,
+    };
+  }
+
+  // Cleanup method for proper disposal
+  dispose(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+    this.clearAll();
+  }
+}
+
+// Global cache instance
+const highlightCache = new HighlightCache();
+
+// Convenience functions for backward compatibility
+const getCachedContent = (key: string): string | null => highlightCache.getCachedContent(key);
+const setCachedContent = (key: string, html: string): void =>
+  highlightCache.setCachedContent(key, html);
 
 // Clear cache utility
 export const clearHighlightCache = () => {
-  contentCache.clear();
-  // Only log cache clearing when debug is enabled
-  debugLog('🧹 Highlight cache cleared');
+  highlightCache.clearAll();
+  shikiManager.clearCaches();
+  debugLog('🧹 All highlight caches cleared');
 };
 
 // Force refresh all highlighting
