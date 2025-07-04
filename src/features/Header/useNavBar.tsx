@@ -14,7 +14,7 @@ export const useNavBar = (mobile?: boolean) => {
       consola.debug('🤯 [nav] onClick', id);
       const index = navList.find((nav) => nav.id === id)?.index || 0;
       const buttonList = getNavButtons();
-      buttonList[index].click();
+      buttonList[index]?.click();
     },
     [navList],
   );

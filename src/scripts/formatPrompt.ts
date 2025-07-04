@@ -23,7 +23,10 @@ export const Converter = {
      */
     function multiply_range(start_position: number, multiplier: number) {
       for (let pos = start_position; pos < res.length; pos++) {
-        res[pos][1] = Converter.round(res[pos][1] * multiplier);
+        const item = res[pos];
+        if (item && Array.isArray(item) && typeof item[1] === 'number') {
+          item[1] = Converter.round(item[1] * multiplier);
+        }
       }
     }
 
@@ -31,11 +34,17 @@ export const Converter = {
       let word = match[0];
 
       if (word in brackets) {
-        brackets[word].stack.push(res.length);
+        const bracketData = brackets[word];
+        if (bracketData?.stack) {
+          bracketData.stack.push(res.length);
+        }
       } else if (word === '}' || word === ']') {
         const bracket = brackets[word === '}' ? '{' : '['];
-        if (bracket.stack.length > 0) {
-          multiply_range(bracket.stack.pop()!, bracket.multiplier);
+        if (bracket?.stack && bracket.stack.length > 0 && bracket.multiplier) {
+          const position = bracket.stack.pop();
+          if (typeof position === 'number') {
+            multiply_range(position, bracket.multiplier);
+          }
         }
       } else {
         res.push([word, 1]);
@@ -43,8 +52,13 @@ export const Converter = {
     }
 
     for (const bracketType of Object.keys(brackets)) {
-      for (const pos of brackets[bracketType].stack) {
-        multiply_range(pos, brackets[bracketType].multiplier);
+      const bracketData = brackets[bracketType];
+      if (bracketData?.stack && bracketData.multiplier) {
+        for (const pos of bracketData.stack) {
+          if (typeof pos === 'number') {
+            multiply_range(pos, bracketData.multiplier);
+          }
+        }
       }
     }
 
@@ -54,8 +68,10 @@ export const Converter = {
 
     let index = 0;
     while (index + 1 < res.length) {
-      if (res[index][1] === res[index + 1][1]) {
-        res[index][0] += res[index + 1][0];
+      const currentItem = res[index];
+      const nextItem = res[index + 1];
+      if (currentItem && nextItem && currentItem[1] === nextItem[1]) {
+        currentItem[0] += nextItem[0];
         res.splice(index + 1, 1);
       } else {
         index += 1;
@@ -151,7 +167,7 @@ export const Converter = {
         if (string__[index] === ',' && !inBracket) {
           array.push(string__.slice(start, index));
           start = index + 1;
-        } else if (bracketRegex.test(string__[index])) {
+        } else if (index < string__.length && bracketRegex.test(string__[index]!)) {
           inBracket = !inBracket;
         }
       }
@@ -177,11 +193,11 @@ export const Converter = {
       })
       .filter(Boolean)
       .sort((a, b) => {
-        return a.includes('<') && !b.includes('<') ?
-          1 :
-          b.includes('<') && !a.includes('<') ?
-            -1 :
-            0;
+        return a.includes('<') && !b.includes('<')
+          ? 1
+          : b.includes('<') && !a.includes('<')
+            ? -1
+            : 0;
       });
   },
 
@@ -215,11 +231,11 @@ export const Converter = {
     ) as HTMLTextAreaElement;
     const negResult = Converter.convert(negprompt.value);
     negprompt.value =
-      negResult.match(/^lowres,/) === null ?
-        negResult.length === 0 ?
-          default_negative :
-          default_negative + negResult :
-        negResult;
+      negResult.match(/^lowres,/) === null
+        ? negResult.length === 0
+          ? default_negative
+          : default_negative + negResult
+        : negResult;
     Converter.dispatchInputEvent(negprompt);
   },
 

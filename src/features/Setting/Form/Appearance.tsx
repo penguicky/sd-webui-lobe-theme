@@ -58,7 +58,8 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
 
   // ADDED: Track changes in real-time
   const onValuesChange = useCallback(
-    (changedValues: Partial<WebuiSetting>, allValues: WebuiSetting) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_changedValues: Partial<WebuiSetting>, allValues: WebuiSetting) => {
       // Update local state
       setRawSetting(allValues);
 
@@ -108,7 +109,7 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
     () => ({
       children: [
         {
-          children: <Select options={localeOptions} />,
+          children: <Select {...(localeOptions && { options: localeOptions })} />,
           desc: t('setting.language.desc'),
           label: t('setting.language.title'),
           name: 'i18n',
@@ -123,7 +124,8 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
         {
           children: (
             <Swatches
-              activeColor={primaryColor ? primaryColors[primaryColor] : undefined}
+              {...(primaryColor &&
+                primaryColors[primaryColor] && { activeColor: primaryColors[primaryColor] })}
               colors={primaryColorsSwatches}
               onSelect={handlePrimaryColorChange}
             />
@@ -134,7 +136,8 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
         {
           children: (
             <Swatches
-              activeColor={neutralColor ? neutralColors[neutralColor] : undefined}
+              {...(neutralColor &&
+                neutralColors[neutralColor] && { activeColor: neutralColors[neutralColor] })}
               colors={neutralColorsSwatches}
               onSelect={handleNeutralColorChange}
             />
@@ -182,8 +185,8 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
         {
           children: (
             <CustomLogo
-              logoCustomTitle={rawSetting.logoCustomTitle}
-              logoCustomUrl={rawSetting.logoCustomUrl}
+              {...(rawSetting.logoCustomTitle && { logoCustomTitle: rawSetting.logoCustomTitle })}
+              {...(rawSetting.logoCustomUrl && { logoCustomUrl: rawSetting.logoCustomUrl })}
             />
           ),
           hidden: rawSetting.logoType !== 'custom',

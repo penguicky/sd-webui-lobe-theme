@@ -18,16 +18,16 @@ const Logo = memo<LogoProps>(({ size = 32, style }) => {
   const themeMode = useAppStore(selectors.themeMode);
 
   if (setting.logoType === 'kitchen') {
-    return <KitchenLogo size={size * 0.75} style={style} themeMode={themeMode} />;
+    return <KitchenLogo size={size * 0.75} {...(style && { style })} themeMode={themeMode} />;
   }
 
   if (setting.logoType === 'custom') {
     return (
       <CustomLogo
-        logoCustomTitle={setting.logoCustomTitle}
-        logoCustomUrl={setting.logoCustomUrl}
+        {...(setting.logoCustomTitle && { logoCustomTitle: setting.logoCustomTitle })}
+        {...(setting.logoCustomUrl && { logoCustomUrl: setting.logoCustomUrl })}
         size={size}
-        style={style}
+        {...(style && { style })}
       />
     );
   }
@@ -45,7 +45,7 @@ const Logo = memo<LogoProps>(({ size = 32, style }) => {
         </a>
       }
       size={size}
-      style={style}
+      {...(style && { style })}
       type="combine"
     />
   );

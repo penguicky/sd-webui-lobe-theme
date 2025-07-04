@@ -75,8 +75,8 @@ const Setting = memo<SettingProps>(({ open, onCancel }) => {
       allowFullscreen={true}
       // Pass state and handlers to Footer
       footer={<Footer onReset={handleReset} pendingChanges={pendingChanges} />}
-      onCancel={onCancel}
-      open={open}
+      {...(onCancel && { onCancel })}
+      open={open || false}
       styles={{
         body: {
           display: 'flex',

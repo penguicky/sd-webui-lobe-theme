@@ -23,7 +23,8 @@ const SettingForm = memo<LayoutFormProps>(({ currentSetting }) => {
 
   // ADDED: Track changes in real-time
   const onValuesChange = useCallback(
-    (changedValues: Partial<WebuiSetting>, allValues: WebuiSetting) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_changedValues: Partial<WebuiSetting>, allValues: WebuiSetting) => {
       // Dispatch change event immediately when any field changes
       const changeEvent = new CustomEvent('settingsFormChange', { detail: allValues });
       window.dispatchEvent(changeEvent);

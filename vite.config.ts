@@ -25,24 +25,22 @@ export default defineConfig({
 
     rollupOptions: {
       // External dependencies that should not be bundled (if any)
-external: [],
-      
-input: resolve(__dirname, 'src/main.tsx'),
-      
-      
-output: {
+      external: [],
+
+      input: resolve(__dirname, 'src/main.tsx'),
+
+      output: {
         // Single file output - no code splitting for compatibility
         assetFileNames: `[name].[ext]`,
         chunkFileNames: `[name].js`,
         entryFileNames: `[name].js`,
         inlineDynamicImports: true,
         // Force everything into a single bundle
-        manualChunks: undefined,
       },
-      
+
       // Enhanced tree-shaking configuration
-treeshake: {
-        moduleSideEffects: (id) => {
+      treeshake: {
+        moduleSideEffects: (id): boolean => {
           // Preserve side effects only for critical initialization modules
           if (
             id.includes('src/locales/config') ||
@@ -107,7 +105,7 @@ treeshake: {
       : [
           {
             configureServer(server) {
-              server.middlewares.use((req, res, next) => {
+              server.middlewares.use((_req, res, next) => {
                 res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
                 res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-non');
                 next();

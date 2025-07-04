@@ -22,9 +22,9 @@ export const genNavList = (): NavItem[] => {
   const buttons = getNavButtons();
   consola.debug('🤯 [nav] generate nav list');
   return buttons.map((button, index) => {
-    const id = navList[index].id;
+    const id = navList[index]?.id;
     return {
-      id,
+      id: id || `nav-${index}`,
       index,
       label: startCase(String(button.textContent)),
     };

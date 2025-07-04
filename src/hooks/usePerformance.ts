@@ -27,6 +27,7 @@ export const usePerformanceMonitor = (componentName: string) => {
         }
       };
     }
+    return undefined;
   });
 };
 
@@ -116,7 +117,9 @@ export const useIntersectionObserver = (
     }
 
     const observer = new IntersectionObserver(([entry]) => {
-      setIsIntersecting(entry.isIntersecting);
+      if (entry) {
+        setIsIntersecting(entry.isIntersecting);
+      }
     }, options);
 
     observer.observe(ref.current);

@@ -41,7 +41,7 @@ const TagList = memo<TagListProps>(({ tags, setTags, type, setValue }) => {
   const { styles } = useStyles(type);
   const handleDelete = useCallback(
     (index_: number) => {
-      const newTags = tags.filter((tag, index) => index !== index_);
+      const newTags = tags.filter((_tag, index) => index !== index_);
       setTags(newTags);
       setValue(newTags);
     },

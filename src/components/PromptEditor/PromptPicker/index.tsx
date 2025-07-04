@@ -31,6 +31,7 @@ const PromptPicker = memo(() => {
       return data;
     } catch (error) {
       consola.error('🤯 [prompt]', error);
+      return [];
     }
   }, []);
 
@@ -67,9 +68,16 @@ const PromptPicker = memo(() => {
     getValue();
     if (!data || activeObject || activeAttribute) return;
     const defaultActiveObject = Object.keys(data)[0];
-    setActiveObject(defaultActiveObject);
-    const defaultActiveAttribute = Object.keys(data[defaultActiveObject].children)[0];
-    setActiveAttribute(defaultActiveAttribute);
+    if (defaultActiveObject) {
+      setActiveObject(defaultActiveObject);
+      const objectData = data[defaultActiveObject];
+      if (objectData?.children) {
+        const defaultActiveAttribute = Object.keys(objectData.children)[0];
+        if (defaultActiveAttribute) {
+          setActiveAttribute(defaultActiveAttribute);
+        }
+      }
+    }
   }, [data, activeObject, activeAttribute]);
 
   if (isLoading || !data) return <Skeleton active />;
@@ -86,7 +94,13 @@ const PromptPicker = memo(() => {
               key={key}
               onClick={() => {
                 setActiveObject(key);
-                setActiveAttribute(Object.keys(data[key].children)[0]);
+                const objectData = data[key];
+                if (objectData?.children) {
+                  const firstAttribute = Object.keys(objectData.children)[0];
+                  if (firstAttribute) {
+                    setActiveAttribute(firstAttribute);
+                  }
+                }
               }}
               size={'small'}
               style={{ flex: 1 }}
@@ -100,6 +114,7 @@ const PromptPicker = memo(() => {
       <span style={{ marginBottom: -10 }}>{t('prompt.area.attribute')}</span>
       <Flexbox gap={4} horizontal style={{ flexWrap: 'wrap' }}>
         {activeObject &&
+          data[activeObject]?.children &&
           Object.entries(data[activeObject].children).map(([key, value], index) => {
             const name = isCN ? value.langName : value.name;
             const isActive = activeAttribute ? activeAttribute === key : index === 0;
@@ -120,6 +135,7 @@ const PromptPicker = memo(() => {
       <Flexbox gap={4} horizontal style={{ flexWrap: 'wrap' }}>
         {activeObject &&
           activeAttribute &&
+          data[activeObject]?.children?.[activeAttribute]?.children &&
           Object.entries(data[activeObject].children[activeAttribute].children).map(
             ([key, value]) => {
               const isActive = tags.some(

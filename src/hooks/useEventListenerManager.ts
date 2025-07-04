@@ -41,7 +41,7 @@ class EventListenerManager {
       if (!this.globalListeners.has(key)) {
         this.globalListeners.set(key, new Set());
       }
-      this.globalListeners.get(key)!.add({ listener, options });
+      this.globalListeners.get(key)!.add({ listener, ...(options && { options }) });
     }
 
     // Return cleanup function
@@ -126,6 +126,7 @@ class EventListenerManager {
     // Clean up global listeners
     for (const [key, listeners] of this.globalListeners.entries()) {
       const [targetType, eventType] = key.split('-');
+      if (!eventType) continue;
       const target = targetType === 'Window' ? window : document;
 
       for (const { listener, options } of listeners) {

@@ -45,7 +45,9 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
     usePooledIntersectionObserver(
       priority === 'high' ? null : containerRef.current,
       ([entry]) => {
-        setIsVisible(entry.isIntersecting);
+        if (entry) {
+          setIsVisible(entry.isIntersecting);
+        }
       },
       {
         rootMargin: '50px', // Start highlighting slightly before entering view

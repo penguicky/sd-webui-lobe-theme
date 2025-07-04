@@ -26,7 +26,8 @@ const SettingForm = memo<SidebarFormProps>(({ currentSetting }) => {
 
   // ADDED: Track changes in real-time
   const onValuesChange = useCallback(
-    (changedValues: Partial<WebuiSetting>, allValues: WebuiSetting) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_changedValues: Partial<WebuiSetting>, allValues: WebuiSetting) => {
       // Update local state for conditional visibility
       setRawSetting(allValues);
 

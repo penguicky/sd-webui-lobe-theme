@@ -23,7 +23,8 @@ const Nav = memo(() => {
 
   // Memoize desktop component to prevent recreation
   const desktopComponent = useMemo(
-    () => (!mobile ? <TabsNav activeKey={currentTab} items={items} onChange={onChange} /> : null),
+    () =>
+      !mobile ? <TabsNav activeKey={currentTab} items={items || []} onChange={onChange} /> : null,
     [mobile, currentTab, items, onChange],
   );
 

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useInject } from '@/hooks/useInject';
 import { selectors, useAppStore } from '@/store';
-import { type DivProps } from '@/types';
+import { type BeforeUnloadEvent, type DivProps } from '@/types';
 
 import Brand from './Brand';
 import { Community, MoreProducts, Resources } from './data';
@@ -18,10 +18,11 @@ const Footer = memo<DivProps>(({ className, ...props }) => {
   const footerReference = useRef<HTMLDivElement>(null);
 
   // Memoize the beforeunload handler to prevent recreation
-  const handleBeforeUnload = useCallback((event: BeforeUnloadEvent) => {
+  const handleBeforeUnload = useCallback((event: BeforeUnloadEvent): string | void => {
     if (footerReference.current?.isConnected) {
       event.preventDefault();
-      return (event.returnValue = '');
+      event.returnValue = '';
+      return '';
     }
   }, []);
 

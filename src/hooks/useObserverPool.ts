@@ -26,7 +26,8 @@ class ObserverPool {
   // Create or reuse a MutationObserver
   getMutationObserver(
     key: string,
-    options: MutationObserverInit,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _options: MutationObserverInit,
     callback: MutationCallback,
   ): MutationObserver | null {
     if (!isMutationObserverSupported()) {
@@ -176,7 +177,11 @@ class ObserverPool {
   // Re-observe other elements after disconnecting
   // Note: WeakMap doesn't support iteration, so we'll need to track elements differently
   // For now, we'll disconnect and let the hooks re-establish observers as needed
-  private reobserveOtherElements(key: string, observer: MutationObserver): void {
+  private reobserveOtherElements(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _key: string,
+    observer: MutationObserver,
+  ): void {
     // WeakMap doesn't support iteration, so we can't re-observe other elements
     // The hooks will re-establish observers as needed when elements are accessed
     observer.disconnect();

@@ -30,8 +30,8 @@ const Giscus = memo<GiscusProps>(({ open, onCancel }) => {
   return (
     <Modal
       footer={null}
-      onCancel={onCancel}
-      open={open}
+      {...(onCancel && { onCancel })}
+      open={open || false}
       title={
         <Flexbox align={'center'} gap={4} horizontal>
           {t('modal.themeFeedback.title')}
