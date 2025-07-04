@@ -6,7 +6,7 @@ import {
 } from '@lobehub/ui';
 import { useResponsive } from 'antd-style';
 import isEqual from 'fast-deep-equal';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { selectors, useAppStore } from '@/store';
@@ -31,11 +31,30 @@ const ExtraNetworkSidebar = memo<ExtraNetworkSidebarProps>(({ headerHeight }) =>
     if (mobile) setExpand(false);
   }, [mobile]);
 
-  const mode = mobile ? 'fixed' : pin ? 'fixed' : 'float';
+  // Memoize mode calculation to prevent recreation
+  const mode = useMemo(() => (mobile ? 'fixed' : pin ? 'fixed' : 'float'), [mobile, pin]);
+
+  // Memoize default size object to prevent recreation
+  const defaultSize = useMemo(
+    () => ({ width: setting.extraNetworkSidebarWidth }),
+    [setting.extraNetworkSidebarWidth],
+  );
+
+  // Memoize container style to prevent recreation
+  const containerStyle = useMemo(
+    () =>
+      mode === 'float'
+        ? { background: theme.colorBgContainer, minWidth: setting.extraNetworkSidebarWidth }
+        : { minWidth: setting.extraNetworkSidebarWidth },
+    [mode, theme.colorBgContainer, setting.extraNetworkSidebarWidth],
+  );
+
+  // Memoize translated title to prevent recreation
+  const sidebarTitle = useMemo(() => t('sidebar.extraNetwork'), [t]);
 
   return (
     <DraggablePanel
-      defaultSize={{ width: setting.extraNetworkSidebarWidth }}
+      defaultSize={defaultSize}
       expand={expand}
       minWidth={setting.extraNetworkSidebarWidth}
       mode={mode}
@@ -44,20 +63,13 @@ const ExtraNetworkSidebar = memo<ExtraNetworkSidebarProps>(({ headerHeight }) =>
       placement="right"
     >
       <LayoutSidebarInner>
-        <DraggablePanelContainer
-          className={styles.container}
-          style={
-            mode === 'float' ?
-              { background: theme.colorBgContainer, minWidth: setting.extraNetworkSidebarWidth } :
-              { minWidth: setting.extraNetworkSidebarWidth }
-          }
-        >
+        <DraggablePanelContainer className={styles.container} style={containerStyle}>
           <DraggablePanelHeader
             pin={pin}
             position="right"
             setExpand={setExpand}
             setPin={setPin}
-            title={t('sidebar.extraNetwork')}
+            title={sidebarTitle}
           />
           <Inner />
         </DraggablePanelContainer>
@@ -65,5 +77,7 @@ const ExtraNetworkSidebar = memo<ExtraNetworkSidebarProps>(({ headerHeight }) =>
     </DraggablePanel>
   );
 });
+
+ExtraNetworkSidebar.displayName = 'ExtraNetworkSidebar';
 
 export default ExtraNetworkSidebar;

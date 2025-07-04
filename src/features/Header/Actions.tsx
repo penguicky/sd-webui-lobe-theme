@@ -3,7 +3,7 @@ import { Space } from 'antd';
 import { useResponsive } from 'antd-style';
 import { Github, LayoutGrid, LucideIcon, Moon, Settings, Sun } from 'lucide-react';
 import qs from 'query-string';
-import { Suspense, lazy, memo, useCallback, useState } from 'react';
+import { Suspense, lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Giscus } from '@/components';
@@ -29,6 +29,7 @@ const Actions = memo<ActionsProps>(() => {
   const { mobile } = useResponsive();
   const { t } = useTranslation();
 
+  // Memoize theme toggle handler to prevent recreation on every render
   const handleSetTheme = useCallback(() => {
     const theme = themeMode === 'light' ? 'dark' : 'light';
     const gradioURL = qs.parseUrl(window.location.href);
@@ -36,45 +37,56 @@ const Actions = memo<ActionsProps>(() => {
     window.location.replace(qs.stringifyUrl(gradioURL));
   }, [themeMode]);
 
+  // Memoize modal handlers to prevent recreation
+  const handleOpenSettings = useCallback(() => setIsSettingOpen(true), []);
+  const handleCloseSettings = useCallback(() => setIsSettingOpen(false), []);
+  const handleOpenModal = useCallback(() => setIsModalOpen(true), []);
+  const handleCloseModal = useCallback(() => setIsModalOpen(false), []);
+
+  // Memoize theme icon to prevent recreation on every render
+  const themeIcon = useMemo(() => (themeMode === 'light' ? Sun : Moon), [themeMode]);
+
+  // Memoize translated strings to prevent recreation
+  const feedbackTitle = useMemo(() => t('header.feedback'), [t]);
+  const switchThemeTitle = useMemo(() => t('header.switchTheme'), [t]);
+  const settingTitle = useMemo(() => t('header.setting'), [t]);
+
+  // Memoize desktop actions to prevent recreation when mobile state changes
+  const desktopActions = useMemo(
+    () =>
+      !mobile ? (
+        <>
+          <a href="https://civitai.com/" rel="noreferrer" target="_blank">
+            <ActionIcon icon={CivitaiLogo} title="Civitai" />
+          </a>
+          <a
+            href="https://supagruen.github.io/StableDiffusion-CheatSheet/"
+            rel="noreferrer"
+            target="_blank"
+          >
+            <ActionIcon icon={LayoutGrid} title="Cheat Sheet" />
+          </a>
+          <ActionIcon icon={Github} onClick={handleOpenModal} title={feedbackTitle} />
+        </>
+      ) : null,
+    [mobile, handleOpenModal, feedbackTitle],
+  );
+
   return (
     <>
       <Space.Compact>
-        {!mobile && (
-          <>
-            <a href="https://civitai.com/" rel="noreferrer" target="_blank">
-              <ActionIcon icon={CivitaiLogo} title="Civitai" />
-            </a>
-            <a
-              href="https://supagruen.github.io/StableDiffusion-CheatSheet/"
-              rel="noreferrer"
-              target="_blank"
-            >
-              <ActionIcon icon={LayoutGrid} title="Cheat Sheet" />
-            </a>
-            <ActionIcon
-              icon={Github}
-              onClick={() => setIsModalOpen(true)}
-              title={t('header.feedback')}
-            />
-          </>
-        )}
-        <ActionIcon
-          icon={themeMode === 'light' ? Sun : Moon}
-          onClick={handleSetTheme}
-          title={t('header.switchTheme')}
-        />
-        <ActionIcon
-          icon={Settings}
-          onClick={() => setIsSettingOpen(true)}
-          title={t('header.setting')}
-        />
+        {desktopActions}
+        <ActionIcon icon={themeIcon} onClick={handleSetTheme} title={switchThemeTitle} />
+        <ActionIcon icon={Settings} onClick={handleOpenSettings} title={settingTitle} />
       </Space.Compact>
       <Suspense fallback={null}>
-        <Setting onCancel={() => setIsSettingOpen(false)} open={isSettingOpen} />
+        <Setting onCancel={handleCloseSettings} open={isSettingOpen} />
       </Suspense>
-      <Giscus onCancel={() => setIsModalOpen(false)} open={isModalOpen} />
+      <Giscus onCancel={handleCloseModal} open={isModalOpen} />
     </>
   );
 });
+
+Actions.displayName = 'HeaderActions';
 
 export default Actions;

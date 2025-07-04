@@ -1,6 +1,6 @@
 import { Burger, TabsNav } from '@lobehub/ui';
 import { useResponsive } from 'antd-style';
-import { memo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import { selectors, useAppStore } from '@/store';
 
@@ -12,9 +12,24 @@ const Nav = memo(() => {
   const { items, onChange } = useNavBar(mobile);
   const [opened, setOpened] = useState(false);
 
-  if (mobile) return <Burger items={items} opened={opened} setOpened={setOpened} />;
+  // Memoize burger handlers to prevent recreation
+  const handleSetOpened = useCallback((value: boolean) => setOpened(value), []);
 
-  return <TabsNav activeKey={currentTab} items={items} onChange={onChange} />;
+  // Memoize mobile component to prevent recreation when mobile state changes
+  const mobileComponent = useMemo(
+    () => (mobile ? <Burger items={items} opened={opened} setOpened={handleSetOpened} /> : null),
+    [mobile, items, opened, handleSetOpened],
+  );
+
+  // Memoize desktop component to prevent recreation
+  const desktopComponent = useMemo(
+    () => (!mobile ? <TabsNav activeKey={currentTab} items={items} onChange={onChange} /> : null),
+    [mobile, currentTab, items, onChange],
+  );
+
+  return mobileComponent || desktopComponent;
 });
+
+Nav.displayName = 'HeaderNav';
 
 export default Nav;
