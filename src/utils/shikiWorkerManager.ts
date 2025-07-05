@@ -84,21 +84,10 @@ class ShikiWorkerManager {
   }
 
   private createWorker(): Worker | null {
-    try {
-      // Check if Web Workers are supported and if we're in a compatible environment
-      if (typeof Worker === 'undefined') {
-        console.warn('Web Workers not supported in this environment');
-        return null;
-      }
-
-      // In production build with IIFE format, Web Workers may not be available
-      // This is a graceful fallback approach
-      const workerPath = './workers/shikiWorker.js';
-      return new Worker(workerPath, { type: 'module' });
-    } catch (error) {
-      console.warn('Failed to create Web Worker, will use main thread fallback:', error);
-      return null;
-    }
+    // In IIFE build format, Web Workers are not available as separate files
+    // Always return null to use main thread fallback for compatibility
+    console.info('Web Worker disabled in IIFE build - using main thread fallback for syntax highlighting');
+    return null;
   }
 
   async initialize(): Promise<void> {
