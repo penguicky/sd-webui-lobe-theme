@@ -282,23 +282,29 @@ export const useVirtualizedExtraNetwork = (
   enabled: boolean = true
 ) => {
   const [dimensions, setDimensions] = useState({ height: 0, width: 0 });
-  
+
   useEffect(() => {
     if (!enabled || !containerRef.current) return;
-    
-    const updateDimensions = () => {
+
+    // Initial dimensions
+    const { width, height } = containerRef.current.getBoundingClientRect();
+    setDimensions({ height, width });
+  }, [containerRef, enabled]);
+
+  // Use pooled ResizeObserver with debouncing for better performance
+  const { usePooledResizeObserver } = require('@/hooks/useObserverPool');
+
+  usePooledResizeObserver(
+    enabled ? containerRef.current : null,
+    () => {
       if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect();
         setDimensions({ height, width });
       }
-    };
-    
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    resizeObserver.observe(containerRef.current);
-    updateDimensions();
-    
-    return () => resizeObserver.disconnect();
-  }, [containerRef, enabled]);
+    },
+    'virtualized-extra-network-resize',
+    100, // 100ms debounce for resize events
+  );
   
   return {
     dimensions,

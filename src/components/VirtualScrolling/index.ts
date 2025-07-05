@@ -185,7 +185,26 @@ export const useAutoVirtualScrolling = <T>(
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const updateDimensions = () => {
+    // Initial setup
+    const { width, height } = containerRef.current.getBoundingClientRect();
+    setContainerDimensions({ height, width });
+
+    // Determine if virtualization is beneficial
+    const shouldUse = virtualScrollingUtils.shouldUseVirtualScrolling(
+      items.length,
+      itemHeight,
+      height,
+      threshold
+    );
+    setShouldVirtualize(shouldUse);
+  }, [items.length, itemHeight, threshold, containerRef]);
+
+  // Use pooled ResizeObserver with debouncing for better performance
+  const { usePooledResizeObserver } = require('@/hooks/useObserverPool');
+
+  usePooledResizeObserver(
+    containerRef.current,
+    () => {
       if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect();
         setContainerDimensions({ height, width });
@@ -199,14 +218,10 @@ export const useAutoVirtualScrolling = <T>(
         );
         setShouldVirtualize(shouldUse);
       }
-    };
-
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    resizeObserver.observe(containerRef.current);
-    updateDimensions();
-
-    return () => resizeObserver.disconnect();
-  }, [items.length, itemHeight, threshold, containerRef]);
+    },
+    `virtual-scrolling-${Math.random().toString(36).slice(2, 11)}`,
+    150, // 150ms debounce for resize events
+  );
 
   return {
     containerDimensions,

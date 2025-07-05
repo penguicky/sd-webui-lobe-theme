@@ -17,29 +17,36 @@ import {
 // PERFORMANCE UTILITIES
 // =============================================================================
 
-// Intersection observer hook
+// Intersection observer hook - optimized with pooling
 export const useIntersectionObserver = (
   ref: React.RefObject<Element>,
   options?: IntersectionObserverInit,
+  debounceMs = 100,
 ) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
 
   useEffect(() => {
-    if (!ref.current || !isIntersectionObserverSupported()) {
+    if (!isIntersectionObserverSupported()) {
       setIsIntersecting(true); // Fallback for SSR or unsupported browsers
       return;
     }
+  }, []);
 
-    const observer = new IntersectionObserver(([entry]) => {
+  // Use pooled intersection observer for better performance
+  const { usePooledIntersectionObserver } = require('@/hooks/useObserverPool');
+
+  usePooledIntersectionObserver(
+    ref.current,
+    (entries: IntersectionObserverEntry[]) => {
+      const entry = entries[0];
       if (entry) {
         setIsIntersecting(entry.isIntersecting);
       }
-    }, options);
-
-    observer.observe(ref.current);
-
-    return () => observer.disconnect();
-  }, [options]);
+    },
+    options || { threshold: 0.1 },
+    `performance-intersection-${Math.random().toString(36).slice(2, 11)}`,
+    debounceMs,
+  );
 
   return isIntersecting;
 };

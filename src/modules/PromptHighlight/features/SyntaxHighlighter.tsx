@@ -55,6 +55,7 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
         threshold: 0.1,
       },
       `syntax-highlighter-${parentId || 'default'}`,
+      200, // 200ms debounce for intersection events
     );
 
     // Only highlight when visible and content is reasonable size

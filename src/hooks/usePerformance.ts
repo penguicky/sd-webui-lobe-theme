@@ -104,28 +104,36 @@ export const useThrottledEffect = (
   }, deps);
 };
 
-// Intersection observer hook for lazy loading
+// Intersection observer hook for lazy loading - optimized with pooling
 export const useIntersectionObserver = (
   ref: React.RefObject<Element>,
   options?: IntersectionObserverInit,
+  debounceMs = 100,
 ) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
 
   useEffect(() => {
-    if (!ref.current || !('IntersectionObserver' in window)) {
+    if (!('IntersectionObserver' in window)) {
+      setIsIntersecting(true); // Fallback for unsupported browsers
       return;
     }
+  }, []);
 
-    const observer = new IntersectionObserver(([entry]) => {
+  // Use pooled intersection observer for better performance
+  const { usePooledIntersectionObserver } = require('@/hooks/useObserverPool');
+
+  usePooledIntersectionObserver(
+    ref.current,
+    (entries: IntersectionObserverEntry[]) => {
+      const entry = entries[0];
       if (entry) {
         setIsIntersecting(entry.isIntersecting);
       }
-    }, options);
-
-    observer.observe(ref.current);
-
-    return () => observer.disconnect();
-  }, [ref, options]);
+    },
+    options || { threshold: 0.1 },
+    `lazy-loading-intersection-${Math.random().toString(36).slice(2, 11)}`,
+    debounceMs,
+  );
 
   return isIntersecting;
 };

@@ -10,11 +10,13 @@ class ObserverPool {
   private static instance: ObserverPool | null = null;
   private mutationObservers = new Map<string, MutationObserver>();
   private intersectionObservers = new Map<string, IntersectionObserver>();
+  private resizeObservers = new Map<string, ResizeObserver>();
   private observerCallbacks = new Map<
     string,
-    Set<MutationCallback | IntersectionObserverCallback>
+    Set<MutationCallback | IntersectionObserverCallback | ResizeObserverCallback>
   >();
   private observedElements = new WeakMap<Element, Set<string>>();
+  private debouncedCallbacks = new Map<string, Map<(..._args: any[]) => void, (..._args: any[]) => void>>();
 
   static getInstance(): ObserverPool {
     if (!ObserverPool.instance) {
@@ -63,6 +65,7 @@ class ObserverPool {
     key: string,
     options: IntersectionObserverInit,
     callback: IntersectionObserverCallback,
+    debounceMs?: number,
   ): IntersectionObserver | null {
     if (!isIntersectionObserverSupported()) {
       console.warn('⚠️ IntersectionObserver is not supported in this browser');
@@ -87,14 +90,82 @@ class ObserverPool {
     }
 
     const callbacks = this.observerCallbacks.get(key)!;
-    callbacks.add(callback);
+
+    // Add debouncing if requested
+    if (debounceMs && debounceMs > 0) {
+      const debouncedCallback = this.getDebouncedCallback(key, callback, debounceMs);
+      callbacks.add(debouncedCallback as IntersectionObserverCallback);
+    } else {
+      callbacks.add(callback);
+    }
 
     return this.intersectionObservers.get(key)!;
   }
 
+  // Create or reuse a ResizeObserver
+  getResizeObserver(
+    key: string,
+    callback: ResizeObserverCallback,
+    debounceMs?: number,
+  ): ResizeObserver | null {
+    if (!('ResizeObserver' in window)) {
+      console.warn('⚠️ ResizeObserver is not supported in this browser');
+      return null;
+    }
+
+    if (!this.resizeObservers.has(key)) {
+      const observer = new ResizeObserver((entries, observer) => {
+        const callbacks = this.observerCallbacks.get(key);
+        if (callbacks) {
+          callbacks.forEach((cb) => {
+            try {
+              (cb as ResizeObserverCallback)(entries, observer);
+            } catch (error) {
+              console.warn('Observer callback error:', error);
+            }
+          });
+        }
+      });
+      this.resizeObservers.set(key, observer);
+      this.observerCallbacks.set(key, new Set());
+    }
+
+    const callbacks = this.observerCallbacks.get(key)!;
+
+    // Add debouncing if requested
+    if (debounceMs && debounceMs > 0) {
+      const debouncedCallback = this.getDebouncedCallback(key, callback, debounceMs);
+      callbacks.add(debouncedCallback as ResizeObserverCallback);
+    } else {
+      callbacks.add(callback);
+    }
+
+    return this.resizeObservers.get(key)!;
+  }
+
+  // Helper method to create debounced callbacks
+  getDebouncedCallback(key: string, callback: (..._args: any[]) => void, debounceMs: number): (..._args: any[]) => void {
+    if (!this.debouncedCallbacks.has(key)) {
+      this.debouncedCallbacks.set(key, new Map());
+    }
+
+    const keyCallbacks = this.debouncedCallbacks.get(key)!;
+
+    if (!keyCallbacks.has(callback)) {
+      let timeoutId: NodeJS.Timeout;
+      const debouncedFn = (...args: any[]) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => callback(...args), debounceMs);
+      };
+      keyCallbacks.set(callback, debouncedFn);
+    }
+
+    return keyCallbacks.get(callback)!;
+  }
+
   // Observe an element with a specific observer
   observe(
-    observer: MutationObserver | IntersectionObserver | null,
+    observer: MutationObserver | IntersectionObserver | ResizeObserver | null,
     element: Element,
     key: string,
     options?: MutationObserverInit,
@@ -118,10 +189,23 @@ class ObserverPool {
   }
 
   // Remove a callback from an observer
-  removeCallback(key: string, callback: MutationCallback | IntersectionObserverCallback): void {
+  removeCallback(key: string, callback: MutationCallback | IntersectionObserverCallback | ResizeObserverCallback): void {
     const callbacks = this.observerCallbacks.get(key);
     if (callbacks) {
+      // Remove both original and debounced callbacks
       callbacks.delete(callback);
+
+      // Clean up debounced callback if it exists
+      const keyCallbacks = this.debouncedCallbacks.get(key);
+      if (keyCallbacks && keyCallbacks.has(callback)) {
+        const debouncedCallback = keyCallbacks.get(callback);
+        callbacks.delete(debouncedCallback as any);
+        keyCallbacks.delete(callback);
+
+        if (keyCallbacks.size === 0) {
+          this.debouncedCallbacks.delete(key);
+        }
+      }
 
       // If no more callbacks, clean up the observer
       if (callbacks.size === 0) {
@@ -134,6 +218,7 @@ class ObserverPool {
   private cleanupObserver(key: string): void {
     const mutationObserver = this.mutationObservers.get(key);
     const intersectionObserver = this.intersectionObservers.get(key);
+    const resizeObserver = this.resizeObservers.get(key);
 
     if (mutationObserver) {
       mutationObserver.disconnect();
@@ -143,6 +228,11 @@ class ObserverPool {
     if (intersectionObserver) {
       intersectionObserver.disconnect();
       this.intersectionObservers.delete(key);
+    }
+
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+      this.resizeObservers.delete(key);
     }
 
     this.observerCallbacks.delete(key);
@@ -190,8 +280,10 @@ class ObserverPool {
   // Get statistics for debugging
   getStats() {
     return {
+      debouncedCallbacks: this.debouncedCallbacks.size,
       intersectionObservers: this.intersectionObservers.size,
       mutationObservers: this.mutationObservers.size,
+      resizeObservers: this.resizeObservers.size,
       totalCallbacks: Array.from(this.observerCallbacks.values()).reduce(
         (sum, set) => sum + set.size,
         0,
@@ -203,10 +295,13 @@ class ObserverPool {
   dispose(): void {
     this.mutationObservers.forEach((observer) => observer.disconnect());
     this.intersectionObservers.forEach((observer) => observer.disconnect());
+    this.resizeObservers.forEach((observer) => observer.disconnect());
 
     this.mutationObservers.clear();
     this.intersectionObservers.clear();
+    this.resizeObservers.clear();
     this.observerCallbacks.clear();
+    this.debouncedCallbacks.clear();
     // WeakMap doesn't need manual clearing
   }
 }
@@ -220,6 +315,7 @@ export const usePooledMutationObserver = (
   callback: MutationCallback,
   options?: MutationObserverInit,
   key?: string,
+  debounceMs?: number,
 ) => {
   const defaultOptions: MutationObserverInit = { attributes: true, childList: true, subtree: true };
   const callbackRef = useRef(callback);
@@ -232,10 +328,16 @@ export const usePooledMutationObserver = (
     if (!element) return;
 
     const finalOptions = options || defaultOptions;
+
+    // Apply debouncing if requested
+    const finalCallback = debounceMs && debounceMs > 0
+      ? observerPool.getDebouncedCallback(observerKey, callbackRef.current, debounceMs) as MutationCallback
+      : callbackRef.current;
+
     const observer = observerPool.getMutationObserver(
       observerKey,
       finalOptions,
-      callbackRef.current,
+      finalCallback,
     );
 
     if (observer) {
@@ -243,10 +345,10 @@ export const usePooledMutationObserver = (
     }
 
     return () => {
-      observerPool.removeCallback(observerKey, callbackRef.current);
+      observerPool.removeCallback(observerKey, finalCallback);
       observerPool.unobserve(element, observerKey);
     };
-  }, [element, observerKey, options, defaultOptions]);
+  }, [element, observerKey, options, defaultOptions, debounceMs]);
 };
 
 // Hook for using pooled IntersectionObserver
@@ -255,6 +357,7 @@ export const usePooledIntersectionObserver = (
   callback: IntersectionObserverCallback,
   options?: IntersectionObserverInit,
   key?: string,
+  debounceMs?: number,
 ) => {
   const defaultOptions: IntersectionObserverInit = { threshold: 0.1 };
   const callbackRef = useRef(callback);
@@ -271,6 +374,7 @@ export const usePooledIntersectionObserver = (
       observerKey,
       finalOptions,
       callbackRef.current,
+      debounceMs,
     );
 
     if (observer) {
@@ -281,7 +385,40 @@ export const usePooledIntersectionObserver = (
       observerPool.removeCallback(observerKey, callbackRef.current);
       observerPool.unobserve(element, observerKey);
     };
-  }, [element, observerKey, options, defaultOptions]);
+  }, [element, observerKey, options, defaultOptions, debounceMs]);
+};
+
+// Hook for using pooled ResizeObserver
+export const usePooledResizeObserver = (
+  element: Element | null,
+  callback: ResizeObserverCallback,
+  key?: string,
+  debounceMs?: number,
+) => {
+  const callbackRef = useRef(callback);
+  const observerKey = key || `resize-${Math.random().toString(36).slice(2, 11)}`;
+
+  // Update callback ref
+  callbackRef.current = callback;
+
+  useEffect(() => {
+    if (!element) return;
+
+    const observer = observerPool.getResizeObserver(
+      observerKey,
+      callbackRef.current,
+      debounceMs,
+    );
+
+    if (observer) {
+      observerPool.observe(observer, element, observerKey);
+    }
+
+    return () => {
+      observerPool.removeCallback(observerKey, callbackRef.current);
+      observerPool.unobserve(element, observerKey);
+    };
+  }, [element, observerKey, debounceMs]);
 };
 
 // Export pool for advanced usage
