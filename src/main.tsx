@@ -7,10 +7,21 @@ import './styles/critical.css';
 import Page from './app/page';
 import { trackDynamicImport } from './utils/bundleAnalysis';
 
-// Optimized Shiki engine pre-warming with performance tracking
+// Optimized Shiki engine pre-warming with Web Worker support
 const preWarmShiki = async () => {
   try {
-    // Track the dynamic import performance
+    // Pre-warm Web Worker first (non-blocking)
+    const { shikiWorkerManager } = await trackDynamicImport(
+      'shikiWorkerManager',
+      import('./utils/shikiWorkerManager'),
+    );
+
+    // Start worker pre-warming (don't await to avoid blocking)
+    shikiWorkerManager.preWarm().catch((error) => {
+      consola.warn('Web Worker pre-warming failed, will use main thread fallback:', error);
+    });
+
+    // Also pre-warm main thread fallback
     const { ShikiEngineManager } = await trackDynamicImport(
       'useHighlight',
       import('./hooks/useHighlight'),

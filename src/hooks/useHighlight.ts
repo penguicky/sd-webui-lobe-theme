@@ -6,6 +6,7 @@ import useSWR from 'swr';
 import { createDynamicGrammar } from '@/modules/PromptHighlight/features/dynamicGrammar';
 import prompt from '@/modules/PromptHighlight/features/grammar';
 import { themeConfig } from '@/modules/PromptHighlight/features/promptTheme';
+import { shikiWorkerManager } from '@/utils/shikiWorkerManager';
 
 // Import centralized debug utilities
 import { debugError, debugLog, debugWarn } from '../modules/PromptHighlight/utils/debug';
@@ -294,7 +295,7 @@ const shikiManager = ShikiEngineManager.getInstance();
 // Export for external access (e.g., pre-warming)
 export { ShikiEngineManager };
 
-// Optimized highlighter initialization function
+// Optimized highlighter initialization function (fallback for Web Worker)
 const initHighlighter = async (text?: string): Promise<HighlighterCore> => {
   const shouldUseDynamicGrammar = text && text.length > 0;
 
@@ -303,6 +304,40 @@ const initHighlighter = async (text?: string): Promise<HighlighterCore> => {
   } else {
     return shikiManager.getStaticHighlighter();
   }
+};
+
+// Web Worker-based highlighting function
+const highlightWithWorker = async (
+  text: string,
+  isDarkMode: boolean,
+  isNegPrompt: boolean
+): Promise<string> => {
+  const shouldUseDynamicGrammar = text && text.length > 0;
+
+  // Fallback function for when worker fails
+  const fallbackFn = async (): Promise<string> => {
+    try {
+      const highlighter = await initHighlighter(text);
+      const themeKey = getThemeKey(isDarkMode, isNegPrompt);
+
+      return highlighter.codeToHtml(text, {
+        lang: 'prompt',
+        theme: themeKey,
+        transformers: [codeTransformer],
+      });
+    } catch (error) {
+      debugError('❌ Fallback highlighting failed:', error);
+      return text; // Return plain text as ultimate fallback
+    }
+  };
+
+  return shikiWorkerManager.highlightWithFallback(
+    text,
+    isDarkMode,
+    isNegPrompt,
+    !!shouldUseDynamicGrammar,
+    fallbackFn
+  );
 };
 
 // Enhanced cache with WeakMap for automatic cleanup and better memory management
@@ -516,14 +551,8 @@ export const useHighlight = (text: string, isDarkMode: boolean, isNegPrompt: boo
       }
 
       try {
-        const highlighter = await initHighlighter(text);
-        const themeKey = getThemeKey(isDarkMode, isNegPrompt);
-
-        const html = highlighter.codeToHtml(text, {
-          lang: 'prompt',
-          theme: themeKey,
-          transformers: [codeTransformer],
-        });
+        // Try Web Worker first, fallback to main thread if needed
+        const html = await highlightWithWorker(text, isDarkMode, isNegPrompt);
 
         // Cache the result
         setCachedContent(key, html);

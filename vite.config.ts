@@ -44,14 +44,18 @@ export default defineConfig({
         compact: true,
 
         entryFileNames: `[name].js`,
-        
+
+        // Use IIFE format for main bundle to avoid ES module issues
+        format: 'iife',
+
         // Aggressive minification settings
-generatedCode: {
+        generatedCode: {
           arrowFunctions: true,
           constBindings: true,
           objectShorthand: true,
         },
-        
+
+        // Force single bundle - no separate chunks for compatibility
         inlineDynamicImports: true,
       },
 
@@ -236,6 +240,23 @@ tryCatchDeoptimization: false,
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+    },
+  },
+
+  // Web Worker configuration
+  worker: {
+    format: 'es',
+    plugins: () => [
+      react({
+        devTarget: 'esnext',
+        tsDecorators: true,
+      }),
+    ],
+    rollupOptions: {
+      output: {
+        entryFileNames: 'workers/[name].js',
+        format: 'es',
+      },
     },
   },
 
