@@ -2,6 +2,66 @@
 
 # Changelog
 
+## [Version 3.7.4](https://github.com/lobehub/sd-webui-lobe-theme/compare/v3.7.3...v3.7.4)
+
+<sup>Released on **2025-07-05**</sup>
+
+#### ⚡ Performance Improvements
+
+- **css**: Implement comprehensive CSS performance optimizations with 71% token reduction and style caching system.
+
+<br/>
+
+<details>
+<summary><kbd>Improvements and Fixes</kbd></summary>
+
+#### Performance Improvements
+
+- **css**: Implement comprehensive CSS performance optimizations with 71% token reduction and style caching system - Major CSS performance overhaul including critical CSS extraction (2.6KB separate file), PostCSS optimization pipeline, massive CSS token system optimization (210+ tokens reduced to ~60, 71% reduction), and comprehensive style caching system with LRU eviction. Achieved 4KB bundle reduction while maintaining full theming functionality and CSS-in-JS architecture compatibility. Includes memory-safe caching, pre-warming strategies, and performance monitoring integration.
+
+#### Technical Details
+
+**Critical CSS Extraction:**
+- Extracted 120 lines of frequently used static CSS styles to `src/styles/critical.css`
+- Separate 2.6KB CSS file for immediate rendering
+- Reduced runtime CSS generation overhead for essential styles
+
+**CSS Token System Optimization:**
+- **71% reduction**: From 210+ CSS custom properties to ~60 optimized tokens
+- Eliminated duplicate primary/secondary color scales (identical values)
+- Consolidated spacing system from 7 to 4 tokens
+- Reduced border radius tokens from 7 to 3
+- Simplified typography tokens from 7 to 4
+- Streamlined component tokens from 35 to 12
+- Merged form control tokens from 24 to 8
+- Optimized button system from 36 to 12 tokens
+
+**Style Caching System:**
+- LRU cache for computed SerializedStyles with 1000 item limit
+- Pre-warming of common style combinations at app startup
+- Memoization for high-frequency style calculations
+- Performance monitoring and cache statistics
+- Memory-safe cache implementation with automatic cleanup
+
+**PostCSS Optimization:**
+- Configured PostCSS with autoprefixer and cssnano
+- Optimized for CSS-in-JS architecture (avoided PurgeCSS)
+- Maintained dynamic theming functionality
+
+**Performance Results:**
+- **Bundle Size**: 4KB total reduction (JavaScript: 3.77KB, CSS: 0.07KB)
+- **CSS Tokens**: 71% fewer custom properties (210+ → ~60)
+- **Runtime Performance**: Eliminated redundant CSS-in-JS calculations
+- **Memory Impact**: Significant reduction in CSS variable overhead
+
+</details>
+
+<div align="right">
+
+[![](https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square)](#readme-top)
+
+</div>
+
 ## [Version 3.7.3](https://github.com/lobehub/sd-webui-lobe-theme/compare/v3.7.2...v3.7.3)
 
 <sup>Released on **2025-07-03**</sup>

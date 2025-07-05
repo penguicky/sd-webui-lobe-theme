@@ -1,6 +1,9 @@
 import { consola } from 'consola';
 import { createRoot } from 'react-dom/client';
 
+// Import critical CSS first for immediate rendering
+import './styles/critical.css';
+
 import Page from './app/page';
 import { trackDynamicImport } from './utils/bundleAnalysis';
 

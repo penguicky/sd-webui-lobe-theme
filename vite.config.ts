@@ -32,12 +32,18 @@ export default defineConfig({
 
       output: {
         // Single file output - no code splitting for compatibility
-        assetFileNames: `[name].[ext]`,
+        assetFileNames: (assetInfo) => {
+          // Keep critical CSS separate for better caching
+          if (assetInfo.name === 'critical.css') {
+            return 'critical.[hash].css';
+          }
+          return `[name].[ext]`;
+        },
         chunkFileNames: `[name].js`,
         // Force everything into a single bundle
-compact: true,
-        
-entryFileNames: `[name].js`,
+        compact: true,
+
+        entryFileNames: `[name].js`,
         
         // Aggressive minification settings
 generatedCode: {
@@ -88,6 +94,15 @@ tryCatchDeoptimization: false,
     },
     sourcemap: !isProduction,
     target: 'es2020',
+  },
+
+  css: {
+    postcss: './postcss.config.js',
+    preprocessorOptions: {
+      less: {
+        javascriptEnabled: true,
+      },
+    },
   },
 
   define: {

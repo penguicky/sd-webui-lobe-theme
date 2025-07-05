@@ -1,6 +1,9 @@
 import { Theme, css } from 'antd-style';
+import { getCachedStyle } from '@/utils/styleCache';
 
-export default (token: Theme) => css`
+export default (token: Theme) => {
+  // Use cached styles for better performance
+  return getCachedStyle(token, 'button-styles', (theme) => css`
   button {
     cursor: pointer;
     min-width: fit-content !important;
@@ -14,7 +17,7 @@ export default (token: Theme) => css`
         width: 36px;
         min-width: 36px !important;
         max-width: 36px !important;
-        height: var(--button-lg-tool-height);
+        height: ${theme.controlHeight || 36}px;
         min-height: var(--button-lg-tool-height) !important;
         max-height: var(--button-lg-tool-height);
         padding: 0;
@@ -124,4 +127,5 @@ export default (token: Theme) => css`
       font-size: var(--text-md) !important;
     }
   }
-`;
+  `);
+};

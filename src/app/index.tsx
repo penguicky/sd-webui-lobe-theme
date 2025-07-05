@@ -7,6 +7,7 @@ import StructuredData from '@/components/StructuredData';
 import PromptFormator from '@/features/PromptFormator';
 import { useComponentPerformance, usePerformanceDashboard } from '@/hooks/usePerformanceMonitoring';
 import { warmShikiCache } from '@/hooks/usePerformanceOptimized';
+import { preWarmStyleCache } from '@/utils/styleCache';
 import '@/locales/config';
 import ImageInfo from '@/modules/ImageInfo/page';
 import PromptHighlight from '@/modules/PromptHighlight/page';
@@ -114,6 +115,22 @@ const Index = memo(() => {
       debugLog('⚠️ Prompt highlighting is DISABLED in settings');
       debugLog('💡 Enable it in: Settings → Prompt Syntax Highlighting');
     }
+
+    // Pre-warm style cache with current theme for better performance
+    const mockTheme = {
+      borderRadius: 6,
+      colorBgContainer: '#ffffff',
+      colorBgElevated: '#ffffff',
+      colorPrimary: '#1677ff',
+      colorPrimaryActive: '#0958d9',
+      colorPrimaryHover: '#4096ff',
+      colorText: 'rgba(0, 0, 0, 0.88)',
+      colorTextSecondary: 'rgba(0, 0, 0, 0.65)',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      fontSize: 14,
+    } as any;
+    preWarmStyleCache(mockTheme);
+    debugLog('🎨 Style cache pre-warmed for better performance');
   }, [enableHighlight]);
 
   // Add a one-time initialization log
