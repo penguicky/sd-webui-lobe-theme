@@ -164,14 +164,84 @@ export const debugShikiSetup = async () => {
   console.groupEnd();
 };
 
-// Manual alignment adjustment utility
-export const adjustHighlightAlignment = (offsetX = 0, offsetY = 0) => {
-  const containers = document.querySelectorAll('[data-code-type="highlighter"]');
+// Enhanced alignment adjustment utility with sub-pixel precision
+export const adjustHighlightAlignment = (offsetX = 0, offsetY = 0, subPixelX = 0, subPixelY = 0) => {
+  const containers = document.querySelectorAll('[data-code-type="hybrid-highlighter"]');
   containers.forEach((container) => {
-    (container as HTMLElement).style.setProperty('--highlight-offset-x', `${offsetX}px`);
-    (container as HTMLElement).style.setProperty('--highlight-offset-y', `${offsetY}px`);
+    const element = container as HTMLElement;
+    element.style.setProperty('--highlight-offset-x', `${offsetX}px`);
+    element.style.setProperty('--highlight-offset-y', `${offsetY}px`);
+    element.style.setProperty('--highlight-sub-pixel-x', `${subPixelX}px`);
+    element.style.setProperty('--highlight-sub-pixel-y', `${subPixelY}px`);
   });
-  debugLog(`🎯 Highlight alignment adjusted: X: ${offsetX}px, Y: ${offsetY}px`);
+  debugLog(`🎯 Highlight alignment adjusted: X: ${offsetX}px, Y: ${offsetY}px, Sub-pixel X: ${subPixelX}px, Sub-pixel Y: ${subPixelY}px`);
+};
+
+// Visual alignment testing utility
+export const testAlignmentVisually = () => {
+  const containers = document.querySelectorAll('[data-code-type="hybrid-highlighter"]');
+  containers.forEach((container, index) => {
+    const element = container as HTMLElement;
+
+    // Add visual debugging overlay
+    const debugOverlay = document.createElement('div');
+    debugOverlay.id = `alignment-debug-${index}`;
+    debugOverlay.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 2px dashed red;
+      background: rgba(255, 0, 0, 0.1);
+      pointer-events: none;
+      z-index: 9999;
+      font-family: monospace;
+      font-size: 12px;
+      color: red;
+    `;
+    debugOverlay.innerHTML = `
+      <div style="position: absolute; top: -20px; left: 0; background: red; color: white; padding: 2px 4px; font-size: 10px;">
+        Highlighter ${index + 1}
+      </div>
+    `;
+
+    element.append(debugOverlay);
+
+    // Remove after 5 seconds
+    setTimeout(() => {
+      const overlay = document.getElementById(`alignment-debug-${index}`);
+      if (overlay) overlay.remove();
+    }, 5000);
+  });
+
+  debugLog(`🔍 Visual alignment test activated for ${containers.length} highlighters (will auto-remove in 5s)`);
+};
+
+// Browser-specific alignment detection and adjustment
+export const detectAndFixBrowserAlignment = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isFirefox = userAgent.includes('firefox');
+  const isSafari = userAgent.includes('safari') && !userAgent.includes('chrome');
+  const isEdge = userAgent.includes('edge');
+
+  let adjustments = { subX: 0, subY: 0, x: 0, y: 0 };
+
+  // Browser-specific alignment adjustments based on testing
+  if (isFirefox) {
+    adjustments = { subX: 0, subY: 0, x: 0, y: -0.5 };
+  } else if (isSafari) {
+    adjustments = { subX: 0.5, subY: 0, x: 0, y: 0 };
+  } else if (isEdge) {
+    adjustments = { subX: 0, subY: 0.25, x: 0, y: 0 };
+  }
+
+  if (adjustments.x !== 0 || adjustments.y !== 0 || adjustments.subX !== 0 || adjustments.subY !== 0) {
+    adjustHighlightAlignment(adjustments.x, adjustments.y, adjustments.subX, adjustments.subY);
+    debugLog(`🌐 Applied browser-specific alignment for ${isFirefox ? 'Firefox' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Chrome'}`);
+  }
+
+  return adjustments;
 };
 
 // Test highlighting responsiveness
@@ -210,13 +280,17 @@ if (typeof window !== 'undefined') {
   (window as any).debugShikiSetup = debugShikiSetup;
   (window as any).adjustHighlightAlignment = adjustHighlightAlignment;
   (window as any).testHighlightResponsiveness = testHighlightResponsiveness;
+  (window as any).testAlignmentVisually = testAlignmentVisually;
+  (window as any).detectAndFixBrowserAlignment = detectAndFixBrowserAlignment;
 
   // Only show debug utilities info if debug is enabled
   if (isDebugEnabled()) {
     debugLog('🛠️ Debug utilities available:');
     debugLog('  - debugShikiSetup() - Full Shiki diagnostics');
     debugLog('  - testBasicHighlighting() - Test core highlighting function');
-    debugLog('  - adjustHighlightAlignment(x, y) - Fine-tune text alignment');
+    debugLog('  - adjustHighlightAlignment(x, y, subX, subY) - Fine-tune text alignment with sub-pixel precision');
+    debugLog('  - testAlignmentVisually() - Visual alignment testing with red overlay');
+    debugLog('  - detectAndFixBrowserAlignment() - Auto-detect and fix browser-specific alignment issues');
     debugLog('  - testHighlightResponsiveness() - Test real-time highlighting');
     debugLog('  - forceCompleteAllHighlighting() - EMERGENCY: Force stop all loading');
   }

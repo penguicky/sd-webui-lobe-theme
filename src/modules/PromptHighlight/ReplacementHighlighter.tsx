@@ -2,6 +2,7 @@ import { useScroll, useSize } from 'ahooks';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useExternalTextareaObserver } from '@/hooks/useExternalTextareaObserver';
+import { autoFixAlignment } from '@/utils/textAlignmentFixes';
 
 import SyntaxHighlighter from './features/SyntaxHighlighter';
 import { useStyles } from './style';
@@ -63,6 +64,33 @@ const ReplacementHighlighter = memo<ReplacementHighlighterProps>(({ parentId }) 
     }
   }, [scroll?.top, scroll?.left]);
 
+  // Apply browser-specific alignment adjustments on mount and resize
+  useEffect(() => {
+    if (!ref.current || !nativeTextarea) return;
+
+    // Auto-fix alignment function
+    const applyAlignmentFixes = () => {
+      autoFixAlignment();
+    };
+
+    // Initial alignment fix with delay to ensure DOM is fully rendered
+    const initialTimer = setTimeout(applyAlignmentFixes, 150);
+
+    // Listen for resize events to re-apply alignment fixes (handles zoom changes)
+    const handleResize = () => {
+      // Debounce resize events
+      clearTimeout(initialTimer);
+      setTimeout(applyAlignmentFixes, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(initialTimer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [nativeTextarea]);
+
   // Determine priority based on prompt type
   const priority = useMemo(() => {
     if (parentId.includes('txt2img_prompt') && !parentId.includes('neg')) {
@@ -71,42 +99,85 @@ const ReplacementHighlighter = memo<ReplacementHighlighterProps>(({ parentId }) 
     return 'normal' as const;
   }, [parentId]);
 
-  // Get textarea computed style for perfect font matching
+  // Get textarea computed style for perfect font matching with enhanced browser compatibility
   const textareaStyle = useMemo(() => {
     if (!nativeTextarea) return {};
 
     const computedStyle = window.getComputedStyle(nativeTextarea);
-    return {
-      // Text rendering properties for consistency
-      MozOsxFontSmoothing: (computedStyle as any).MozOsxFontSmoothing,
-      WebkitFontSmoothing: (computedStyle as any).WebkitFontSmoothing,
 
-      // Box model for perfect positioning
+    // Detect browser for specific adjustments
+    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+    const isWebkit = navigator.userAgent.toLowerCase().includes('webkit');
+    const isSafari = navigator.userAgent.toLowerCase().includes('safari') && !navigator.userAgent.toLowerCase().includes('chrome');
+
+    return {
+      // Enhanced text rendering properties for pixel-perfect consistency
+      MozOsxFontSmoothing: (computedStyle as any).MozOsxFontSmoothing || 'grayscale',
+      MozTabSize: (computedStyle as any).MozTabSize || '8',
+      MozTextSizeAdjust: (computedStyle as any).MozTextSizeAdjust || '100%',
+      WebkitFontSmoothing: (computedStyle as any).WebkitFontSmoothing || 'antialiased',
+      WebkitTextSizeAdjust: (computedStyle as any).WebkitTextSizeAdjust || '100%',
+
+      // Critical: Prevent sub-pixel positioning issues
+      backfaceVisibility: 'hidden' as any, // Force hardware acceleration for consistent rendering
+
+      // Box model for perfect positioning with sub-pixel precision
       border: 'none', // Remove border to prevent double borders
       borderRadius: computedStyle.borderRadius,
       boxSizing: computedStyle.boxSizing as any,
 
-      // Font properties for perfect text matching
+      // Enhanced font properties for perfect text matching
       fontFamily: computedStyle.fontFamily,
+      fontFeatureSettings: (computedStyle as any).fontFeatureSettings || 'normal',
+      fontKerning: (computedStyle as any).fontKerning || 'auto',
       fontSize: computedStyle.fontSize,
+      fontSmooth: (computedStyle as any).fontSmooth || 'always',
+      fontStretch: computedStyle.fontStretch,
       fontStyle: computedStyle.fontStyle,
+      fontVariant: computedStyle.fontVariant,
+      fontVariantNumeric: (computedStyle as any).fontVariantNumeric || 'normal',
       fontWeight: computedStyle.fontWeight,
       letterSpacing: computedStyle.letterSpacing,
       lineHeight: computedStyle.lineHeight,
 
-      // Text layout properties
+      // Enhanced text layout properties with browser-specific adjustments
+      margin: computedStyle.margin,
+      marginBottom: computedStyle.marginBottom,
+      marginLeft: computedStyle.marginLeft,
+      marginRight: computedStyle.marginRight,
+      marginTop: computedStyle.marginTop,
       overflowWrap: computedStyle.overflowWrap as any,
       padding: computedStyle.padding,
       paddingBottom: computedStyle.paddingBottom,
       paddingLeft: computedStyle.paddingLeft,
       paddingRight: computedStyle.paddingRight,
       paddingTop: computedStyle.paddingTop,
+      perspective: '1000px', // Improve text rendering consistency
+      tabSize: (computedStyle as any).tabSize || '8',
       textAlign: computedStyle.textAlign as any,
       textIndent: computedStyle.textIndent,
       textRendering: computedStyle.textRendering as any,
+      textSizeAdjust: (computedStyle as any).textSizeAdjust || '100%',
+      transform: 'translateZ(0)', // Force hardware acceleration for consistent rendering
       whiteSpace: computedStyle.whiteSpace as any,
       wordBreak: computedStyle.wordBreak as any,
       wordSpacing: computedStyle.wordSpacing,
+
+      // Browser-specific adjustments for pixel-perfect alignment
+      ...(isFirefox && {
+        // Firefox-specific adjustments
+        MozUserSelect: 'none',
+        scrollbarWidth: 'none',
+      }),
+      ...(isWebkit && {
+        // Webkit-specific adjustments (Chrome, Safari)
+        WebkitAppearance: 'none',
+        WebkitUserSelect: 'none',
+      }),
+      ...(isSafari && {
+        // Safari-specific adjustments
+        WebkitTextStroke: '0px transparent',
+      }),
     };
   }, [nativeTextarea, size]);
 

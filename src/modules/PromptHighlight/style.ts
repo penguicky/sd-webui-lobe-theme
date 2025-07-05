@@ -7,15 +7,31 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
       /* CSS custom properties for micro-adjustments if needed */
       --highlight-offset-x: 0;
       --highlight-offset-y: 0;
+      --highlight-sub-pixel-x: 0;
+      --highlight-sub-pixel-y: 0;
 
       pointer-events: none !important;
 
       position: absolute;
 
-      /* Fine-tune positioning to match textarea exactly */
+      /* Enhanced positioning for pixel-perfect alignment */
       top: 0;
       left: 0;
-      transform: translate(var(--highlight-offset-x), var(--highlight-offset-y));
+      transform: translate(
+        calc(var(--highlight-offset-x) + var(--highlight-sub-pixel-x)),
+        calc(var(--highlight-offset-y) + var(--highlight-sub-pixel-y))
+      );
+
+      /* Critical: Force hardware acceleration and prevent sub-pixel issues */
+      will-change: transform;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+
+      /* Ensure consistent rendering across browsers */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-smooth: always;
+      text-rendering: optimizeLegibility;
 
       /* Allow content to be visible even if it extends beyond container */
       overflow: visible;
@@ -28,6 +44,12 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
 
       /* Ensure perfect text baseline alignment */
       vertical-align: baseline;
+
+      /* Prevent text selection and interaction issues */
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
 
       /* Ensure all child elements also don't capture events */
       * {
@@ -124,6 +146,22 @@ export const useStyles = createStyles(({ css, token, cx, stylish, prefixCls }) =
 
           background: none !important;
           outline: none !important;
+
+          /* Enhanced text rendering for pixel-perfect alignment */
+          -webkit-font-smoothing: inherit;
+          -moz-osx-font-smoothing: inherit;
+          font-smooth: inherit;
+          text-rendering: inherit;
+
+          /* Prevent sub-pixel positioning issues */
+          transform: translateZ(0);
+          will-change: auto;
+
+          /* Ensure consistent text metrics */
+          font-variant-ligatures: inherit;
+          font-variant-numeric: inherit;
+          font-feature-settings: inherit;
+          font-kerning: inherit;
 
           /* Make sure all highlighted elements are non-interactive and aligned */
           code,
