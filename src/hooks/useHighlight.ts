@@ -115,6 +115,23 @@ class ShikiEngineManager {
         lightNeg: this.themes[1].name,
       });
     }
+
+    // Set up periodic cleanup to prevent memory leaks
+    setInterval(() => {
+      if (this.dynamicHighlighterCache.size > 3) {
+        debugLog('🧹 Running periodic Shiki cleanup...');
+        // Keep only the 3 most recent highlighters
+        const entries = Array.from(this.dynamicHighlighterCache.entries());
+        const toRemove = entries.slice(0, - 3);
+
+        for (const [key, highlighter] of toRemove) {
+          if (highlighter && typeof highlighter.dispose === 'function') {
+            highlighter.dispose();
+          }
+          this.dynamicHighlighterCache.delete(key);
+        }
+      }
+    }, 2 * 60 * 1000); // Every 2 minutes
   }
 
   static getInstance(): ShikiEngineManager {
@@ -204,10 +221,14 @@ class ShikiEngineManager {
         themes: this.themes,
       });
 
-      // Cache the highlighter (limit cache size)
-      if (this.dynamicHighlighterCache.size >= 10) {
+      // Cache the highlighter (limit cache size to prevent memory leaks)
+      if (this.dynamicHighlighterCache.size >= 5) { // Reduced from 10 to 5
         const firstKey = this.dynamicHighlighterCache.keys().next().value;
         if (firstKey !== undefined) {
+          const oldHighlighter = this.dynamicHighlighterCache.get(firstKey);
+          if (oldHighlighter && typeof oldHighlighter.dispose === 'function') {
+            oldHighlighter.dispose(); // Properly dispose of old highlighter
+          }
           this.dynamicHighlighterCache.delete(firstKey);
         }
       }
@@ -286,6 +307,28 @@ class ShikiEngineManager {
       hasEngine: !!this.engine,
       hasStaticHighlighter: !!this.staticHighlighter,
     };
+  }
+
+  // Cleanup method to dispose of highlighters and prevent memory leaks
+  cleanup() {
+    // Dispose of dynamic highlighters
+    for (const highlighter of this.dynamicHighlighterCache.values()) {
+      if (highlighter && typeof highlighter.dispose === 'function') {
+        highlighter.dispose();
+      }
+    }
+    this.dynamicHighlighterCache.clear();
+
+    // Dispose of static highlighter
+    if (this.staticHighlighter && typeof this.staticHighlighter.dispose === 'function') {
+      this.staticHighlighter.dispose();
+      this.staticHighlighter = null;
+    }
+
+    // Clear caches
+    this.grammarCache.clear();
+
+    debugLog('🧹 ShikiEngineManager cleanup completed');
   }
 }
 

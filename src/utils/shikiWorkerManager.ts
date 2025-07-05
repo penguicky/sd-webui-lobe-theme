@@ -270,8 +270,8 @@ class ShikiWorkerManager {
   ): Promise<string> {
     try {
       return await this.highlight(text, isDarkMode, isNegPrompt, useDynamicGrammar);
-    } catch (error) {
-      console.warn('Worker highlighting failed, falling back to main thread:', error);
+    } catch {
+      // In IIFE builds, worker is always unavailable - use fallback silently
       if (fallbackFn) {
         return await fallbackFn();
       }
