@@ -1,13 +1,14 @@
 import { LayoutHeader, LayoutMain, LayoutSidebar } from '@lobehub/ui';
+import { consola } from 'consola';
 import { lazy, memo, useEffect } from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { AppErrorBoundary, FeatureErrorBoundary } from '@/components/ErrorBoundary';
+import { ProgressiveLoader, SuspenseLoader } from '@/components/ProgressiveLoader';
 import StructuredData from '@/components/StructuredData';
 import PromptFormator from '@/features/PromptFormator';
 import { useComponentPerformance, usePerformanceDashboard } from '@/hooks/usePerformanceMonitoring';
 import { warmShikiCache } from '@/hooks/usePerformanceOptimized';
-import { preWarmStyleCache } from '@/utils/styleCache';
 import '@/locales/config';
 import ImageInfo from '@/modules/ImageInfo/page';
 import PromptHighlight from '@/modules/PromptHighlight/page';
@@ -16,16 +17,16 @@ import { useAppStore } from '@/store';
 import GlobalStyle from '@/styles';
 import { auditAccessibility } from '@/utils/accessibilityTesting';
 import { getBrowserCompatibilityReport } from '@/utils/browserCompat';
-import { logChunkPerformance } from '@/utils/lazyOptimized';
 import { registerCommonFeatures } from '@/utils/featureLoader';
+import { logChunkPerformance } from '@/utils/lazyOptimized';
 import { initializeResourcePreloader } from '@/utils/resourcePreloader';
-import { ProgressiveLoader, SuspenseLoader } from '@/components/ProgressiveLoader';
+import { preWarmStyleCache } from '@/utils/styleCache';
 
 import Content from '../features/Content';
-import { useStyles } from './style';
-
 // Phase 4: Remove lazy loading from ExtraNetworkSidebar for immediate availability
 import ExtraNetworkSidebar from '../features/ExtraNetworkSidebar';
+import { useStyles } from './style';
+
 // Lazy load non-critical components for Phase 3 optimization
 const Footer = lazy(() => import('../features/Footer'));
 const Header = lazy(() => import('../features/Header'));
@@ -50,11 +51,11 @@ const getDebugState = (): boolean => {
 
 // Debug utilities that check the shared state
 const debugLog = (message: string, data?: any) => {
-  if (getDebugState()) {
+  if (process.env.NODE_ENV === 'development' && getDebugState()) {
     if (data) {
-      console.log(message, data);
+      consola.debug(message, data);
     } else {
-      console.log(message);
+      consola.debug(message);
     }
   }
 };
@@ -116,7 +117,7 @@ const Index = memo(() => {
     if (enableHighlight) {
       debugLog('🔥 Highlighting enabled - triggering Shiki cache warming...');
       warmShikiCache().catch((error) => {
-        console.error('❌ Failed to warm Shiki cache:', error);
+        consola.error('❌ Failed to warm Shiki cache:', error);
       });
     } else {
       debugLog('⚠️ Prompt highlighting is DISABLED in settings');
@@ -173,7 +174,7 @@ const Index = memo(() => {
       const interval = setInterval(() => {
         const metrics = getMetrics();
         if (metrics.warnings.length > 0) {
-          console.warn('📊 App Performance Issues:', metrics.warnings);
+          consola.warn('📊 App Performance Issues:', metrics.warnings);
         }
 
         // Log performance dashboard every 60 seconds
@@ -209,7 +210,7 @@ const Index = memo(() => {
           try {
             task();
           } catch (error) {
-            console.error('Failed to execute initialization task:', error);
+            consola.error('Failed to execute initialization task:', error);
           }
         });
       });

@@ -3,7 +3,6 @@
  * Phase 4: Enhanced with Progressive Resource Loading
  * Implements progressive enhancement with intelligent loading priorities
  */
-
 import { ComponentType } from 'react';
 
 // Phase 4: Progressive resource loading interfaces
@@ -47,7 +46,7 @@ export interface TieredLoadingConfig {
 class TieredLoadingManager {
   private config: TieredLoadingConfig;
   private loadedComponents = new Map<string, ComponentType<any>>();
-  private loadingQueue: Array<{ component: string, tier: string; }> = [];
+  private loadingQueue: Array<{ component: string; tier: string }> = [];
   private activeLoads = 0;
   private isIdle = false;
   private idleTimer: number | null = null;
@@ -75,10 +74,9 @@ class TieredLoadingManager {
   };
 
   private setupIdleDetection(): void {
-
     // Track user activity
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    events.forEach(event => {
+    events.forEach((event) => {
       document.addEventListener(event, this.resetIdleTimer, { passive: true });
     });
 
@@ -91,9 +89,12 @@ class TieredLoadingManager {
     const sortedTiers = [...this.config.tiers].sort((a, b) => a.priority - b.priority);
 
     sortedTiers.forEach((tier, index) => {
-      setTimeout(() => {
-        this.loadTier(tier);
-      }, tier.delay * (index + 1));
+      setTimeout(
+        () => {
+          this.loadTier(tier);
+        },
+        tier.delay * (index + 1),
+      );
     });
   }
 
@@ -107,7 +108,7 @@ class TieredLoadingManager {
     console.log(`🚀 Loading tier: ${tier.name} (priority: ${tier.priority})`);
 
     // Add components to queue
-    tier.components.forEach(component => {
+    tier.components.forEach((component) => {
       if (!this.loadedComponents.has(component.name)) {
         this.loadingQueue.push({ component: component.name, tier: tier.name });
       }
@@ -138,15 +139,15 @@ class TieredLoadingManager {
     const startTime = performance.now();
 
     try {
-      const tier = this.config.tiers.find(t => t.name === tierName);
-      const componentConfig = tier?.components.find(c => c.name === componentName);
+      const tier = this.config.tiers.find((t) => t.name === tierName);
+      const componentConfig = tier?.components.find((c) => c.name === componentName);
 
       if (!componentConfig) {
         throw new Error(`Component ${componentName} not found in tier ${tierName}`);
       }
 
       console.log(`📦 Loading component: ${componentName} from tier: ${tierName}`);
-      
+
       const result = await componentConfig.loader();
       this.loadedComponents.set(componentName, result.default);
 
@@ -154,10 +155,11 @@ class TieredLoadingManager {
       console.log(`✅ Loaded ${componentName} in ${loadTime.toFixed(2)}ms`);
 
       // Dispatch custom event for performance monitoring
-      window.dispatchEvent(new CustomEvent('tiered-component-loaded', {
-        detail: { componentName, loadTime, tierName }
-      }));
-
+      window.dispatchEvent(
+        new CustomEvent('tiered-component-loaded', {
+          detail: { componentName, loadTime, tierName },
+        }),
+      );
     } catch (error) {
       console.error(`❌ Failed to load component ${componentName}:`, error);
     } finally {
@@ -175,9 +177,11 @@ class TieredLoadingManager {
     return new Promise((resolve, reject) => {
       // Find component in tiers
       for (const tier of this.config.tiers) {
-        const component = tier.components.find(c => c.name === name);
+        const component = tier.components.find((c) => c.name === name);
         if (component) {
-          this.loadComponent(tier.name, name).then(() => resolve()).catch(reject);
+          this.loadComponent(tier.name, name)
+            .then(() => resolve())
+            .catch(reject);
           return;
         }
       }
@@ -191,7 +195,10 @@ class TieredLoadingManager {
     queuedComponents: number;
     totalComponents: number;
   } {
-    const totalComponents = this.config.tiers.reduce((sum, tier) => sum + tier.components.length, 0);
+    const totalComponents = this.config.tiers.reduce(
+      (sum, tier) => sum + tier.components.length,
+      0,
+    );
 
     return {
       activeLoads: this.activeLoads,
@@ -211,7 +218,7 @@ class TieredLoadingManager {
     // Group resources by tier
     const resourcesByTier = new Map<number, ProgressiveResource[]>();
 
-    this.progressiveResources.forEach(resource => {
+    this.progressiveResources.forEach((resource) => {
       if (resource.condition && !resource.condition()) return;
 
       if (!resourcesByTier.has(resource.tier)) {
@@ -262,36 +269,36 @@ class TieredLoadingManager {
       let size = 0;
 
       switch (resource.type) {
-      case 'css': {
-        success = await this.loadCSS(resource);
-        size = resource.content?.length || 0;
-      
-      break;
-      }
-      case 'js': {
-        success = await this.loadJS(resource);
-        size = resource.content?.length || 0;
-      
-      break;
-      }
-      case 'font': {
-        success = await this.loadFont(resource);
-      
-      break;
-      }
-      case 'image': 
-      case 'icon': {
-        success = await this.loadImage(resource);
-      
-      break;
-      }
-      // No default
+        case 'css': {
+          success = await this.loadCSS(resource);
+          size = resource.content?.length || 0;
+
+          break;
+        }
+        case 'js': {
+          success = await this.loadJS(resource);
+          size = resource.content?.length || 0;
+
+          break;
+        }
+        case 'font': {
+          success = await this.loadFont(resource);
+
+          break;
+        }
+        case 'image':
+        case 'icon': {
+          success = await this.loadImage(resource);
+
+          break;
+        }
+        // No default
       }
 
       const loadTime = performance.now() - startTime;
 
       this.resourceLoadResults.push({
-        cached: false, // TODO: Implement cache detection
+        cached: false, // Cache detection not implemented yet
         loadTime,
         name: resource.name,
         size,
@@ -300,7 +307,11 @@ class TieredLoadingManager {
 
       if (success) {
         this.loadedResources.add(resource.name);
-        console.log(`✅ Loaded progressive resource: ${resource.name} (${loadTime.toFixed(2)}ms)`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            `✅ Loaded progressive resource: ${resource.name} (${loadTime.toFixed(2)}ms)`,
+          );
+        }
       }
     } catch (error) {
       console.error(`❌ Failed to load progressive resource ${resource.name}:`, error);
@@ -418,7 +429,7 @@ export const defaultTieredConfig: TieredLoadingConfig = {
     },
     {
       // Only on desktop
-components: [
+      components: [
         {
           loader: () => import('../features/Setting'),
           name: 'settings-modal',
@@ -430,12 +441,12 @@ components: [
           preload: true,
         },
       ],
-      
-condition: () => window.innerWidth > 768,
-      
-delay: 3000,
-      
-name: 'advanced', 
+
+      condition: () => window.innerWidth > 768,
+
+      delay: 3000,
+
+      name: 'advanced',
       priority: 3,
     },
     {
@@ -459,7 +470,9 @@ name: 'advanced',
 // Global instance
 let tieredLoadingManager: TieredLoadingManager | null = null;
 
-export function initTieredLoading(config: TieredLoadingConfig = defaultTieredConfig): TieredLoadingManager {
+export function initTieredLoading(
+  config: TieredLoadingConfig = defaultTieredConfig,
+): TieredLoadingManager {
   if (!tieredLoadingManager) {
     tieredLoadingManager = new TieredLoadingManager(config);
   }

@@ -2,7 +2,6 @@
  * Phase 3: Memory Management System
  * Handles cleanup and disposal of loaded components to prevent memory leaks
  */
-
 import { ComponentType } from 'react';
 
 interface ComponentMemoryInfo {
@@ -12,7 +11,7 @@ interface ComponentMemoryInfo {
   lastUsed: number;
   loadTime: number;
   memoryEstimate: number;
-  name: string; 
+  name: string;
   usageCount: number;
 }
 
@@ -76,7 +75,7 @@ class ComponentMemoryManager {
   public registerComponent(
     name: string,
     component: ComponentType<any>,
-    memoryEstimate: number = 50 // Default 50KB estimate
+    memoryEstimate: number = 50, // Default 50KB estimate
   ): void {
     const now = Date.now();
     this.components.set(name, {
@@ -111,7 +110,9 @@ class ComponentMemoryManager {
     const componentInfo = this.components.get(name);
     if (componentInfo) {
       componentInfo.isActive = false;
-      console.log(`😴 Component marked inactive: ${name}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`😴 Component marked inactive: ${name}`);
+      }
     }
   }
 
@@ -137,8 +138,9 @@ class ComponentMemoryManager {
 
     // Remove least recently used components if over limits
     if (this.components.size > this.config.maxComponents) {
-      const sortedComponents = Array.from(this.components.entries())
-        .sort(([, a], [, b]) => a.lastUsed - b.lastUsed);
+      const sortedComponents = Array.from(this.components.entries()).sort(
+        ([, a], [, b]) => a.lastUsed - b.lastUsed,
+      );
 
       const excessCount = this.components.size - this.config.maxComponents;
       for (let i = 0; i < excessCount && i < sortedComponents.length; i++) {
@@ -161,17 +163,19 @@ class ComponentMemoryManager {
 
   private removeComponents(names: string[]): number {
     let freedMemory = 0;
-    
+
     for (const name of names) {
       const componentInfo = this.components.get(name);
       if (componentInfo) {
         freedMemory += componentInfo.memoryEstimate;
         this.components.delete(name);
-        
+
         // Dispatch cleanup event for external listeners
-        window.dispatchEvent(new CustomEvent('component-cleanup', {
-          detail: { componentName: name, memoryFreed: componentInfo.memoryEstimate }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('component-cleanup', {
+            detail: { componentName: name, memoryFreed: componentInfo.memoryEstimate },
+          }),
+        );
       }
     }
 
@@ -179,8 +183,10 @@ class ComponentMemoryManager {
   }
 
   private checkMemoryLimits(): void {
-    const totalEstimatedMemory = Array.from(this.components.values())
-      .reduce((sum, info) => sum + info.memoryEstimate, 0);
+    const totalEstimatedMemory = Array.from(this.components.values()).reduce(
+      (sum, info) => sum + info.memoryEstimate,
+      0,
+    );
 
     if (totalEstimatedMemory > this.config.maxMemoryMB * 1024) {
       console.warn(`🧠 Estimated memory usage high: ${totalEstimatedMemory}KB`);
@@ -195,11 +201,12 @@ class ComponentMemoryManager {
     totalComponents: number;
   } {
     const components = Array.from(this.components.values());
-    const activeComponents = components.filter(c => c.isActive);
+    const activeComponents = components.filter((c) => c.isActive);
     const totalMemory = components.reduce((sum, c) => sum + c.memoryEstimate, 0);
-    const averageUsage = components.length > 0 
-      ? components.reduce((sum, c) => sum + c.usageCount, 0) / components.length 
-      : 0;
+    const averageUsage =
+      components.length > 0
+        ? components.reduce((sum, c) => sum + c.usageCount, 0) / components.length
+        : 0;
 
     return {
       activeComponents: activeComponents.length,
@@ -224,16 +231,18 @@ class ComponentMemoryManager {
 const defaultConfig: MemoryManagementConfig = {
   cleanupInterval: 60_000,
   // 1 minute
-inactiveThreshold: 300_000,
-  
-maxComponents: 20, 
+  inactiveThreshold: 300_000,
+
+  maxComponents: 20,
   maxMemoryMB: 50, // 5 minutes
 };
 
 // Global instance
 let memoryManager: ComponentMemoryManager | null = null;
 
-export function initMemoryManagement(config: MemoryManagementConfig = defaultConfig): ComponentMemoryManager {
+export function initMemoryManagement(
+  config: MemoryManagementConfig = defaultConfig,
+): ComponentMemoryManager {
   if (!memoryManager) {
     memoryManager = new ComponentMemoryManager(config);
     console.log('🧠 Component memory management initialized');

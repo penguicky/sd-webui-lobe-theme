@@ -1,17 +1,15 @@
 import { consola } from 'consola';
 import { createRoot } from 'react-dom/client';
 
-// Phase 4: Initialize critical resource prioritization FIRST
-import './utils/criticalResourcePrioritizer';
-
+import Page from './app/page';
+import { trackProgressiveLoadingMetrics } from './hooks/usePerformanceMonitoring';
 // Import critical CSS first for immediate rendering
 import './styles/critical.css';
-
-import Page from './app/page';
-import { initTieredLoading } from './utils/tieredLoading';
-import { initMemoryManagement } from './utils/memoryManagement';
-import { trackProgressiveLoadingMetrics } from './hooks/usePerformanceMonitoring';
+// Phase 4: Initialize critical resource prioritization FIRST
+import './utils/criticalResourcePrioritizer';
 import { initIntelligentPreloading } from './utils/intelligentPreloading';
+import { initMemoryManagement } from './utils/memoryManagement';
+import { initTieredLoading } from './utils/tieredLoading';
 
 // Optimized Shiki engine pre-warming with Web Worker support and WebUI compatibility
 const preWarmShiki = async () => {
@@ -36,11 +34,15 @@ const preWarmShiki = async () => {
 if (window.global === undefined) window.global = window;
 
 // Phase 3: Initialize progressive enhancement systems
-console.log('🚀 Phase 3: Initializing progressive enhancement systems...');
+if (process.env.NODE_ENV === 'development') {
+  consola.info('🚀 Phase 3: Initializing progressive enhancement systems...');
+}
 
 // Initialize tiered loading system
 const tieredManager = initTieredLoading();
-console.log('✅ Tiered loading system initialized');
+if (process.env.NODE_ENV === 'development') {
+  consola.info('✅ Tiered loading system initialized');
+}
 
 // Phase 4: Add progressive theme resources
 const progressiveThemeResources = [
@@ -124,19 +126,27 @@ const progressiveThemeResources = [
 ];
 
 tieredManager.addProgressiveResources(progressiveThemeResources);
-console.log('✅ Progressive theme resources configured');
+if (process.env.NODE_ENV === 'development') {
+  consola.info('✅ Progressive theme resources configured');
+}
 
 // Initialize memory management
 const memoryManager = initMemoryManagement();
-console.log('✅ Memory management system initialized');
+if (process.env.NODE_ENV === 'development') {
+  consola.info('✅ Memory management system initialized');
+}
 
 // Initialize progressive loading metrics
 const progressiveMetrics = trackProgressiveLoadingMetrics();
-console.log('✅ Progressive loading metrics initialized');
+if (process.env.NODE_ENV === 'development') {
+  consola.info('✅ Progressive loading metrics initialized');
+}
 
 // Initialize intelligent preloading
 const intelligentPreloader = initIntelligentPreloading();
-console.log('✅ Intelligent preloading system initialized');
+if (process.env.NODE_ENV === 'development') {
+  consola.info('✅ Intelligent preloading system initialized');
+}
 
 // Log performance improvements every 30 seconds in development
 if (process.env.NODE_ENV === 'development') {
@@ -144,7 +154,7 @@ if (process.env.NODE_ENV === 'development') {
     const stats = memoryManager.getMemoryStats();
     const metrics = progressiveMetrics.getProgressiveMetrics();
     const preloadStats = intelligentPreloader.getPreloadingStats();
-    console.log('📊 Phase 3 Performance Stats:', {
+    consola.info('📊 Phase 3 Performance Stats:', {
       memory: stats,
       preloading: preloadStats,
       progressive: metrics,

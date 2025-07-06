@@ -2,8 +2,7 @@
  * CSS Performance Optimization - Style Caching System
  * Reduces runtime CSS generation overhead by caching computed styles
  */
-
-import { Theme, SerializedStyles, css } from 'antd-style';
+import { SerializedStyles, Theme, css } from 'antd-style';
 
 // Cache for computed styles
 const styleCache = new Map<string, SerializedStyles>();
@@ -17,7 +16,11 @@ let cacheMisses = 0;
 /**
  * Generate a cache key from theme properties and component props
  */
-function generateCacheKey(theme: Theme, componentName: string, props?: Record<string, any>): string {
+function generateCacheKey(
+  theme: Theme,
+  componentName: string,
+  props?: Record<string, any>,
+): string {
   const themeKey = `${theme.colorPrimary}-${theme.borderRadius}-${theme.fontSize}-${theme.colorBgContainer}`;
   const propsKey = props ? JSON.stringify(props) : '';
   return `${componentName}-${themeKey}-${propsKey}`;
@@ -30,19 +33,19 @@ export function getCachedStyle(
   theme: Theme,
   componentName: string,
   styleGenerator: (theme: Theme, props?: any) => SerializedStyles,
-  props?: Record<string, any>
+  props?: Record<string, any>,
 ): SerializedStyles {
   const cacheKey = generateCacheKey(theme, componentName, props);
-  
+
   if (styleCache.has(cacheKey)) {
     cacheHits++;
     return styleCache.get(cacheKey)!;
   }
-  
+
   cacheMisses++;
   const computedStyle = styleGenerator(theme, props);
   styleCache.set(cacheKey, computedStyle);
-  
+
   // Limit cache size to prevent memory leaks
   if (styleCache.size > 1000) {
     const firstKey = styleCache.keys().next().value;
@@ -50,26 +53,23 @@ export function getCachedStyle(
       styleCache.delete(firstKey);
     }
   }
-  
+
   return computedStyle;
 }
 
 /**
  * Cache theme calculations
  */
-export function getCachedTheme(
-  themeKey: string,
-  themeGenerator: () => any
-): any {
+export function getCachedTheme(themeKey: string, themeGenerator: () => any): any {
   if (themeCache.has(themeKey)) {
     cacheHits++;
     return themeCache.get(themeKey);
   }
-  
+
   cacheMisses++;
   const computedTheme = themeGenerator();
   themeCache.set(themeKey, computedTheme);
-  
+
   // Limit cache size
   if (themeCache.size > 100) {
     const firstKey = themeCache.keys().next().value;
@@ -77,7 +77,7 @@ export function getCachedTheme(
       themeCache.delete(firstKey);
     }
   }
-  
+
   return computedTheme;
 }
 
@@ -116,7 +116,7 @@ export function getCacheStats(): {
  */
 export function createMemoizedStyle<T extends Record<string, any>>(
   componentName: string,
-  styleGenerator: (theme: Theme, props?: T) => Record<string, string>
+  styleGenerator: (theme: Theme, props?: T) => Record<string, string>,
 ) {
   return (theme: Theme, props?: T) => {
     const cacheKey = generateCacheKey(theme, componentName, props);
@@ -147,51 +147,77 @@ export function createMemoizedStyle<T extends Record<string, any>>(
  */
 export function preWarmStyleCache(theme: Theme): void {
   // Pre-compute common button styles
-  getCachedStyle(theme, 'button-primary', (t) => css`
-    background: ${t.colorPrimary};
-    border: 1px solid ${t.colorPrimary};
-    border-radius: ${t.borderRadius}px;
-  `);
+  getCachedStyle(
+    theme,
+    'button-primary',
+    (t) => css`
+      border: 1px solid ${t.colorPrimary};
+      border-radius: ${t.borderRadius}px;
+      background: ${t.colorPrimary};
+    `,
+  );
 
-  getCachedStyle(theme, 'button-secondary', (t) => css`
-    background: ${t.colorFillTertiary};
-    border: 1px solid ${t.colorBorderSecondary};
-    border-radius: ${t.borderRadius}px;
-  `);
+  getCachedStyle(
+    theme,
+    'button-secondary',
+    (t) => css`
+      border: 1px solid ${t.colorBorderSecondary};
+      border-radius: ${t.borderRadius}px;
+      background: ${t.colorFillTertiary};
+    `,
+  );
 
   // Pre-compute common container styles
-  getCachedStyle(theme, 'container-base', (t) => css`
-    background: ${t.colorBgContainer};
-    border: 1px solid ${t.colorBorderSecondary};
-    border-radius: ${t.borderRadius}px;
-    padding: 16px;
-  `);
+  getCachedStyle(
+    theme,
+    'container-base',
+    (t) => css`
+      padding: 16px;
+      border: 1px solid ${t.colorBorderSecondary};
+      border-radius: ${t.borderRadius}px;
+      background: ${t.colorBgContainer};
+    `,
+  );
 
   // Pre-compute common text styles
-  getCachedStyle(theme, 'text-primary', (t) => css`
-    color: ${t.colorText};
-    font-size: ${t.fontSize}px;
-    font-family: ${t.fontFamily};
-  `);
+  getCachedStyle(
+    theme,
+    'text-primary',
+    (t) => css`
+      font-family: ${t.fontFamily};
+      font-size: ${t.fontSize}px;
+      color: ${t.colorText};
+    `,
+  );
 
-  getCachedStyle(theme, 'text-secondary', (t) => css`
-    color: ${t.colorTextSecondary};
-    font-size: ${t.fontSizeSM}px;
-    font-family: ${t.fontFamily};
-  `);
+  getCachedStyle(
+    theme,
+    'text-secondary',
+    (t) => css`
+      font-family: ${t.fontFamily};
+      font-size: ${t.fontSizeSM}px;
+      color: ${t.colorTextSecondary};
+    `,
+  );
 }
 
 // Development-only cache monitoring
 if (process.env.NODE_ENV === 'development') {
-  // Log cache stats every 30 seconds
+  // Log cache stats every 60 seconds (reduced frequency)
   setInterval(() => {
     const stats = getCacheStats();
-    if (stats.hits + stats.misses > 0) {
+    if (stats.hits + stats.misses > 10) {
+      // Only log if there's meaningful activity
       console.log('🎨 Style Cache Stats:', {
         cached: `${stats.stylesCached} styles, ${stats.themesCached} themes`,
         hitRate: `${stats.hitRate.toFixed(1)}%`,
-        performance: stats.hitRate > 80 ? '🟢 Excellent' : stats.hitRate > 60 ? '🟡 Good' : '🔴 Needs optimization'
+        performance:
+          stats.hitRate > 80
+            ? '🟢 Excellent'
+            : stats.hitRate > 60
+              ? '🟡 Good'
+              : '🔴 Needs optimization',
       });
     }
-  }, 30_000);
+  }, 60_000);
 }

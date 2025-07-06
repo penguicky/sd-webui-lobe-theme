@@ -2,7 +2,6 @@
  * Bundle Analysis and Optimization Utilities
  * Provides runtime analysis of bundle composition and optimization opportunities
  */
-
 import { webUIImport } from './webUICompat';
 
 // Track imported modules for analysis
@@ -43,7 +42,7 @@ export function registerModuleUsage(moduleName: string, size?: number): void {
 export function webUICompatibleImport<T>(
   moduleName: string,
   importFn: () => Promise<T>,
-  fallbackFn?: () => Promise<T>
+  fallbackFn?: () => Promise<T>,
 ): Promise<T> {
   const startTime = performance.now();
 
@@ -77,10 +76,7 @@ export function webUICompatibleImport<T>(
 
     if (process.env.NODE_ENV === 'development') {
       const prefix = isFallback ? '❌ Fallback failed' : '⚠️ Primary import failed';
-      console.error(
-        `${prefix} for "${moduleName}" after ${loadTime.toFixed(2)}ms:`,
-        error,
-      );
+      console.error(`${prefix} for "${moduleName}" after ${loadTime.toFixed(2)}ms:`, error);
     }
 
     return error;
@@ -88,7 +84,7 @@ export function webUICompatibleImport<T>(
 
   // Try primary import with WebUI compatibility
   return importFn()
-    .then(result => handleSuccess(result, false))
+    .then((result) => handleSuccess(result, false))
     .catch(async (error) => {
       handleError(error, false);
 
@@ -105,8 +101,8 @@ export function webUICompatibleImport<T>(
       // Try custom fallback if available
       if (fallbackFn) {
         return fallbackFn()
-          .then(result => handleSuccess(result, true))
-          .catch(fallbackError => {
+          .then((result) => handleSuccess(result, true))
+          .catch((fallbackError) => {
             handleError(fallbackError, true);
             throw fallbackError;
           });
@@ -114,13 +110,6 @@ export function webUICompatibleImport<T>(
 
       throw error;
     });
-}
-
-/**
- * Track dynamic import performance (legacy compatibility)
- */
-export function trackDynamicImport<T>(moduleName: string, importPromise: Promise<T>): Promise<T> {
-  return webUICompatibleImport(moduleName, () => importPromise);
 }
 
 /**

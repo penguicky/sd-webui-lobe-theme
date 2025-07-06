@@ -22,19 +22,19 @@ if (typeof window !== 'undefined') {
 
 // Debug utility functions that check the global state
 export const debugLog = (message: string, ...args: any[]) => {
-  if (HIGHLIGHT_DEBUG_ENABLED) {
+  if (process.env.NODE_ENV === 'development' && HIGHLIGHT_DEBUG_ENABLED) {
     console.log(message, ...args);
   }
 };
 
 export const debugWarn = (message: string, ...args: any[]) => {
-  if (HIGHLIGHT_DEBUG_ENABLED) {
+  if (process.env.NODE_ENV === 'development' && HIGHLIGHT_DEBUG_ENABLED) {
     console.warn(message, ...args);
   }
 };
 
 export const debugError = (message: string, ...args: any[]) => {
-  if (HIGHLIGHT_DEBUG_ENABLED) {
+  if (process.env.NODE_ENV === 'development' && HIGHLIGHT_DEBUG_ENABLED) {
     console.error(message, ...args);
   }
 };
