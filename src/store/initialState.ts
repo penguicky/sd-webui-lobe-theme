@@ -62,7 +62,7 @@ export const DEFAULT_SETTING: WebuiSetting = {
   svgIcon: true,
 };
 
-export interface StroeState {
+export interface StoreState {
   currentTab: string;
   latestVersion: string;
   loading: boolean;
@@ -72,7 +72,7 @@ export interface StroeState {
   version: string;
 }
 
-export const initialState: StroeState = {
+export const initialState: StoreState = {
   currentTab: 'tab_txt2img',
   latestVersion: DEFAULT_VERSION,
   loading: true,

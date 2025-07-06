@@ -53,7 +53,7 @@ class Ld {
         webpage?.enable &&
           this.genWebPage({
             ...webpage,
-            date,
+            ...(date && { date }),
             description,
             image,
             title,

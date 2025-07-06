@@ -1,8 +1,9 @@
 import { ActionIcon, DraggablePanelBody, DraggablePanelFooter } from '@lobehub/ui';
 import { Skeleton, Slider } from 'antd';
 import isEqual from 'fast-deep-equal';
-import { ZoomIn, ZoomOut } from 'lucide-react';
 import { memo, useState } from 'react';
+
+import { ZoomIn, ZoomOut } from '@/components/OptimizedIcon';
 import { Flexbox } from 'react-layout-kit';
 
 import { selectors, useAppStore } from '@/store';

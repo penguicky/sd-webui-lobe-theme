@@ -1,6 +1,6 @@
 {
   "name": "sd-webui-lobe-theme",
-  "version": "3.6.0",
+  "version": "4.0.0",
   "private": true,
   "description": "LobeThem: The Modern Theme for Stable Diffusion WebUI, Exquisite interface design, Highly customizable UI, and Efficiency boosting features.",
   "keywords": [
@@ -45,10 +45,6 @@
     "type-check": "tsc --noEmit"
   },
   "lint-staged": {
-    "*.md": [
-      "remark --quiet --output --",
-      "prettier --write --no-error-on-unmatched-pattern"
-    ],
     "*.json": [
       "prettier --write --no-error-on-unmatched-pattern"
     ],
@@ -80,6 +76,8 @@
     "i18next-http-backend": "^2.5.2",
     "lodash-es": "^4.17.21",
     "lucide-react": "0.263.1",
+    "lucide-static": "^0.525.0",
+    "modern-screenshot": "^4.6.4",
     "polished": "^4.3.1",
     "react": "^18.3.1",
     "react-dnd": "^16.0.1",
@@ -91,7 +89,7 @@
     "react-rnd": "^10.4.10",
     "react-tag-input": "6.9.0",
     "semver": "^7.6.2",
-    "shiki": "^1.6.0",
+    "shiki": "^3.7.0",
     "split-smartly2": "^2.0.1",
     "swr": "^2.2.5",
     "url-join": "^5.0.0",
@@ -100,6 +98,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^19.3.0",
+    "@fullhuman/postcss-purgecss": "^7.0.2",
     "@lobehub/lint": "^1.23.4",
     "@testing-library/jest-dom": "^6.4.5",
     "@testing-library/react": "^15.0.7",
@@ -112,17 +111,21 @@
     "@types/semver": "^7.5.8",
     "@vitejs/plugin-react-swc": "^3.7.0",
     "@vitest/coverage-v8": "^1.6.0",
+    "autoprefixer": "^10.4.21",
     "commitlint": "^19.3.0",
+    "cssnano": "^7.0.7",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "fast-deep-equal": "^3.1.3",
     "husky": "^9.0.11",
     "jsdom": "^24.0.0",
     "lint-staged": "^15.2.4",
+    "postcss": "^8.5.6",
     "prettier": "^3.2.5",
     "query-string": "^9.0.0",
     "remark": "^14.0.3",
     "remark-cli": "^11.0.0",
+    "rollup-plugin-visualizer": "^6.0.3",
     "semantic-release": "^21.1.2",
     "stylelint": "^15.11.0",
     "terser": "^5.31.0",
@@ -138,5 +141,10 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
-  }
+  },
+  "trustedDependencies": [
+    "@swc/core",
+    "core-js",
+    "unrs-resolver"
+  ]
 }

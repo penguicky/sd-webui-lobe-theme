@@ -1,7 +1,8 @@
 import { ActionIcon, CopyButton } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { memo, useState } from 'react';
+
+import { ChevronDown, ChevronRight } from '@/components/OptimizedIcon';
 import { Flexbox } from 'react-layout-kit';
 
 import SyntaxHighlighter from '@/modules/PromptHighlight/features/SyntaxHighlighter';
@@ -14,8 +15,8 @@ const useStyles = createStyles(
     const langHoverCls = `${prefix}-hover-lang`;
 
     const typeStylish = css`
-      background-color: ${type === 'block' ? token.colorFillTertiary : 'transparent'};
       border: 1px solid ${type === 'block' ? 'transparent' : token.colorBorder};
+      background-color: ${type === 'block' ? token.colorFillTertiary : 'transparent'};
 
       &:hover {
         background-color: ${type === 'block' ? token.colorFillTertiary : token.colorFillQuaternary};
@@ -114,7 +115,13 @@ export const Highlighter = memo<HighlighterProps>(
           )}
         </Flexbox>
         <div style={expand ? {} : { height: 0, overflow: 'hidden' }}>
-          <SyntaxHighlighter parentId={className || ''}>{children}</SyntaxHighlighter>
+          <SyntaxHighlighter
+            maxLength={20_000} // Allow longer content for image info
+            parentId={title?.includes('Negative') ? `${className}_neg_prompt` : className || ''}
+            priority="high" // Image info highlighting should have high priority
+          >
+            {children}
+          </SyntaxHighlighter>
         </div>
       </div>
     );

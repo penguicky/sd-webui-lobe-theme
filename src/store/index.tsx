@@ -2,6 +2,7 @@ import { devtools } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
 import { createWithEqualityFn } from 'zustand/traditional';
 
+import { optimizedSelectors } from './stateOptimization';
 import { type Store, createStore } from './store';
 
 // Create optimized store with devtools only in development
@@ -16,6 +17,7 @@ export const useAppStore = createWithEqualityFn<Store>()(
 export * from './action';
 export * from './initialState';
 export { selectors } from './selectors';
+export * from './stateOptimization';
 export { type Store } from './store';
 
 // Performance optimized hook with proper typing
@@ -23,17 +25,22 @@ export function useOptimizedSelector<T>(selector: (state: Store) => T, equalityF
   return useAppStore(selector, equalityFn);
 }
 
-// Common selectors for better reusability
+// Enhanced selectors with performance optimizations
 export const commonSelectors = {
+  // Basic selectors
   currentTab: (state: Store) => state.currentTab,
   latestVersion: (state: Store) => state.latestVersion,
-  // Settings selectors
+  layoutConfig: optimizedSelectors.layoutConfig,
+
+  // Legacy selectors for backward compatibility
   layoutSettings: (state: Store) => ({
     layoutHideFooter: state.setting.layoutHideFooter,
     layoutSplitPreview: state.setting.layoutSplitPreview,
   }),
 
   loading: (state: Store) => state.loading,
+
+  performanceConfig: optimizedSelectors.performanceConfig,
 
   promptSettings: (state: Store) => ({
     promptEditor: state.setting.promptEditor,
@@ -48,6 +55,9 @@ export const commonSelectors = {
     sidebarWidth: state.setting.sidebarWidth,
   }),
 
+  // Optimized computed selectors
+  themeConfig: optimizedSelectors.themeConfig,
+
   themeMode: (state: Store) => state.themeMode,
 
   uiSettings: (state: Store) => ({
@@ -61,3 +71,8 @@ export const commonSelectors = {
 
   version: (state: Store) => state.version,
 };
+
+// Performance-optimized hooks for common use cases
+export const useThemeConfig = () => useAppStore(optimizedSelectors.themeConfig);
+export const useLayoutConfig = () => useAppStore(optimizedSelectors.layoutConfig);
+export const usePerformanceConfig = () => useAppStore(optimizedSelectors.performanceConfig);

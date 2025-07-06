@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedding Highlight Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .prompt-input {
+            width: 100%;
+            height: 100px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .embedding-valid { color: #28a745; font-weight: bold; }
+        .embedding-invalid { color: #dc3545; text-decoration: line-through; }
+        .embedding-unknown { color: #fd7e14; }
+        .status { 
+            padding: 5px 10px; 
+            border-radius: 3px; 
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>Embedding Highlight System Test</h1>
+    
+    <div class="test-section">
+        <h2>API Status</h2>
+        <div id="api-status">Checking API availability...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Prompts</h2>
+        <p>Enter a prompt with embeddings (e.g., <code>&lt;embedding:test&gt;</code>) to test the highlighting:</p>
+        <textarea class="prompt-input" id="prompt-input" placeholder="masterpiece, best quality, &lt;embedding:test&gt;, 1girl, beautiful">masterpiece, best quality, &lt;embedding:test&gt;, 1girl, beautiful, &lt;embedding:invalid&gt;</textarea>
+        <button onclick="testPrompt()">Test Highlighting</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Predefined Tests</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Mock WebUI API for testing
+        let mockEmbeddings = ['test', 'style', 'character', 'valid-embedding'];
+        
+        // Mock fetch to simulate WebUI API
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            if (url.includes('/sdapi/v1/embeddings')) {
+                if (options?.method === 'HEAD') {
+                    return Promise.resolve({ ok: true });
+                }
+                
+                const mockResponse = {
+                    loaded: {},
+                    skipped: {}
+                };
+                
+                mockEmbeddings.forEach(name => {
+                    mockResponse.loaded[name] = {
+                        step: 1000,
+                        sd_checkpoint: 'test.ckpt',
+                        sd_checkpoint_name: 'test',
+                        shape: 768,
+                        vectors: 1
+                    };
+                });
+                
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(mockResponse)
+                });
+            }
+            return originalFetch.apply(this, arguments);
+        };
+
+        // Simple embedding verification function
+        async function isValidEmbedding(name) {
+            try {
+                const response = await fetch('http://localhost:7860/sdapi/v1/embeddings');
+                if (!response.ok) return false;
+                
+                const data = await response.json();
+                return !!(data.loaded[name] || data.skipped[name]);
+            } catch (error) {
+                console.error('API Error:', error);
+                return false;
+            }
+        }
+
+        // Simple highlighting function
+        async function highlightPrompt(text) {
+            const embeddingRegex = /<embedding:([^>]+)>/g;
+            let result = text;
+            const matches = [...text.matchAll(embeddingRegex)];
+            
+            for (const match of matches) {
+                const embeddingName = match[1];
+                const isValid = await isValidEmbedding(embeddingName);
+                const className = isValid ? 'embedding-valid' : 'embedding-invalid';
+                const replacement = `<span class="${className}">&lt;embedding:${embeddingName}&gt;</span>`;
+                result = result.replace(match[0], replacement);
+            }
+            
+            return result;
+        }
+
+        // Test functions
+        async function testPrompt() {
+            const input = document.getElementById('prompt-input').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = 'Processing...';
+            
+            try {
+                const highlighted = await highlightPrompt(input);
+                resultDiv.innerHTML = highlighted;
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="status error">Error: ${error.message}</span>`;
+            }
+        }
+
+        async function checkAPIStatus() {
+            const statusDiv = document.getElementById('api-status');
+            
+            try {
+                const response = await fetch('http://localhost:7860/sdapi/v1/embeddings', { method: 'HEAD' });
+                if (response.ok) {
+                    statusDiv.innerHTML = '<div class="status success">✓ Mock API is available</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="status error">✗ API returned error</div>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="status warning">⚠ Using mock API (WebUI not running)</div>';
+            }
+        }
+
+        async function runAllTests() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = 'Running tests...';
+            
+            const tests = [
+                {
+                    name: 'Valid embedding',
+                    prompt: 'masterpiece, <embedding:test>, best quality',
+                    expected: 'Should highlight "test" as valid'
+                },
+                {
+                    name: 'Invalid embedding', 
+                    prompt: 'masterpiece, <embedding:nonexistent>, best quality',
+                    expected: 'Should highlight "nonexistent" as invalid'
+                },
+                {
+                    name: 'Mixed embeddings',
+                    prompt: '<embedding:test>, <embedding:invalid>, <embedding:style>',
+                    expected: 'Should show different colors for valid/invalid'
+                },
+                {
+                    name: 'No embeddings',
+                    prompt: 'masterpiece, best quality, 1girl',
+                    expected: 'Should return unchanged'
+                }
+            ];
+            
+            let results = '<h3>Test Results:</h3>';
+            
+            for (const test of tests) {
+                try {
+                    const highlighted = await highlightPrompt(test.prompt);
+                    const hasValidClass = highlighted.includes('embedding-valid');
+                    const hasInvalidClass = highlighted.includes('embedding-invalid');
+                    
+                    results += `
+                        <div class="test-section">
+                            <h4>${test.name}</h4>
+                            <p><strong>Input:</strong> ${test.prompt}</p>
+                            <p><strong>Expected:</strong> ${test.expected}</p>
+                            <p><strong>Result:</strong> ${highlighted}</p>
+                            <div class="status ${hasValidClass || hasInvalidClass || test.name === 'No embeddings' ? 'success' : 'error'}">
+                                ${hasValidClass || hasInvalidClass || test.name === 'No embeddings' ? '✓ PASS' : '✗ FAIL'}
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    results += `
+                        <div class="test-section">
+                            <h4>${test.name}</h4>
+                            <div class="status error">✗ ERROR: ${error.message}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            resultsDiv.innerHTML = results;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAPIStatus();
+        });
+    </script>
+</body>
+</html>

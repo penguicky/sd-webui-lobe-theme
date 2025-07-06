@@ -59,7 +59,6 @@ const ShareModal = memo<ShareModalProps>(({ open, onCancel, type }) => {
         children: <Switch />,
         hidden: tab !== Tab.Info,
         label: t('shareModal.showAllImages'),
-        minWidth: undefined,
         name: 'showAllImages',
         valuePropName: 'checked',
       },
@@ -67,7 +66,6 @@ const ShareModal = memo<ShareModalProps>(({ open, onCancel, type }) => {
         children: <Switch />,
         hidden: tab !== Tab.Info,
         label: t('shareModal.showNegative'),
-        minWidth: undefined,
         name: 'showNegative',
         valuePropName: 'checked',
       },
@@ -75,7 +73,6 @@ const ShareModal = memo<ShareModalProps>(({ open, onCancel, type }) => {
         children: <Switch />,
         hidden: tab !== Tab.Info,
         label: t('shareModal.showConfig'),
-        minWidth: undefined,
         name: 'showConfig',
         valuePropName: 'checked',
       },
@@ -83,7 +80,6 @@ const ShareModal = memo<ShareModalProps>(({ open, onCancel, type }) => {
         children: <Switch />,
         hidden: tab !== Tab.Settings,
         label: t('shareModal.withBackground'),
-        minWidth: undefined,
         name: 'withBackground',
         valuePropName: 'checked',
       },
@@ -91,7 +87,6 @@ const ShareModal = memo<ShareModalProps>(({ open, onCancel, type }) => {
         children: <Switch />,
         hidden: tab !== Tab.Settings,
         label: t('shareModal.withFooter'),
-        minWidth: undefined,
         name: 'withFooter',
         valuePropName: 'checked',
       },
@@ -99,7 +94,6 @@ const ShareModal = memo<ShareModalProps>(({ open, onCancel, type }) => {
         children: <Segmented options={imageTypeOptions} />,
         hidden: tab !== Tab.Settings,
         label: t('shareModal.imageType'),
-        minWidth: undefined,
         name: 'imageType',
       },
     ],
@@ -116,8 +110,8 @@ const ShareModal = memo<ShareModalProps>(({ open, onCancel, type }) => {
         </Button>
       }
       maxHeight={false}
-      onCancel={onCancel}
-      open={open}
+      {...(onCancel && { onCancel })}
+      open={open || false}
       title={t('share')}
     >
       <Flexbox gap={16}>

@@ -1,11 +1,10 @@
 import { Form, Swatches } from '@lobehub/ui';
 import { Input, Segmented, Select, Switch } from 'antd';
-import isEqual from 'fast-deep-equal';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CustomLogo } from '@/components';
-import { type WebuiSetting, selectors, useAppStore } from '@/store';
+import { type WebuiSetting, useAppStore } from '@/store';
 
 import {
   type NeutralColor,
@@ -15,55 +14,120 @@ import {
   neutralColorsSwatches,
   primaryColors,
   primaryColorsSwatches,
-} from './data';
+} from '../data';
 import { SettingItemGroup } from './types';
 
-const SettingForm = memo(() => {
-  const setting = useAppStore(selectors.currentSetting, isEqual);
-  const { onSetSetting, localeOptions } = useAppStore((st) => ({
+interface AppearanceFormProps {
+  currentSetting: WebuiSetting;
+}
+
+const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
+  const { localeOptions } = useAppStore((st) => ({
     localeOptions: st.localeOptions,
-    onSetSetting: st.onSetSetting,
   }));
-  const [rawSetting, setRawSetting] = useState<WebuiSetting>(setting);
+
+  // Use current setting (which includes pending changes) instead of original store setting
+  const [rawSetting, setRawSetting] = useState<WebuiSetting>(currentSetting);
   const [primaryColor, setPrimaryColor] = useState<PrimaryColor | undefined>(
-    setting.primaryColor || undefined,
+    currentSetting.primaryColor || undefined,
   );
   const [neutralColor, setNeutralColor] = useState<NeutralColor | undefined>(
-    setting.neutralColor || undefined,
+    currentSetting.neutralColor || undefined,
   );
 
   const { t } = useTranslation();
 
+  // Update local state when currentSetting prop changes (when switching tabs)
+  useEffect(() => {
+    setRawSetting(currentSetting);
+    setPrimaryColor(currentSetting.primaryColor || undefined);
+    setNeutralColor(currentSetting.neutralColor || undefined);
+  }, [currentSetting]);
+
+  // MODIFIED: Track changes in real-time as user makes them
   const onFinish = useCallback(
     (value: WebuiSetting) => {
-      onSetSetting({ ...value, neutralColor, primaryColor });
-      location.reload();
+      // Keep for compatibility but won't be called without submit button
+      const changeEvent = new CustomEvent('settingsFormChange', {
+        detail: { ...value, neutralColor, primaryColor },
+      });
+      window.dispatchEvent(changeEvent);
     },
     [primaryColor, neutralColor],
+  );
+
+  // ADDED: Track changes in real-time
+  const onValuesChange = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_changedValues: Partial<WebuiSetting>, allValues: WebuiSetting) => {
+      // Update local state
+      setRawSetting(allValues);
+
+      // Dispatch change event immediately
+      const changeEvent = new CustomEvent('settingsFormChange', {
+        detail: { ...allValues, neutralColor, primaryColor },
+      });
+      window.dispatchEvent(changeEvent);
+    },
+    [primaryColor, neutralColor],
+  );
+
+  // ADDED: Track color changes too
+  const handlePrimaryColorChange = useCallback(
+    (c?: string) => {
+      if (c) {
+        const newColor = findCustomThemeName('primary', c);
+        setPrimaryColor(newColor);
+
+        // Dispatch color change immediately
+        const changeEvent = new CustomEvent('settingsFormChange', {
+          detail: { ...rawSetting, neutralColor, primaryColor: newColor },
+        });
+        window.dispatchEvent(changeEvent);
+      }
+    },
+    [rawSetting, neutralColor],
+  );
+
+  const handleNeutralColorChange = useCallback(
+    (c?: string) => {
+      if (c) {
+        const newColor = findCustomThemeName('neutral', c);
+        setNeutralColor(newColor);
+
+        // Dispatch color change immediately
+        const changeEvent = new CustomEvent('settingsFormChange', {
+          detail: { ...rawSetting, neutralColor: newColor, primaryColor },
+        });
+        window.dispatchEvent(changeEvent);
+      }
+    },
+    [rawSetting, primaryColor],
   );
 
   const theme: SettingItemGroup = useMemo(
     () => ({
       children: [
         {
-          children: <Select options={localeOptions} />,
+          children: <Select {...(localeOptions && { options: localeOptions })} />,
           desc: t('setting.language.desc'),
           label: t('setting.language.title'),
           name: 'i18n',
         },
         {
           children: <Switch />,
-          desc: t('setting.reduceAnimation.desc'),
-          label: t('setting.reduceAnimation.title'),
+          desc: t('setting.liteAnimation.desc', 'Reduce animations for better performance'),
+          label: t('setting.liteAnimation.title', 'Reduce Animation'),
           name: 'liteAnimation',
           valuePropName: 'checked',
         },
         {
           children: (
             <Swatches
-              activeColor={primaryColor ? primaryColors[primaryColor] : undefined}
+              {...(primaryColor &&
+                primaryColors[primaryColor] && { activeColor: primaryColors[primaryColor] })}
               colors={primaryColorsSwatches}
-              onSelect={(c) => setPrimaryColor(findCustomThemeName('primary', c))}
+              onSelect={handlePrimaryColorChange}
             />
           ),
           desc: t('setting.primaryColor.desc'),
@@ -72,9 +136,10 @@ const SettingForm = memo(() => {
         {
           children: (
             <Swatches
-              activeColor={neutralColor ? neutralColors[neutralColor] : undefined}
+              {...(neutralColor &&
+                neutralColors[neutralColor] && { activeColor: neutralColors[neutralColor] })}
               colors={neutralColorsSwatches}
-              onSelect={(c) => setNeutralColor(findCustomThemeName('neutral', c))}
+              onSelect={handleNeutralColorChange}
             />
           ),
           desc: t('setting.neutralColor.desc'),
@@ -99,14 +164,13 @@ const SettingForm = memo(() => {
               ]}
             />
           ),
-          desc: t('setting.logoType.desc'),
-          label: t('setting.logoType.title'),
+          desc: t('setting.logoType.desc', 'Choose logo style'),
+          label: t('setting.logoType.title', 'Logo Type'),
           name: 'logoType',
         },
         {
           children: <Input />,
           desc: t('setting.customLogo.desc'),
-          divider: false,
           hidden: rawSetting.logoType !== 'custom',
           label: t('setting.customLogo.title'),
           name: 'logoCustomUrl',
@@ -114,7 +178,6 @@ const SettingForm = memo(() => {
         {
           children: <Input />,
           desc: t('setting.customTitle.desc'),
-          divider: false,
           hidden: rawSetting.logoType !== 'custom',
           label: t('setting.customTitle.title'),
           name: 'logoCustomTitle',
@@ -122,18 +185,17 @@ const SettingForm = memo(() => {
         {
           children: (
             <CustomLogo
-              logoCustomTitle={rawSetting.logoCustomTitle}
-              logoCustomUrl={rawSetting.logoCustomUrl}
+              {...(rawSetting.logoCustomTitle && { logoCustomTitle: rawSetting.logoCustomTitle })}
+              {...(rawSetting.logoCustomUrl && { logoCustomUrl: rawSetting.logoCustomUrl })}
             />
           ),
-          divider: false,
           hidden: rawSetting.logoType !== 'custom',
-          label: t('setting.logoType.preview'),
+          label: 'Logo Preview',
         },
         {
           children: <Switch />,
-          desc: t('setting.svgIcons.desc'),
-          label: t('setting.svgIcons.title'),
+          desc: t('setting.svgIcon.desc', 'Use SVG icons globally'),
+          label: t('setting.svgIcon.title', 'SVG Icons'),
           name: 'svgIcon',
           valuePropName: 'checked',
         },
@@ -152,7 +214,6 @@ const SettingForm = memo(() => {
           valuePropName: 'checked',
         },
       ],
-
       title: t('setting.group.theme'),
     }),
     [
@@ -161,16 +222,19 @@ const SettingForm = memo(() => {
       rawSetting.logoType,
       rawSetting.logoCustomTitle,
       rawSetting.logoCustomUrl,
+      localeOptions,
+      handlePrimaryColorChange,
+      handleNeutralColorChange,
+      t,
     ],
   );
 
   return (
     <Form
-      id="theme_settings"
-      initialValues={setting}
+      initialValues={currentSetting}
       items={[theme]}
       onFinish={onFinish}
-      onValuesChange={(_, v) => setRawSetting(v)}
+      onValuesChange={onValuesChange}
       style={{ flex: 1 }}
       variant={'pure'}
     />

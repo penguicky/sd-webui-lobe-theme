@@ -1,7 +1,10 @@
 import { Modal, type ModalProps } from '@lobehub/ui';
 import { useResponsive, useTheme } from 'antd-style';
-import { memo, useState } from 'react';
+import isEqual from 'fast-deep-equal';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
+
+import { type WebuiSetting, selectors, useAppStore } from '@/store';
 
 import FormAppearance from './Form/Appearance';
 import FormExperimental from './Form/Experimental';
@@ -20,21 +23,60 @@ const Setting = memo<SettingProps>(({ open, onCancel }) => {
   const { mobile } = useResponsive();
   const theme = useTheme();
 
+  // Get original settings from store
+  const originalSetting = useAppStore(selectors.currentSetting, isEqual);
+
+  // Track all pending changes across all tabs
+  const [pendingChanges, setPendingChanges] = useState<Partial<WebuiSetting>>({});
+
+  // Calculate current merged state (original + pending changes)
+  const currentSetting = { ...originalSetting, ...pendingChanges };
+
+  // Listen for changes from individual forms
+  useEffect(() => {
+    const handleFormChange = (event: CustomEvent) => {
+      setPendingChanges((prev) => ({ ...prev, ...event.detail }));
+    };
+
+    window.addEventListener('settingsFormChange', handleFormChange as any);
+    return () => window.removeEventListener('settingsFormChange', handleFormChange as any);
+  }, []);
+
+  // Reset pending changes when modal opens/closes
+  useEffect(() => {
+    if (open) {
+      setPendingChanges({});
+    }
+  }, [open]);
+
+  // Pass reset function to Footer
+  const handleReset = useCallback(() => {
+    setPendingChanges({});
+  }, []);
+
   const content = (
     <>
-      {tab === SettingsTabs.Appearance && <FormAppearance />}
-      {tab === SettingsTabs.Layout && <FormLayout />}
-      {tab === SettingsTabs.Sidebar && <FormSidebar />}
-      {tab === SettingsTabs.Experimental && <FormExperimental />}
+      {/* Pass current merged state to each form so they show the right values */}
+      {tab === SettingsTabs.Appearance && (
+        <FormAppearance currentSetting={currentSetting} key="appearance" />
+      )}
+      {tab === SettingsTabs.Layout && <FormLayout currentSetting={currentSetting} key="layout" />}
+      {tab === SettingsTabs.Sidebar && (
+        <FormSidebar currentSetting={currentSetting} key="sidebar" />
+      )}
+      {tab === SettingsTabs.Experimental && (
+        <FormExperimental currentSetting={currentSetting} key="experimental" />
+      )}
     </>
   );
 
   return (
     <Modal
       allowFullscreen={true}
-      footer={mobile ? <Footer /> : null}
-      onCancel={onCancel}
-      open={open}
+      // Pass state and handlers to Footer
+      footer={<Footer onReset={handleReset} pendingChanges={pendingChanges} />}
+      {...(onCancel && { onCancel })}
+      open={open || false}
       styles={{
         body: {
           display: 'flex',
@@ -86,14 +128,13 @@ const Setting = memo<SettingProps>(({ open, onCancel }) => {
             width={'100%'}
           >
             {content}
-            <Flexbox width={'100%'}>
-              <Footer />
-            </Flexbox>
           </Flexbox>
         </Flexbox>
       )}
     </Modal>
   );
 });
+
+Setting.displayName = 'Setting';
 
 export default Setting;

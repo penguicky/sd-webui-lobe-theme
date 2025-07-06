@@ -1,8 +1,9 @@
 import { Form, type ItemGroup, Swatches } from '@lobehub/ui';
 import { Button, Input, InputNumber, Segmented, Select, Switch } from 'antd';
 import isEqual from 'fast-deep-equal';
-import { Layout, Palette, PanelLeftClose, PanelRightClose, TextCursorInput } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
+
+import { Layout, Palette, PanelLeftClose, PanelRightClose, TextCursorInput } from '@/components/OptimizedIcon';
 import { useTranslation } from 'react-i18next';
 
 import { CustomLogo } from '@/components';
@@ -63,7 +64,7 @@ const SettingForm = memo(() => {
     () => ({
       children: [
         {
-          children: <Select options={localeOptions} />,
+          children: <Select {...(localeOptions && { options: localeOptions })} />,
           desc: t('setting.language.desc'),
           label: t('setting.language.title'),
           name: 'i18n',
@@ -78,7 +79,8 @@ const SettingForm = memo(() => {
         {
           children: (
             <Swatches
-              activeColor={primaryColor ? primaryColors[primaryColor] : undefined}
+              {...(primaryColor &&
+                primaryColors[primaryColor] && { activeColor: primaryColors[primaryColor] })}
               colors={primaryColorsSwatches}
               onSelect={(c) => setPrimaryColor(findCustomThemeName('primary', c))}
             />
@@ -89,7 +91,8 @@ const SettingForm = memo(() => {
         {
           children: (
             <Swatches
-              activeColor={neutralColor ? neutralColors[neutralColor] : undefined}
+              {...(neutralColor &&
+                neutralColors[neutralColor] && { activeColor: neutralColors[neutralColor] })}
               colors={neutralColorsSwatches}
               onSelect={(c) => setNeutralColor(findCustomThemeName('neutral', c))}
             />
@@ -139,8 +142,8 @@ const SettingForm = memo(() => {
         {
           children: (
             <CustomLogo
-              logoCustomTitle={rawSetting.logoCustomTitle}
-              logoCustomUrl={rawSetting.logoCustomUrl}
+              {...(rawSetting.logoCustomTitle && { logoCustomTitle: rawSetting.logoCustomTitle })}
+              {...(rawSetting.logoCustomUrl && { logoCustomUrl: rawSetting.logoCustomUrl })}
             />
           ),
           divider: false,

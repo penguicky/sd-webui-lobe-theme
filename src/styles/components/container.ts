@@ -1,8 +1,9 @@
 import { Theme, css } from 'antd-style';
 import { readableColor } from 'polished';
+import { getCachedStyle } from '@/utils/styleCache';
 
 export default (token: Theme) => {
-  return css`
+  return getCachedStyle(token, 'container-styles', (theme) => css`
     .gradio-group,
     .gradio-row {
       gap: 12px !important;
@@ -19,7 +20,7 @@ export default (token: Theme) => {
 
     .block.padded {
       &.gradio-box:not(.gradio-accordion) {
-        padding: 16px !important;
+        padding: ${theme.padding || 16}px !important;
       }
     }
 
@@ -84,5 +85,5 @@ export default (token: Theme) => {
       border-style: solid;
       border-width: 2px;
     }
-  `;
+  `);
 };

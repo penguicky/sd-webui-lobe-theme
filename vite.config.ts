@@ -2,7 +2,8 @@ import react from '@vitejs/plugin-react-swc';
 import { consola } from 'consola';
 import dotenv from 'dotenv';
 import { resolve } from 'node:path';
-import * as process from 'node:process';
+import process from 'node:process';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { type PluginOption, defineConfig } from 'vite';
 
 dotenv.config();
@@ -21,27 +22,107 @@ export default defineConfig({
     emptyOutDir: true,
     minify: 'esbuild',
     outDir: './javascript',
+    reportCompressedSize: true,
 
-    // Increase limit since we're using single bundle
-reportCompressedSize: true,
+    rollupOptions: {
+      // External dependencies that should not be bundled (if any)
+      external: [],
 
-    
-rollupOptions: {
       input: resolve(__dirname, 'src/main.tsx'),
+
       output: {
-        // Single file output - no code splitting for compatibility
-        assetFileNames: `[name].[ext]`,
-        chunkFileNames: `[name].js`,
+        // Strategic code splitting for Phase 2 optimizations
+        assetFileNames: (assetInfo) => {
+          // Keep critical CSS separate for better caching
+          if (assetInfo.name === 'critical.css') {
+            return 'critical.[hash].css';
+          }
+          return `[name].[ext]`;
+        },
+        chunkFileNames: `[name]-[hash].js`,
+        compact: true,
+
         entryFileNames: `[name].js`,
 
-        
+        // Use IIFE format for WebUI compatibility
+        format: 'iife',
+        name: 'LobeTheme',
+
+        // Aggressive minification settings
+        generatedCode: {
+          arrowFunctions: true,
+          constBindings: true,
+          objectShorthand: true,
+        },
+
+        // Disable code splitting for IIFE compatibility with WebUI
         inlineDynamicImports: true,
-        // Force everything into a single bundle
-manualChunks: undefined,
+
+        // IIFE format doesn't support manual chunks - all code will be inlined
       },
-    }, 
+
+      // Enhanced tree-shaking configuration for Phase 1 optimizations
+      treeshake: {
+        moduleSideEffects: (id): boolean => {
+          // Preserve side effects only for critical initialization modules
+          if (
+            id.includes('src/locales/config') ||
+            id.includes('i18next-http-backend') ||
+            id.includes('react-i18next') ||
+            id.includes('antd/es/config-provider') ||
+            id.includes('antd-style') ||
+            id.includes('@lobehub/ui')
+          ) {
+            return true;
+          }
+
+          // Aggressive tree-shaking for large libraries
+          if (
+            id.includes('lodash-es') ||
+            id.includes('lucide-react') ||
+            id.includes('lucide-static') ||
+            id.includes('@icons-pack/react-simple-icons') ||
+            // Enhanced Shiki tree-shaking
+            id.includes('shiki/dist') ||
+            id.includes('shiki/langs') ||
+            id.includes('shiki/themes') ||
+            id.includes('shiki/wasm') ||
+            // Target unused Shiki components
+            id.includes('shiki/engine/javascript') ||
+            id.includes('shiki/engine/textmate')
+          ) {
+            return false;
+          }
+
+          return false;
+        },
+        // More aggressive tree-shaking options for Phase 1
+        preset: 'smallest',
+
+        propertyReadSideEffects: false,
+
+        tryCatchDeoptimization: false,
+
+        unknownGlobalSideEffects: false,
+
+        // Enhanced dead code elimination
+        annotations: true,
+
+        // More aggressive function inlining
+        correctVarValueBeforeDeclaration: false,
+      },
+    },
     sourcemap: !isProduction,
     target: 'es2020',
+  },
+
+  css: {
+    postcss: './postcss.config.js',
+    preprocessorOptions: {
+      less: {
+        javascriptEnabled: true,
+      },
+    },
   },
 
   define: {
@@ -50,16 +131,60 @@ manualChunks: undefined,
   },
 
   optimizeDeps: {
-    exclude: ['fast-deep-equal'],
+    // Exclude problematic dependencies that should be bundled at build time
+    exclude: [
+      'fast-deep-equal',
+      // Enhanced Shiki exclusions for Phase 1 optimization
+      'shiki', // Large WebAssembly dependency - better to bundle at build time
+      'shiki/core',
+      'shiki/engine/oniguruma',
+      'shiki/wasm',
+      'shiki/dist',
+      '@lobehub/ui/node_modules/shiki', // Nested shiki dependency
+      // Exclude unused Shiki engines to reduce bundle size
+      'shiki/engine/javascript',
+      'shiki/engine/textmate',
+    ],
     include: [
+      // Core React dependencies
       'react',
       'react-dom',
-      'antd',
+      'react/jsx-runtime',
+
+      // UI and styling libraries
       'antd-style',
       '@lobehub/ui',
+
+      // State management
       'zustand',
-      'lodash-es',
+      'zustand/shallow',
+
+      // Utilities (tree-shakeable)
       'dayjs',
+      'consola',
+
+      // Specific antd components for better tree-shaking
+      'antd/es/button',
+      'antd/es/input',
+      'antd/es/select',
+      'antd/es/switch',
+      'antd/es/segmented',
+      'antd/es/space',
+      'antd/es/skeleton',
+      'antd/es/slider',
+      'antd/es/tag',
+      'antd/es/menu',
+      'antd/es/config-provider',
+      'antd/es/input-number',
+      'antd/es/popconfirm',
+      'antd/es/notification',
+      'antd/es/form',
+      'antd/es/modal',
+      'antd/es/drawer',
+      'antd/es/tooltip',
+      'antd/es/dropdown',
+
+
     ],
   },
 
@@ -69,13 +194,26 @@ manualChunks: undefined,
       tsDecorators: true,
     }),
 
+    // Bundle analyzer for production builds
+    ...(isProduction
+      ? [
+          visualizer({
+            brotliSize: true,
+            filename: 'javascript/bundle-analysis.html',
+            gzipSize: true,
+            open: false,
+            template: 'treemap', // 'treemap', 'sunburst', 'network'
+          }) as PluginOption,
+        ]
+      : []),
+
     // Development-only plugins
     ...(isProduction
       ? []
       : [
           {
             configureServer(server) {
-              server.middlewares.use((req, res, next) => {
+              server.middlewares.use((_req, res, next) => {
                 res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
                 res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-non');
                 next();
@@ -124,6 +262,23 @@ manualChunks: undefined,
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+    },
+  },
+
+  // Web Worker configuration
+  worker: {
+    format: 'es',
+    plugins: () => [
+      react({
+        devTarget: 'esnext',
+        tsDecorators: true,
+      }),
+    ],
+    rollupOptions: {
+      output: {
+        entryFileNames: 'workers/[name].js',
+        format: 'es',
+      },
     },
   },
 

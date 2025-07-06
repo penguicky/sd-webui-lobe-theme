@@ -1,9 +1,9 @@
 import type { StateCreator } from 'zustand/vanilla';
 
 import { type StoreAction, createSettings } from './action';
-import { type StroeState, initialState } from './initialState';
+import { type StoreState, initialState } from './initialState';
 
-export type Store = StoreAction & StroeState;
+export type Store = StoreAction & StoreState;
 
 export const createStore: StateCreator<Store, [['zustand/devtools', never]]> = (...parameters) => ({
   ...initialState,

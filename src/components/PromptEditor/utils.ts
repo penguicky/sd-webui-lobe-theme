@@ -1,4 +1,5 @@
 import { Converter } from '@/scripts/formatPrompt';
+import { isValidEmbedding } from '@/services/embeddingService';
 
 import { TagItem } from './TagList';
 
@@ -11,8 +12,49 @@ export const genTagType = (tag: TagItem): TagItem => {
   } else if (newTag.text.includes('<embedding')) {
     newTag.className = 'ReactTags__embedding';
   } else {
-    newTag.className = undefined;
+    delete newTag.className;
   }
+  return newTag;
+};
+
+/**
+ * Enhanced tag type generator with API-based embedding verification
+ */
+export const genTagTypeWithVerification = async (tag: TagItem): Promise<TagItem> => {
+  const newTag = { ...tag };
+
+  if (newTag.text.includes('<lora')) {
+    newTag.className = 'ReactTags__lora';
+  } else if (newTag.text.includes('<hypernet')) {
+    newTag.className = 'ReactTags__hypernet';
+  } else if (newTag.text.includes('<embedding:')) {
+    // Extract embedding name from <embedding:name> format
+    const embeddingMatch = newTag.text.match(/<embedding:([^>]+)>/);
+    if (embeddingMatch) {
+      const embeddingName = embeddingMatch[1]?.trim();
+      if (embeddingName) {
+        try {
+          const isValid = await isValidEmbedding(embeddingName);
+          newTag.className = isValid
+            ? 'ReactTags__embedding_valid'
+            : 'ReactTags__embedding_invalid';
+        } catch {
+          // On error, fall back to generic embedding class
+          newTag.className = 'ReactTags__embedding';
+        }
+      } else {
+        newTag.className = 'ReactTags__embedding';
+      }
+    } else {
+      newTag.className = 'ReactTags__embedding';
+    }
+  } else if (newTag.text.includes('<embedding')) {
+    // Legacy embedding format without colon
+    newTag.className = 'ReactTags__embedding';
+  } else {
+    delete newTag.className;
+  }
+
   return newTag;
 };
 

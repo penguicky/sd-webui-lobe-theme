@@ -16,15 +16,18 @@ export const usePerformanceMonitor = (componentName: string) => {
           const endTime = performance.now();
           const renderTime = endTime - startTimeRef.current;
 
-          if (renderTime > 16) {
-            // Only log if render time > 16ms (60fps threshold)
-            console.warn(`🐌 ${componentName} slow render: ${renderTime.toFixed(2)}ms`);
-          } else if (renderTime > 8) {
-            console.log(`⚡ ${componentName} render: ${renderTime.toFixed(2)}ms`);
+          if (__DEV__) {
+            if (renderTime > 16) {
+              // Only log if render time > 16ms (60fps threshold)
+              console.warn(`🐌 ${componentName} slow render: ${renderTime.toFixed(2)}ms`);
+            } else if (renderTime > 8) {
+              console.log(`⚡ ${componentName} render: ${renderTime.toFixed(2)}ms`);
+            }
           }
         }
       };
     }
+    return undefined;
   });
 };
 
@@ -101,26 +104,36 @@ export const useThrottledEffect = (
   }, deps);
 };
 
-// Intersection observer hook for lazy loading
+// Intersection observer hook for lazy loading - optimized with pooling
 export const useIntersectionObserver = (
   ref: React.RefObject<Element>,
   options?: IntersectionObserverInit,
+  debounceMs = 100,
 ) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
 
   useEffect(() => {
-    if (!ref.current || !('IntersectionObserver' in window)) {
+    if (!('IntersectionObserver' in window)) {
+      setIsIntersecting(true); // Fallback for unsupported browsers
       return;
     }
+  }, []);
 
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsIntersecting(entry.isIntersecting);
-    }, options);
+  // Use pooled intersection observer for better performance
+  const { usePooledIntersectionObserver } = require('@/hooks/useObserverPool');
 
-    observer.observe(ref.current);
-
-    return () => observer.disconnect();
-  }, [ref, options]);
+  usePooledIntersectionObserver(
+    ref.current,
+    (entries: IntersectionObserverEntry[]) => {
+      const entry = entries[0];
+      if (entry) {
+        setIsIntersecting(entry.isIntersecting);
+      }
+    },
+    options || { threshold: 0.1 },
+    `lazy-loading-intersection-${Math.random().toString(36).slice(2, 11)}`,
+    debounceMs,
+  );
 
   return isIntersecting;
 };

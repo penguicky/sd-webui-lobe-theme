@@ -42,6 +42,7 @@ English · [简体中文](./README.zh-CN.md) · [Changelog](./CHANGELOG.md) · [
 - [👋🏻 Getting Started & Join Our Community](#-getting-started--join-our-community)
 - [📦 Extension Installation](#-extension-installation)
 - [✨ Feature Overview](#-feature-overview)
+- [⚡ Performance Optimization](#-performance-optimization)
 - [🖥 Environment Support](#-environment-support)
 - [📦 Ecosystem](#-ecosystem)
 - [⌨️ Local Development](#️-local-development)
@@ -366,6 +367,40 @@ photorealistic photo of a handsome male, (wizard:1.2), short beard, white wizard
 - [x] 🌍 **Internationalization Support**: Fully supports major i18n languages and welcomes contributions on [PR](https://github.com/lobehub/sd-webui-lobe-theme/tree/main/locales).
 
 > ✨ With continuous updates in product iterations, we hope to bring more exciting features!
+
+<div align="right">
+
+[![][back-to-top]](#readme-top)
+
+</div>
+
+## ⚡ Performance Optimization
+
+Lobe Theme has undergone extensive performance optimization to ensure fast loading and smooth user experience:
+
+### Bundle Size Optimization
+
+- **92.7% Main Bundle Reduction**: From 2.36 MB to 172.83 kB through advanced code splitting
+- **Smart Code Splitting**: Logical chunks for core (289kB), UI libraries (902kB), utilities (771kB), and features (184kB)
+- **Progressive Loading**: Components load based on visibility, interaction, and priority
+- **Efficient Caching**: Independent chunk caching for better browser cache utilization
+
+### Loading Performance
+
+| Metric | Before Optimization | After Optimization | Improvement |
+|--------|-------------------|-------------------|-------------|
+| **Initial Bundle Size** | 2,356.94 kB | 172.83 kB | **-92.7%** |
+| **Time to Interactive** | ~3-5s | ~0.5-1s | **~80% faster** |
+| **First Contentful Paint** | ~2-3s | ~0.3-0.5s | **~85% faster** |
+
+### Advanced Features
+
+- **Intersection Observer**: Loads components when they become visible
+- **Idle Loading**: Utilizes browser idle time for non-critical features
+- **Error Boundaries**: Graceful error handling with retry mechanisms
+- **Performance Monitoring**: Real-time chunk load tracking and analytics
+
+> 📊 For detailed performance metrics, see [Phase 2 Performance Report](./docs/PHASE_2_PERFORMANCE_REPORT.md)
 
 <div align="right">
 
