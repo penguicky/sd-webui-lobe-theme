@@ -1,7 +1,6 @@
 import { Form, type ItemGroup, Swatches } from '@lobehub/ui';
 import { Button, Input, InputNumber, Segmented, Select, Switch } from 'antd';
 import isEqual from 'fast-deep-equal';
-import { Layout, Palette, PanelLeftClose, PanelRightClose, TextCursorInput } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +12,7 @@ import {
   selectors,
   useAppStore,
 } from '@/store';
+import { createIconComponent } from '@/utils/iconOptimization';
 
 import {
   type NeutralColor,
@@ -171,7 +171,7 @@ const SettingForm = memo(() => {
           valuePropName: 'checked',
         },
       ],
-      icon: Palette,
+      icon: createIconComponent('Palette', 16),
       title: t('setting.group.theme'),
     }),
     [
@@ -220,7 +220,7 @@ const SettingForm = memo(() => {
           valuePropName: 'checked',
         },
       ],
-      icon: TextCursorInput,
+      icon: createIconComponent('TextCursorInput', 16),
       title: t('setting.group.promptTextarea'),
     }),
     [],
@@ -244,7 +244,7 @@ const SettingForm = memo(() => {
           valuePropName: 'checked',
         },
       ],
-      icon: Layout,
+      icon: createIconComponent('Layout', 16),
       title: t('setting.group.layout'),
     }),
     [],
@@ -296,7 +296,7 @@ const SettingForm = memo(() => {
           name: 'sidebarWidth',
         },
       ],
-      icon: PanelLeftClose,
+      icon: createIconComponent('PanelLeftClose', 16),
       title: t('setting.group.quickSettingSidebar'),
     }),
     [rawSetting.enableSidebar],
@@ -355,7 +355,7 @@ const SettingForm = memo(() => {
           name: 'extraNetworkCardSize',
         },
       ],
-      icon: PanelRightClose,
+      icon: createIconComponent('PanelRightClose', 16),
       title: t('setting.group.extraNetworkSidebar'),
     }),
     [rawSetting.enableExtraNetworkSidebar],

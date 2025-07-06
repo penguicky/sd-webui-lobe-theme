@@ -1,11 +1,11 @@
 import { ActionIcon, CopyButton } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { memo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
 import SyntaxHighlighter from '@/modules/PromptHighlight/features/SyntaxHighlighter';
 import { DivProps } from '@/types';
+import { createIconComponent } from '@/utils/iconOptimization';
 
 const useStyles = createStyles(
   ({ token, css, cx, prefixCls }, type: 'ghost' | 'block' | 'pure') => {
@@ -95,7 +95,7 @@ export const Highlighter = memo<HighlighterProps>(
       <div className={container} data-code-type="highlighter" style={style} {...rest}>
         <Flexbox align={'center'} className={styles.header} horizontal justify={'space-between'}>
           <ActionIcon
-            icon={expand ? ChevronDown : ChevronRight}
+            icon={createIconComponent(expand ? 'ChevronDown' : 'ChevronRight', 14)}
             onClick={() => setExpand(!expand)}
             size={{ blockSize: 24, fontSize: 14, strokeWidth: 3 }}
           />
