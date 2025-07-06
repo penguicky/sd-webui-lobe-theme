@@ -1,11 +1,11 @@
 import { ActionIcon, DraggablePanelBody, DraggablePanelFooter } from '@lobehub/ui';
 import { Skeleton, Slider } from 'antd';
 import isEqual from 'fast-deep-equal';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 import { memo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
 import { selectors, useAppStore } from '@/store';
-import { createIconComponent } from '@/utils/iconOptimization';
 
 import { useStyles } from './style';
 import { useCivitaiHelperFix } from './useCivitaiHelperFix';
@@ -54,7 +54,7 @@ const Inner = memo(() => {
       </DraggablePanelBody>
       <DraggablePanelFooter>
         <ActionIcon
-          icon={createIconComponent(setting.extraNetworkCardSize < size ? 'ZoomOut' : 'ZoomIn', 16)}
+          icon={setting.extraNetworkCardSize < size ? ZoomOut : ZoomIn}
           onClick={() => setSize(setting.extraNetworkCardSize)}
           size={{ blockSize: 24, fontSize: 16 }}
         />

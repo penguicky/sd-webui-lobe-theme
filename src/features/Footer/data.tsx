@@ -1,6 +1,7 @@
+import { Icon } from '@lobehub/ui';
+import { Bug, FileClock, GitFork, Github, Heart } from 'lucide-react';
 
 import { GITHUB_REPO_URL } from '@/const/url';
-import { OptimizedIcon } from '@/utils/iconOptimization';
 
 export const Resources = [
   {
@@ -37,31 +38,31 @@ export const Resources = [
 
 export const Community = [
   {
-    icon: <OptimizedIcon name="Github" size={16} />,
+    icon: <Icon icon={Github} size="small" />,
     openExternal: true,
     title: 'GitHub',
     url: GITHUB_REPO_URL,
   },
   {
-    icon: <OptimizedIcon name="FileClock" size={16} />,
+    icon: <Icon icon={FileClock} size="small" />,
     openExternal: true,
     title: 'Changelog',
     url: `${GITHUB_REPO_URL}/blob/main/CHANGELOG.md`,
   },
   {
-    icon: <OptimizedIcon name="Heart" size={16} />,
+    icon: <Icon icon={Heart} size="small" />,
     openExternal: true,
     title: 'Sponsor',
     url: `https://opencollective.com/lobehub`,
   },
   {
-    icon: <OptimizedIcon name="Bug" size={16} />,
+    icon: <Icon icon={Bug} size="small" />,
     openExternal: true,
     title: 'Report Bug',
     url: `${GITHUB_REPO_URL}/issues/new/choose`,
   },
   {
-    icon: <OptimizedIcon name="GitFork" size={16} />,
+    icon: <Icon icon={GitFork} size="small" />,
     openExternal: true,
     title: 'Request Feature',
     url: `${GITHUB_REPO_URL}/issues/new/choose`,

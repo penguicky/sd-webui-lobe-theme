@@ -1,7 +1,6 @@
 import { consola } from 'consola';
+import { debounce } from 'lodash-es';
 import type { StateCreator } from 'zustand/vanilla';
-
-import { debounce } from '@/utils/nativeUtils';
 
 import { getLatestVersion, getLocaleOptions, getSetting, getVersion, postSetting } from './api';
 import { DEFAULT_SETTING, type WebuiSetting } from './initialState';

@@ -1,9 +1,8 @@
-import { Logo } from '@lobehub/ui';
+import { Icon, Logo } from '@lobehub/ui';
+import { Loader2 } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Center, Flexbox } from 'react-layout-kit';
-
-import { OptimizedIcon } from '@/utils/iconOptimization';
 
 const Loading = memo(() => {
   const { t } = useTranslation();
@@ -13,7 +12,7 @@ const Loading = memo(() => {
       <Center flex={1} gap={12} width={'100%'}>
         <Logo extra={'SD'} size={48} type={'combine'} />
         <Center gap={16} horizontal>
-          <OptimizedIcon className="animate-spin" name="Loader2" size={16} />
+          <Icon icon={Loader2} spin />
           {t('custom.initializing')}
         </Center>
       </Center>

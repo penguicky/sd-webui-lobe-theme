@@ -1,6 +1,5 @@
 import { consola } from 'consola';
-
-import { isNumber } from '@/utils/nativeUtils';
+import { isNumber } from 'lodash-es';
 
 const TAB_PREFIX_LIST = ['txt2img', 'img2img'] as const;
 const MODEL_TYPE_LIST = [
