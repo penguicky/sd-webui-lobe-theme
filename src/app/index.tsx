@@ -18,10 +18,14 @@ import { auditAccessibility } from '@/utils/accessibilityTesting';
 import { getBrowserCompatibilityReport } from '@/utils/browserCompat';
 import { logChunkPerformance } from '@/utils/lazyOptimized';
 import { registerCommonFeatures } from '@/utils/featureLoader';
+import { initializeResourcePreloader } from '@/utils/resourcePreloader';
 import { ProgressiveLoader, SuspenseLoader } from '@/components/ProgressiveLoader';
 
 import Content from '../features/Content';
 import { useStyles } from './style';
+
+// Phase 4: Remove lazy loading from ExtraNetworkSidebar for immediate availability
+import ExtraNetworkSidebar from '../features/ExtraNetworkSidebar';
 // Lazy load non-critical components for Phase 3 optimization
 const Footer = lazy(() => import('../features/Footer'));
 const Header = lazy(() => import('../features/Header'));
@@ -100,6 +104,10 @@ const Index = memo(() => {
 
     // Register common features for progressive loading
     registerCommonFeatures();
+
+    // Phase 4: Initialize intelligent resource preloading
+    initializeResourcePreloader();
+    debugLog('🚀 Resource preloader initialized for Phase 4 optimization');
 
     // Check browser compatibility
     getBrowserCompatibilityReport();
@@ -270,17 +278,9 @@ const Index = memo(() => {
             role="complementary"
             style={{ flex: 0, zIndex: 50 }}
           >
-            <SuspenseLoader minHeight={300}>
-              <FeatureErrorBoundary feature="ExtraNetworkSidebar">
-                <ProgressiveLoader
-                  chunkName="extra-network-sidebar"
-                  component={() => import('../features/ExtraNetworkSidebar')}
-                  componentProps={{ headerHeight: HEADER_HEIGHT }}
-                  minLoadingTime={200}
-                  strategy="visible"
-                />
-              </FeatureErrorBoundary>
-            </SuspenseLoader>
+            <FeatureErrorBoundary feature="ExtraNetworkSidebar">
+              <ExtraNetworkSidebar headerHeight={HEADER_HEIGHT} />
+            </FeatureErrorBoundary>
           </LayoutSidebar>
         )}
       </LayoutMain>

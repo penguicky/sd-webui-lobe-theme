@@ -64,12 +64,7 @@ class IntelligentPreloader {
         probability: 0.9,
         trigger: 'enable-sidebar',
       },
-      {
-        components: ['extra-network-sidebar'],
-        delay: 200,
-        probability: 0.9,
-        trigger: 'enable-extra-network',
-      },
+      // Phase 4: Extra Network Sidebar now loads directly - no longer needs preloading
       {
         components: ['prompt-editor-advanced', 'syntax-highlighter'],
         condition: () => window.innerWidth > 768,

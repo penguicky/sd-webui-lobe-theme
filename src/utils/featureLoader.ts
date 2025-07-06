@@ -285,18 +285,8 @@ export function registerCommonFeatures(): void {
     priority: 'low',
   });
 
-  // Extra Network Sidebar
-  featureLoader.registerFeature({
-    conditions: {
-      settingEnabled: 'enableExtraNetworkSidebar',
-    },
-    loader: () => import('../features/ExtraNetworkSidebar'),
-    name: 'extra-network-sidebar',
-    preload: {
-      delay: 1000,
-    },
-    priority: 'high',
-  });
+  // Extra Network Sidebar - Phase 4: Removed lazy loading for immediate availability
+  // Now loaded directly in app/index.tsx for better performance
 
   // Quick Settings Sidebar
   featureLoader.registerFeature({

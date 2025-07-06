@@ -1,9 +1,30 @@
 /**
  * Phase 3: Tiered Loading System
+ * Phase 4: Enhanced with Progressive Resource Loading
  * Implements progressive enhancement with intelligent loading priorities
  */
 
 import { ComponentType } from 'react';
+
+// Phase 4: Progressive resource loading interfaces
+export interface ProgressiveResource {
+  condition?: () => boolean;
+  content?: string;
+  name: string;
+  preload?: boolean;
+  priority: 'high' | 'medium' | 'low';
+  tier: number;
+  type: 'css' | 'js' | 'font' | 'image' | 'icon';
+  url?: string;
+}
+
+export interface ResourceLoadResult {
+  cached: boolean;
+  loadTime: number;
+  name: string;
+  size?: number;
+  success: boolean;
+}
 
 export interface LoadingTier {
   components: Array<{
@@ -30,6 +51,11 @@ class TieredLoadingManager {
   private activeLoads = 0;
   private isIdle = false;
   private idleTimer: number | null = null;
+
+  // Phase 4: Progressive resource loading properties
+  private progressiveResources: ProgressiveResource[] = [];
+  private loadedResources = new Set<string>();
+  private resourceLoadResults: ResourceLoadResult[] = [];
 
   constructor(config: TieredLoadingConfig) {
     this.config = config;
@@ -166,12 +192,199 @@ class TieredLoadingManager {
     totalComponents: number;
   } {
     const totalComponents = this.config.tiers.reduce((sum, tier) => sum + tier.components.length, 0);
-    
+
     return {
       activeLoads: this.activeLoads,
       loadedComponents: this.loadedComponents.size,
       queuedComponents: this.loadingQueue.length,
       totalComponents,
+    };
+  }
+
+  // Phase 4: Progressive Resource Loading Methods
+  public addProgressiveResources(resources: ProgressiveResource[]): void {
+    this.progressiveResources.push(...resources);
+    this.scheduleProgressiveLoading();
+  }
+
+  private scheduleProgressiveLoading(): void {
+    // Group resources by tier
+    const resourcesByTier = new Map<number, ProgressiveResource[]>();
+
+    this.progressiveResources.forEach(resource => {
+      if (resource.condition && !resource.condition()) return;
+
+      if (!resourcesByTier.has(resource.tier)) {
+        resourcesByTier.set(resource.tier, []);
+      }
+      resourcesByTier.get(resource.tier)!.push(resource);
+    });
+
+    // Schedule loading by tier
+    Array.from(resourcesByTier.entries())
+      .sort(([a], [b]) => a - b) // Sort by tier number
+      .forEach(([tier, resources]) => {
+        const delay = tier * 1000; // 1 second per tier
+        setTimeout(() => {
+          this.loadProgressiveResourceTier(resources);
+        }, delay);
+      });
+  }
+
+  private async loadProgressiveResourceTier(resources: ProgressiveResource[]): Promise<void> {
+    console.log(`🔄 Loading progressive resource tier with ${resources.length} resources`);
+
+    // Sort by priority within tier
+    const sortedResources = resources.sort((a, b) => {
+      const priorityOrder = { high: 3, low: 1, medium: 2 };
+      return priorityOrder[b.priority] - priorityOrder[a.priority];
+    });
+
+    for (const resource of sortedResources) {
+      if (this.loadedResources.has(resource.name)) continue;
+
+      await this.loadProgressiveResource(resource);
+
+      // Small delay between resources to avoid overwhelming the browser
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(undefined);
+        }, 100);
+      });
+    }
+  }
+
+  private async loadProgressiveResource(resource: ProgressiveResource): Promise<void> {
+    const startTime = performance.now();
+
+    try {
+      let success = false;
+      let size = 0;
+
+      switch (resource.type) {
+      case 'css': {
+        success = await this.loadCSS(resource);
+        size = resource.content?.length || 0;
+      
+      break;
+      }
+      case 'js': {
+        success = await this.loadJS(resource);
+        size = resource.content?.length || 0;
+      
+      break;
+      }
+      case 'font': {
+        success = await this.loadFont(resource);
+      
+      break;
+      }
+      case 'image': 
+      case 'icon': {
+        success = await this.loadImage(resource);
+      
+      break;
+      }
+      // No default
+      }
+
+      const loadTime = performance.now() - startTime;
+
+      this.resourceLoadResults.push({
+        cached: false, // TODO: Implement cache detection
+        loadTime,
+        name: resource.name,
+        size,
+        success,
+      });
+
+      if (success) {
+        this.loadedResources.add(resource.name);
+        console.log(`✅ Loaded progressive resource: ${resource.name} (${loadTime.toFixed(2)}ms)`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to load progressive resource ${resource.name}:`, error);
+    }
+  }
+
+  private async loadCSS(resource: ProgressiveResource): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (resource.content) {
+        // Inline CSS
+        const style = document.createElement('style');
+        style.id = `progressive-${resource.name}`;
+        style.textContent = resource.content;
+        document.head.append(style);
+        resolve(true);
+      } else if (resource.url) {
+        // External CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = resource.url;
+        link.onload = () => resolve(true);
+        link.onerror = () => resolve(false);
+        document.head.append(link);
+      } else {
+        resolve(false);
+      }
+    });
+  }
+
+  private async loadJS(resource: ProgressiveResource): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (resource.content) {
+        // Inline JS
+        const script = document.createElement('script');
+        script.id = `progressive-${resource.name}`;
+        script.textContent = resource.content;
+        document.head.append(script);
+        resolve(true);
+      } else if (resource.url) {
+        // External JS
+        const script = document.createElement('script');
+        script.src = resource.url;
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.head.append(script);
+      } else {
+        resolve(false);
+      }
+    });
+  }
+
+  private async loadFont(resource: ProgressiveResource): Promise<boolean> {
+    if (!resource.url) return false;
+
+    try {
+      const font = new FontFace(resource.name, `url(${resource.url})`);
+      await font.load();
+      document.fonts.add(font);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private async loadImage(resource: ProgressiveResource): Promise<boolean> {
+    if (!resource.url) return false;
+
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = resource.url!;
+    });
+  }
+
+  public getProgressiveResourceStats(): {
+    loaded: number;
+    results: ResourceLoadResult[];
+    total: number;
+  } {
+    return {
+      loaded: this.loadedResources.size,
+      results: [...this.resourceLoadResults],
+      total: this.progressiveResources.length,
     };
   }
 }
