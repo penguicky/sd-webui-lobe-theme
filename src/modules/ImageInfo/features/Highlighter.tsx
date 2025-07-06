@@ -1,10 +1,9 @@
 import { ActionIcon, CopyButton } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
 import { memo, useState } from 'react';
-
-import { ChevronDown, ChevronRight } from '@/components/OptimizedIcon';
 import { Flexbox } from 'react-layout-kit';
 
+import { ChevronDown, ChevronRight } from '@/components/OptimizedIcon';
 import SyntaxHighlighter from '@/modules/PromptHighlight/features/SyntaxHighlighter';
 import { DivProps } from '@/types';
 
@@ -98,18 +97,12 @@ export const Highlighter = memo<HighlighterProps>(
           <ActionIcon
             icon={expand ? ChevronDown : ChevronRight}
             onClick={() => setExpand(!expand)}
-            size={{ blockSize: 24, fontSize: 14, strokeWidth: 3 }}
+            size={{ blockSize: 24, size: 14, strokeWidth: 3 }}
           />
 
-          <ActionIcon size={{ blockSize: 24 }} style={{ width: 'unset' }}>
-            {title}
-          </ActionIcon>
+          <div style={{ fontSize: '14px', lineHeight: '24px', width: 'unset' }}>{title}</div>
           {showCopy ? (
-            <CopyButton
-              content={children}
-              placement="left"
-              size={{ blockSize: 24, fontSize: 14, strokeWidth: 2 }}
-            />
+            <CopyButton content={children} size={{ blockSize: 24, size: 14, strokeWidth: 2 }} />
           ) : (
             <div />
           )}

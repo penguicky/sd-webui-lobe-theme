@@ -1,4 +1,4 @@
-import { colors as colorScales } from '@lobehub/ui';
+import { colorScales } from '@lobehub/ui/es/color/colors';
 
 export const themeConfig: any = (isDarkMode: boolean, isNegPrompt: boolean) => {
   const type = isDarkMode ? 'dark' : 'light';

@@ -1,4 +1,6 @@
-import { FluentEmoji, Logo as LobeLogo, getEmoji } from '@lobehub/ui';
+import { getEmoji } from '@lobehub/fluent-emoji';
+import { FluentEmoji } from '@lobehub/ui';
+import { LobeHub as LobeLogo } from '@lobehub/ui/brand';
 import { Space } from 'antd';
 import { type CSSProperties, memo } from 'react';
 

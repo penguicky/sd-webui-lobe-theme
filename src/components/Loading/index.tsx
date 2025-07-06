@@ -1,9 +1,9 @@
-import { Logo } from '@lobehub/ui';
+import { LobeHub as Logo } from '@lobehub/ui/brand';
 import { memo } from 'react';
-
-import { LoadingIcon } from '@/components/OptimizedIcon';
 import { useTranslation } from 'react-i18next';
 import { Center, Flexbox } from 'react-layout-kit';
+
+import { LoadingIcon } from '@/components/OptimizedIcon';
 
 const Loading = memo(() => {
   const { t } = useTranslation();

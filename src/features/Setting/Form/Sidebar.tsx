@@ -155,7 +155,7 @@ const SettingForm = memo<SidebarFormProps>(({ currentSetting }) => {
       onFinish={onFinish}
       onValuesChange={onValuesChange}
       style={{ flex: 1 }}
-      variant={'pure'}
+      variant={'borderless'}
     />
   );
 });

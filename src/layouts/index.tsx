@@ -1,15 +1,16 @@
 import {
   type DivProps,
   ThemeProvider,
-  colorScales,
   generateColorNeutralPalette,
   generateColorPalette,
-  neutralColorScales,
 } from '@lobehub/ui';
+import { colorScales } from '@lobehub/ui/es/color/colors';
+import { neutralColorScales } from '@lobehub/ui/es/color/neutrals';
 import isEqual from 'fast-deep-equal';
 import qs from 'query-string';
 import { memo, useCallback, useEffect } from 'react';
 
+import { isHexColor } from '@/features/Setting/data';
 import { useIsDarkMode } from '@/hooks/useIsDarkMode';
 import { selectors, useAppStore } from '@/store';
 import { kitchenNeutral, kitchenPrimary } from '@/styles/kitchenColors';
@@ -37,20 +38,44 @@ const GlobalLayout = memo<DivProps>(({ children }) => {
   const genCustomToken = useCallback(() => {
     let primaryTokens = {};
     let neutralTokens = {};
+
     if (setting.primaryColor) {
       if (setting.primaryColor === 'kitchen') {
         primaryTokens = kitchenPrimary[themeMode];
+      } else if (isHexColor(setting.primaryColor)) {
+        // Handle direct hex color values
+        primaryTokens = {
+          colorPrimary: setting.primaryColor,
+          // Add some transparency for hover
+          colorPrimaryActive: setting.primaryColor + 'AA',
+          colorPrimaryHover: setting.primaryColor + 'CC', // Add more transparency for active
+        };
       } else {
-        const scale = colorScales[setting.primaryColor];
-        primaryTokens = generateColorPalette({ appearance: themeMode, scale, type: 'Primary' });
+        // Handle named colors from @lobehub/ui
+        const scale = colorScales[setting.primaryColor as keyof typeof colorScales];
+        if (scale) {
+          primaryTokens = generateColorPalette({ appearance: themeMode, scale, type: 'Primary' });
+        }
       }
     }
+
     if (setting.neutralColor) {
       if (setting.neutralColor === 'kitchen') {
         neutralTokens = kitchenNeutral[themeMode];
+      } else if (isHexColor(setting.neutralColor)) {
+        // Handle direct hex color values for neutral colors
+        neutralTokens = {
+          colorText: setting.neutralColor,
+          colorTextBase: setting.neutralColor,
+          colorTextSecondary: setting.neutralColor + 'CC',
+          colorTextTertiary: setting.neutralColor + 'AA',
+        };
       } else {
-        const scale = neutralColorScales[setting.neutralColor];
-        neutralTokens = generateColorNeutralPalette({ appearance: themeMode, scale });
+        // Handle named colors from @lobehub/ui
+        const scale = neutralColorScales[setting.neutralColor as keyof typeof neutralColorScales];
+        if (scale) {
+          neutralTokens = generateColorNeutralPalette({ appearance: themeMode, scale });
+        }
       }
     }
 
@@ -61,7 +86,7 @@ const GlobalLayout = memo<DivProps>(({ children }) => {
     setting && (
       <ThemeProvider
         customToken={genCustomToken}
-        enableWebfonts={setting.enableWebFont}
+        enableCustomFonts={setting.enableWebFont}
         themeMode={themeMode}
       >
         {children}

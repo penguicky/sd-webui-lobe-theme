@@ -1,4 +1,4 @@
-import { ItemGroup } from '@lobehub/ui';
+import { type FormGroupItemType as ItemGroup } from '@lobehub/ui';
 
 import { WebuiSettingKeys } from '@/store';
 

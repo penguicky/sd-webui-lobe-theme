@@ -1,12 +1,17 @@
-import { Form, type ItemGroup, Swatches } from '@lobehub/ui';
-import { Button, Input, InputNumber, Segmented, Select, Switch } from 'antd';
+import { Form, type FormGroupItemType as ItemGroup } from '@lobehub/ui';
+import { Button, ColorPicker, Input, InputNumber, Segmented, Select, Switch } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { memo, useCallback, useMemo, useState } from 'react';
-
-import { Layout, Palette, PanelLeftClose, PanelRightClose, TextCursorInput } from '@/components/OptimizedIcon';
 import { useTranslation } from 'react-i18next';
 
 import { CustomLogo } from '@/components';
+import {
+  Layout,
+  Palette,
+  PanelLeftClose,
+  PanelRightClose,
+  TextCursorInput,
+} from '@/components/OptimizedIcon';
 import {
   DEFAULT_SETTING,
   type WebuiSetting,
@@ -19,11 +24,47 @@ import {
   type NeutralColor,
   type PrimaryColor,
   findCustomThemeName,
+  isHexColor,
   neutralColors,
   neutralColorsSwatches,
   primaryColors,
   primaryColorsSwatches,
 } from './data';
+
+// Helper functions to safely get color values
+const getPrimaryColorValue = (color: PrimaryColor | undefined): string | undefined => {
+  if (!color) return undefined;
+  if (isHexColor(color)) return color;
+  return primaryColors[color as keyof typeof primaryColors];
+};
+
+const getNeutralColorValue = (color: NeutralColor | undefined): string | undefined => {
+  if (!color) return undefined;
+  if (isHexColor(color)) return color;
+  return neutralColors[color as keyof typeof neutralColors];
+};
+
+// Simple color selection component using Antd ColorPicker
+const SimpleColorPicker = memo<{
+  colors: string[];
+  onChange?: (_color?: string) => void;
+  value?: string | undefined;
+}>(({ value, colors, onChange }) => {
+  return (
+    <ColorPicker
+      format="hex"
+      onChange={(colorValue) => onChange?.(colorValue.toHexString())}
+      presets={[
+        {
+          colors: colors,
+          label: 'Preset Colors',
+        },
+      ]}
+      showText
+      value={value || '#1890ff'}
+    />
+  );
+});
 
 type SettingItemGroup = ItemGroup & {
   children: {
@@ -78,11 +119,28 @@ const SettingForm = memo(() => {
         },
         {
           children: (
-            <Swatches
-              {...(primaryColor &&
-                primaryColors[primaryColor] && { activeColor: primaryColors[primaryColor] })}
+            <SimpleColorPicker
+              {...(getPrimaryColorValue(primaryColor) && {
+                value: getPrimaryColorValue(primaryColor),
+              })}
               colors={primaryColorsSwatches}
-              onSelect={(c) => setPrimaryColor(findCustomThemeName('primary', c))}
+              onChange={(c?: string) => {
+                if (c) {
+                  // Handle kitchen colors separately since they use hex format incompatible with @lobehub/ui
+                  if (c === '#007AFF') {
+                    setPrimaryColor('kitchen');
+                  } else {
+                    // Try to find a named color match first
+                    const foundColor = findCustomThemeName('primary', c);
+                    if (foundColor && foundColor !== 'undefined') {
+                      setPrimaryColor(foundColor as PrimaryColor);
+                    } else {
+                      // Use the hex color directly if no named match found
+                      setPrimaryColor(c);
+                    }
+                  }
+                }
+              }}
             />
           ),
           desc: t('setting.primaryColor.desc'),
@@ -90,11 +148,28 @@ const SettingForm = memo(() => {
         },
         {
           children: (
-            <Swatches
-              {...(neutralColor &&
-                neutralColors[neutralColor] && { activeColor: neutralColors[neutralColor] })}
+            <SimpleColorPicker
+              {...(getNeutralColorValue(neutralColor) && {
+                value: getNeutralColorValue(neutralColor),
+              })}
               colors={neutralColorsSwatches}
-              onSelect={(c) => setNeutralColor(findCustomThemeName('neutral', c))}
+              onChange={(c?: string) => {
+                if (c) {
+                  // Handle kitchen colors separately since they use hex format incompatible with @lobehub/ui
+                  if (c === '#8E8E93') {
+                    setNeutralColor('kitchen');
+                  } else {
+                    // Try to find a named color match first
+                    const foundColor = findCustomThemeName('neutral', c);
+                    if (foundColor && foundColor !== 'undefined') {
+                      setNeutralColor(foundColor as NeutralColor);
+                    } else {
+                      // Use the hex color directly if no named match found
+                      setNeutralColor(c);
+                    }
+                  }
+                }
+              }}
             />
           ),
           desc: t('setting.neutralColor.desc'),

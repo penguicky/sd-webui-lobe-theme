@@ -1,4 +1,4 @@
-import { colors as colorScales } from '@lobehub/ui';
+import { colorScales } from '@lobehub/ui/es/color/colors';
 import { createStyles } from 'antd-style';
 
 export const useStyles = createStyles(({ css, token, isDarkMode }) => {
@@ -16,12 +16,12 @@ export const useStyles = createStyles(({ css, token, isDarkMode }) => {
     `,
     container: css`
       padding: 16px 10px 16px 24px;
+      border-radius: ${token.borderRadius}px;
 
       font-family: ${token.fontFamilyCode};
       font-size: 13px;
 
       background: ${token.colorFillTertiary};
-      border-radius: ${token.borderRadius}px;
     `,
     highlight: css`
       pre {

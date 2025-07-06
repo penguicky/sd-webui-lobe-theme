@@ -2,10 +2,9 @@ import { ActionIcon, DraggablePanelBody, DraggablePanelFooter } from '@lobehub/u
 import { Skeleton, Slider } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { memo, useState } from 'react';
-
-import { ZoomIn, ZoomOut } from '@/components/OptimizedIcon';
 import { Flexbox } from 'react-layout-kit';
 
+import { ZoomIn, ZoomOut } from '@/components/OptimizedIcon';
 import { selectors, useAppStore } from '@/store';
 
 import { useStyles } from './style';
@@ -37,18 +36,18 @@ const Inner = memo(() => {
             id="txt2img-extra-network-sidebar"
             ref={txt2imgExtraNetworkSidebarReference}
             style={
-              currentTab === 'tab_img2img' ?
-                { display: 'none' } :
-                { height: '100%', overflow: 'hidden', position: 'relative' }
+              currentTab === 'tab_img2img'
+                ? { display: 'none' }
+                : { height: '100%', overflow: 'hidden', position: 'relative' }
             }
           />
           <div
             id="img2img-extra-network-sidebar"
             ref={img2imgExtraNetworkSidebarReference}
             style={
-              currentTab === 'tab_img2img' ?
-                { height: '100%' } :
-                { display: 'none', overflow: 'hidden', position: 'relative' }
+              currentTab === 'tab_img2img'
+                ? { height: '100%' }
+                : { display: 'none', overflow: 'hidden', position: 'relative' }
             }
           />
         </div>
@@ -57,7 +56,7 @@ const Inner = memo(() => {
         <ActionIcon
           icon={setting.extraNetworkCardSize < size ? ZoomOut : ZoomIn}
           onClick={() => setSize(setting.extraNetworkCardSize)}
-          size={{ blockSize: 24, fontSize: 16 }}
+          size={{ blockSize: 24, size: 16 }}
         />
         <Slider
           defaultValue={size}

@@ -91,7 +91,7 @@ const SettingForm = memo<LayoutFormProps>(({ currentSetting }) => {
       onFinish={onFinish}
       onValuesChange={onValuesChange}
       style={{ flex: 1 }}
-      variant={'pure'}
+      variant={'borderless'}
     />
   );
 });

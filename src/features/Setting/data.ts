@@ -1,9 +1,4 @@
-import {
-  neutralColors as nc,
-  neutralColorsSwatches as ncs,
-  primaryColorsSwatches as pcs,
-  primaryColors as ps,
-} from '@lobehub/ui';
+import { neutralColors as nc, primaryColors as ps } from '@lobehub/ui/es/styles/customTheme';
 
 import { kitchenNeutral, kitchenPrimary } from '@/styles/kitchenColors';
 
@@ -12,24 +7,37 @@ export const primaryColors = {
   ...ps,
 };
 
-export const primaryColorsSwatches = [primaryColors.kitchen, ...pcs];
+// Filter out kitchen colors from swatches since they use incompatible hex format
+// Kitchen colors will be handled separately in the UI logic
 
 export const neutralColors = {
   kitchen: kitchenNeutral.dark.colorNeutral,
   ...nc,
 };
 
-export const neutralColorsSwatches = [neutralColors.kitchen, ...ncs];
+// Filter out kitchen colors from swatches since they use incompatible hex format
+// Kitchen colors will be handled separately in the UI logic
 
-export const findCustomThemeName = (type: 'primary' | 'neutral', value?: string): any => {
-  if (!value) return '';
-  let res = type === 'primary' ? primaryColors : neutralColors;
-  let result = Object.entries(res).find((item) => {
-    return item[1] === value;
-  });
-  return result === null || result === void 0 ? void 0 : result[0];
+// Support both named colors and direct hex values
+export type PrimaryColor = keyof typeof primaryColors | string;
+
+export type NeutralColor = keyof typeof neutralColors | string;
+
+// Create swatches from actual @lobehub/ui color values plus kitchen colors
+export const primaryColorsSwatches = [
+  '#007AFF', // kitchen primary
+  ...Object.values(ps),
+];
+
+export const neutralColorsSwatches = [
+  '#8E8E93', // kitchen neutral
+  ...Object.values(nc),
+];
+
+// Helper function to check if a color value is a hex string
+export const isHexColor = (color: string): boolean => {
+  return /^#([\dA-Fa-f]{6}|[\dA-Fa-f]{3})$/.test(color);
 };
 
-export type PrimaryColor = keyof typeof primaryColors;
-
-export type NeutralColor = keyof typeof neutralColors;
+// Import findCustomThemeName separately to avoid potential issues
+export { findCustomThemeName } from '@lobehub/ui/es/styles/customTheme';

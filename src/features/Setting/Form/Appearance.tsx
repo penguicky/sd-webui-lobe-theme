@@ -1,5 +1,5 @@
-import { Form, Swatches } from '@lobehub/ui';
-import { Input, Segmented, Select, Switch } from 'antd';
+import { Form } from '@lobehub/ui';
+import { ColorPicker, Input, Segmented, Select, Switch } from 'antd';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,6 +10,7 @@ import {
   type NeutralColor,
   type PrimaryColor,
   findCustomThemeName,
+  isHexColor,
   neutralColors,
   neutralColorsSwatches,
   primaryColors,
@@ -20,6 +21,41 @@ import { SettingItemGroup } from './types';
 interface AppearanceFormProps {
   currentSetting: WebuiSetting;
 }
+
+// Helper functions to safely get color values
+const getPrimaryColorValue = (color: PrimaryColor | undefined): string | undefined => {
+  if (!color) return undefined;
+  if (isHexColor(color)) return color;
+  return primaryColors[color as keyof typeof primaryColors];
+};
+
+const getNeutralColorValue = (color: NeutralColor | undefined): string | undefined => {
+  if (!color) return undefined;
+  if (isHexColor(color)) return color;
+  return neutralColors[color as keyof typeof neutralColors];
+};
+
+// Simple color selection component using Antd ColorPicker
+const SimpleColorPicker = memo<{
+  colors: string[];
+  onChange?: (_color?: string) => void;
+  value?: string | undefined;
+}>(({ value, colors, onChange }) => {
+  return (
+    <ColorPicker
+      format="hex"
+      onChange={(colorValue) => onChange?.(colorValue.toHexString())}
+      presets={[
+        {
+          colors: colors,
+          label: 'Preset Colors',
+        },
+      ]}
+      showText
+      value={value || '#1890ff'}
+    />
+  );
+});
 
 const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
   const { localeOptions } = useAppStore((st) => ({
@@ -72,11 +108,25 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
     [primaryColor, neutralColor],
   );
 
-  // ADDED: Track color changes too
   const handlePrimaryColorChange = useCallback(
     (c?: string) => {
       if (c) {
-        const newColor = findCustomThemeName('primary', c);
+        let newColor: PrimaryColor;
+
+        // Handle kitchen colors separately
+        if (c === '#007AFF') {
+          newColor = 'kitchen';
+        } else {
+          // Try to find a named color match first
+          const foundColor = findCustomThemeName('primary', c);
+          if (foundColor && foundColor !== 'undefined') {
+            newColor = foundColor as PrimaryColor;
+          } else {
+            // Use the hex color directly if no named match found
+            newColor = c;
+          }
+        }
+
         setPrimaryColor(newColor);
 
         // Dispatch color change immediately
@@ -92,7 +142,22 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
   const handleNeutralColorChange = useCallback(
     (c?: string) => {
       if (c) {
-        const newColor = findCustomThemeName('neutral', c);
+        let newColor: NeutralColor;
+
+        // Handle kitchen colors separately
+        if (c === '#8E8E93') {
+          newColor = 'kitchen';
+        } else {
+          // Try to find a named color match first
+          const foundColor = findCustomThemeName('neutral', c);
+          if (foundColor && foundColor !== 'undefined') {
+            newColor = foundColor as NeutralColor;
+          } else {
+            // Use the hex color directly if no named match found
+            newColor = c;
+          }
+        }
+
         setNeutralColor(newColor);
 
         // Dispatch color change immediately
@@ -123,11 +188,12 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
         },
         {
           children: (
-            <Swatches
-              {...(primaryColor &&
-                primaryColors[primaryColor] && { activeColor: primaryColors[primaryColor] })}
+            <SimpleColorPicker
+              {...(getPrimaryColorValue(primaryColor) && {
+                value: getPrimaryColorValue(primaryColor),
+              })}
               colors={primaryColorsSwatches}
-              onSelect={handlePrimaryColorChange}
+              onChange={handlePrimaryColorChange}
             />
           ),
           desc: t('setting.primaryColor.desc'),
@@ -135,11 +201,12 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
         },
         {
           children: (
-            <Swatches
-              {...(neutralColor &&
-                neutralColors[neutralColor] && { activeColor: neutralColors[neutralColor] })}
+            <SimpleColorPicker
+              {...(getNeutralColorValue(neutralColor) && {
+                value: getNeutralColorValue(neutralColor),
+              })}
               colors={neutralColorsSwatches}
-              onSelect={handleNeutralColorChange}
+              onChange={handleNeutralColorChange}
             />
           ),
           desc: t('setting.neutralColor.desc'),
@@ -236,7 +303,7 @@ const SettingForm = memo<AppearanceFormProps>(({ currentSetting }) => {
       onFinish={onFinish}
       onValuesChange={onValuesChange}
       style={{ flex: 1 }}
-      variant={'pure'}
+      variant={'borderless'}
     />
   );
 });

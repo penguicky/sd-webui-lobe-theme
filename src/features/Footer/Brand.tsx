@@ -1,4 +1,4 @@
-import { Logo } from '@lobehub/ui';
+import { LobeHub as Logo } from '@lobehub/ui/brand';
 import { createStyles, useThemeMode } from 'antd-style';
 import { memo } from 'react';
 import { Flexbox } from 'react-layout-kit';
@@ -25,9 +25,9 @@ const useStyles = createStyles(({ css, token }) => {
       color: inherit !important;
     `,
     status: css`
+      border: none !important;
       color-scheme: none;
       background: transparent;
-      border: none !important;
     `,
   };
 });

@@ -30,7 +30,7 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true
   },
-  "exclude": ["javascript"],
+  "exclude": ["javascript", "example"],
 
   "include": ["src", "typings", "**/*.ts", "**/*.d.ts", "**/*.tsx", "vite.config.ts"]
 }

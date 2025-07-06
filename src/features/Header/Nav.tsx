@@ -1,4 +1,4 @@
-import { Burger, TabsNav } from '@lobehub/ui';
+import { Burger, Tabs as TabsNav } from '@lobehub/ui';
 import { useResponsive } from 'antd-style';
 import { memo, useCallback, useMemo, useState } from 'react';
 

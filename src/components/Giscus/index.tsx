@@ -1,23 +1,15 @@
-import {
-  DiscordIcon,
-  Giscus as G,
-  GradientButton,
-  Icon,
-  Modal,
-  type ModalProps,
-} from '@lobehub/ui';
+import { Icon, Modal, type ModalProps } from '@lobehub/ui';
+import { Giscus as G, GradientButton } from '@lobehub/ui/awesome';
 import { Button } from 'antd';
 import { useTheme } from 'antd-style';
-import isEqual from 'fast-deep-equal';
+import { MessageCircle } from 'lucide-react';
 import { memo, useEffect, useRef } from 'react';
-
-import { GitHubIcon, HeartIcon } from '@/components/OptimizedIcon';
 import { useTranslation } from 'react-i18next';
 import { Center, Flexbox } from 'react-layout-kit';
 
+import { GitHubIcon, HeartIcon } from '@/components/OptimizedIcon';
 import VersionTag from '@/components/VersionTag';
-import { DISCORD_URL, GISCUS_REPO_ID, GITHUB_REPO_URL, REPO_NAME, SPONSOR_URL } from '@/const/url';
-import { selectors, useAppStore } from '@/store';
+import { DISCORD_URL, GITHUB_REPO_URL, SPONSOR_URL } from '@/const/url';
 import { FocusManager, generateAriaLabel, keyboardHandlers } from '@/utils/accessibility';
 
 export interface GiscusProps {
@@ -26,7 +18,6 @@ export interface GiscusProps {
 }
 
 const Giscus = memo<GiscusProps>(({ open, onCancel }) => {
-  const setting = useAppStore(selectors.currentSetting, isEqual);
   const theme = useTheme();
   const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
@@ -92,7 +83,7 @@ const Giscus = memo<GiscusProps>(({ open, onCancel }) => {
               >
                 <Button
                   aria-label="Join Discord community"
-                  icon={<Icon icon={DiscordIcon} />}
+                  icon={<Icon icon={MessageCircle} />}
                   size={'large'}
                 >
                   Join Discord
@@ -104,11 +95,7 @@ const Giscus = memo<GiscusProps>(({ open, onCancel }) => {
                 rel="noreferrer"
                 target="_blank"
               >
-                <Button
-                  aria-label="View GitHub repository"
-                  icon={<GitHubIcon />}
-                  size={'large'}
-                >
+                <Button aria-label="View GitHub repository" icon={<GitHubIcon />} size={'large'}>
                   GitHub
                 </Button>
               </a>
@@ -124,14 +111,7 @@ const Giscus = memo<GiscusProps>(({ open, onCancel }) => {
               </a>
             </Flexbox>
           </Center>
-          <G
-            aria-label="Discussion comments"
-            lang={setting.i18n}
-            mapping="number"
-            repo={REPO_NAME}
-            repoId={GISCUS_REPO_ID}
-            term="53"
-          />
+          <G />
         </Flexbox>
       </div>
     </Modal>
