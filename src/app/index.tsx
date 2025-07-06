@@ -1,5 +1,5 @@
 import { LayoutHeader, LayoutMain, LayoutSidebar } from '@lobehub/ui';
-import { Suspense, memo, useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { AppErrorBoundary, FeatureErrorBoundary } from '@/components/ErrorBoundary';
@@ -16,39 +16,17 @@ import { useAppStore } from '@/store';
 import GlobalStyle from '@/styles';
 import { auditAccessibility } from '@/utils/accessibilityTesting';
 import { getBrowserCompatibilityReport } from '@/utils/browserCompat';
-import { lazyFeature, logChunkPerformance } from '@/utils/lazyOptimized';
+import { logChunkPerformance } from '@/utils/lazyOptimized';
+import { registerCommonFeatures } from '@/utils/featureLoader';
+import { ProgressiveLoader, SuspenseLoader } from '@/components/ProgressiveLoader';
 
 import Content from '../features/Content';
 import Footer from '../features/Footer';
 import Header from '../features/Header';
 import { useStyles } from './style';
 
-// Phase 2: Advanced code splitting with feature-based lazy loading
-const Share = lazyFeature('share', () => import('../features/Share'), {
-  preloadDelay: 3000,
-  preloadOnHover: true,
-  priority: 'low',
-});
-
-// Setting component will be implemented in a future phase
-// const Setting = lazyFeature('setting', () => import('../features/Setting'), {
-//   preloadDelay: 2000,
-//   preloadOnFeatureEnabled: true,
-//   priority: 'medium',
-// });
-
-// Conditionally loaded sidebars based on settings
-const ExtraNetworkSidebar = lazyFeature('extra-network', () => import('../features/ExtraNetworkSidebar'), {
-  preloadDelay: 1000,
-  preloadOnFeatureEnabled: true,
-  priority: 'high',
-});
-
-const QuickSettingSidebar = lazyFeature('quick-settings', () => import('../features/QuickSettingSidebar'), {
-  preloadDelay: 500,
-  preloadOnFeatureEnabled: true,
-  priority: 'high',
-});
+// Phase 2: Advanced code splitting with progressive loading
+// Components are now loaded dynamically using ProgressiveLoader
 
 export const HEADER_HEIGHT = 64;
 
@@ -118,6 +96,9 @@ const Index = memo(() => {
       enableSidebar,
       svgIcon,
     });
+
+    // Register common features for progressive loading
+    registerCommonFeatures();
 
     // Check browser compatibility
     getBrowserCompatibilityReport();
@@ -248,11 +229,17 @@ const Index = memo(() => {
             role="complementary"
             style={{ flex: 0, zIndex: 50 }}
           >
-            <Suspense fallback={<div style={{ padding: '16px' }}>Loading...</div>}>
+            <SuspenseLoader minHeight={200}>
               <FeatureErrorBoundary feature="QuickSettingSidebar">
-                <QuickSettingSidebar headerHeight={HEADER_HEIGHT} />
+                <ProgressiveLoader
+                  chunkName="quick-settings-sidebar"
+                  component={() => import('../features/QuickSettingSidebar')}
+                  componentProps={{ headerHeight: HEADER_HEIGHT }}
+                  minLoadingTime={150}
+                  strategy="immediate"
+                />
               </FeatureErrorBoundary>
-            </Suspense>
+            </SuspenseLoader>
           </LayoutSidebar>
         )}
         <FeatureErrorBoundary feature="Content">
@@ -261,11 +248,17 @@ const Index = memo(() => {
         <FeatureErrorBoundary feature="PromptFormator">
           <PromptFormator />
         </FeatureErrorBoundary>
-        <Suspense fallback={null}>
+        <SuspenseLoader minHeight={0}>
           <FeatureErrorBoundary feature="Share">
-            <Share />
+            <ProgressiveLoader
+              chunkName="share"
+              component={() => import('../features/Share')}
+              fallback={null}
+              minLoadingTime={100}
+              strategy="idle"
+            />
           </FeatureErrorBoundary>
-        </Suspense>
+        </SuspenseLoader>
         {enableExtraNetworkSidebar && (
           <LayoutSidebar
             aria-label="Extra networks sidebar"
@@ -274,11 +267,17 @@ const Index = memo(() => {
             role="complementary"
             style={{ flex: 0, zIndex: 50 }}
           >
-            <Suspense fallback={<div style={{ padding: '16px' }}>Loading...</div>}>
+            <SuspenseLoader minHeight={300}>
               <FeatureErrorBoundary feature="ExtraNetworkSidebar">
-                <ExtraNetworkSidebar headerHeight={HEADER_HEIGHT} />
+                <ProgressiveLoader
+                  chunkName="extra-network-sidebar"
+                  component={() => import('../features/ExtraNetworkSidebar')}
+                  componentProps={{ headerHeight: HEADER_HEIGHT }}
+                  minLoadingTime={200}
+                  strategy="visible"
+                />
               </FeatureErrorBoundary>
-            </Suspense>
+            </SuspenseLoader>
           </LayoutSidebar>
         )}
       </LayoutMain>
