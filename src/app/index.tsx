@@ -16,21 +16,38 @@ import { useAppStore } from '@/store';
 import GlobalStyle from '@/styles';
 import { auditAccessibility } from '@/utils/accessibilityTesting';
 import { getBrowserCompatibilityReport } from '@/utils/browserCompat';
-import { lazyOptimized } from '@/utils/lazyOptimized';
+import { lazyFeature, logChunkPerformance } from '@/utils/lazyOptimized';
 
 import Content from '../features/Content';
-import ExtraNetworkSidebar from '../features/ExtraNetworkSidebar';
 import Footer from '../features/Footer';
 import Header from '../features/Header';
-import QuickSettingSidebar from '../features/QuickSettingSidebar';
 import { useStyles } from './style';
 
-// Optimized lazy loading for non-critical components
-const Share = lazyOptimized(() => import('../features/Share'), {
-  // Preload after 3 seconds of app initialization
+// Phase 2: Advanced code splitting with feature-based lazy loading
+const Share = lazyFeature('share', () => import('../features/Share'), {
   preloadDelay: 3000,
-  // Preload when user shows intent to interact (hover, focus)
   preloadOnHover: true,
+  priority: 'low',
+});
+
+// Setting component will be implemented in a future phase
+// const Setting = lazyFeature('setting', () => import('../features/Setting'), {
+//   preloadDelay: 2000,
+//   preloadOnFeatureEnabled: true,
+//   priority: 'medium',
+// });
+
+// Conditionally loaded sidebars based on settings
+const ExtraNetworkSidebar = lazyFeature('extra-network', () => import('../features/ExtraNetworkSidebar'), {
+  preloadDelay: 1000,
+  preloadOnFeatureEnabled: true,
+  priority: 'high',
+});
+
+const QuickSettingSidebar = lazyFeature('quick-settings', () => import('../features/QuickSettingSidebar'), {
+  preloadDelay: 500,
+  preloadOnFeatureEnabled: true,
+  priority: 'high',
 });
 
 export const HEADER_HEIGHT = 64;
@@ -152,6 +169,11 @@ const Index = memo(() => {
           debugLog('🧪 Accessibility audit completed');
         });
       }, 3000); // Wait for components to render
+
+      // Log chunk performance after initialization
+      setTimeout(() => {
+        logChunkPerformance();
+      }, 5000);
     }
   }, []);
 
@@ -226,9 +248,11 @@ const Index = memo(() => {
             role="complementary"
             style={{ flex: 0, zIndex: 50 }}
           >
-            <FeatureErrorBoundary feature="QuickSettingSidebar">
-              <QuickSettingSidebar headerHeight={HEADER_HEIGHT} />
-            </FeatureErrorBoundary>
+            <Suspense fallback={<div style={{ padding: '16px' }}>Loading...</div>}>
+              <FeatureErrorBoundary feature="QuickSettingSidebar">
+                <QuickSettingSidebar headerHeight={HEADER_HEIGHT} />
+              </FeatureErrorBoundary>
+            </Suspense>
           </LayoutSidebar>
         )}
         <FeatureErrorBoundary feature="Content">
@@ -250,9 +274,11 @@ const Index = memo(() => {
             role="complementary"
             style={{ flex: 0, zIndex: 50 }}
           >
-            <FeatureErrorBoundary feature="ExtraNetworkSidebar">
-              <ExtraNetworkSidebar headerHeight={HEADER_HEIGHT} />
-            </FeatureErrorBoundary>
+            <Suspense fallback={<div style={{ padding: '16px' }}>Loading...</div>}>
+              <FeatureErrorBoundary feature="ExtraNetworkSidebar">
+                <ExtraNetworkSidebar headerHeight={HEADER_HEIGHT} />
+              </FeatureErrorBoundary>
+            </Suspense>
           </LayoutSidebar>
         )}
       </LayoutMain>

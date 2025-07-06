@@ -31,7 +31,7 @@ export default defineConfig({
       input: resolve(__dirname, 'src/main.tsx'),
 
       output: {
-        // Single file output - no code splitting for compatibility
+        // Strategic code splitting for Phase 2 optimizations
         assetFileNames: (assetInfo) => {
           // Keep critical CSS separate for better caching
           if (assetInfo.name === 'critical.css') {
@@ -39,14 +39,13 @@ export default defineConfig({
           }
           return `[name].[ext]`;
         },
-        chunkFileNames: `[name].js`,
-        // Force everything into a single bundle
+        chunkFileNames: `[name]-[hash].js`,
         compact: true,
 
         entryFileNames: `[name].js`,
 
-        // Use IIFE format for main bundle to avoid ES module issues
-        format: 'iife',
+        // Use ES modules for code splitting compatibility
+        format: 'es',
 
         // Aggressive minification settings
         generatedCode: {
@@ -55,11 +54,44 @@ export default defineConfig({
           objectShorthand: true,
         },
 
-        // Force single bundle - no separate chunks for compatibility
-        inlineDynamicImports: true,
+        // Enable strategic code splitting - Phase 2 optimization
+        inlineDynamicImports: false,
+
+        // Manual chunk configuration for logical grouping
+        manualChunks: (id) => {
+          // Core dependencies chunk
+          if (id.includes('node_modules/react') ||
+              id.includes('node_modules/react-dom') ||
+              id.includes('node_modules/zustand')) {
+            return 'core';
+          }
+
+          // UI library chunk
+          if (id.includes('node_modules/@lobehub/ui') ||
+              id.includes('node_modules/antd') ||
+              id.includes('node_modules/antd-style')) {
+            return 'ui-lib';
+          }
+
+          // Heavy utilities chunk
+          if (id.includes('node_modules/shiki') ||
+              id.includes('node_modules/lodash-es') ||
+              id.includes('node_modules/modern-screenshot')) {
+            return 'heavy-utils';
+          }
+
+          // Feature-specific chunks
+          if (id.includes('src/features/Share') ||
+              id.includes('src/features/Setting')) {
+            return 'features-advanced';
+          }
+
+          // Keep main bundle for critical components
+          return undefined;
+        },
       },
 
-      // Enhanced tree-shaking configuration
+      // Enhanced tree-shaking configuration for Phase 1 optimizations
       treeshake: {
         moduleSideEffects: (id): boolean => {
           // Preserve side effects only for critical initialization modules
@@ -79,21 +111,35 @@ export default defineConfig({
             id.includes('lodash-es') ||
             id.includes('lucide-react') ||
             id.includes('lucide-static') ||
-            id.includes('@icons-pack/react-simple-icons')
+            id.includes('@icons-pack/react-simple-icons') ||
+            // Enhanced Shiki tree-shaking
+            id.includes('shiki/dist') ||
+            id.includes('shiki/langs') ||
+            id.includes('shiki/themes') ||
+            id.includes('shiki/wasm') ||
+            // Target unused Shiki components
+            id.includes('shiki/engine/javascript') ||
+            id.includes('shiki/engine/textmate')
           ) {
             return false;
           }
 
           return false;
         },
-        // More aggressive tree-shaking options
-preset: 'smallest',
-        
-propertyReadSideEffects: false,
-        
-tryCatchDeoptimization: false,
-        
+        // More aggressive tree-shaking options for Phase 1
+        preset: 'smallest',
+
+        propertyReadSideEffects: false,
+
+        tryCatchDeoptimization: false,
+
         unknownGlobalSideEffects: false,
+
+        // Enhanced dead code elimination
+        annotations: true,
+
+        // More aggressive function inlining
+        correctVarValueBeforeDeclaration: false,
       },
     },
     sourcemap: !isProduction,
@@ -118,8 +164,16 @@ tryCatchDeoptimization: false,
     // Exclude problematic dependencies that should be bundled at build time
     exclude: [
       'fast-deep-equal',
+      // Enhanced Shiki exclusions for Phase 1 optimization
       'shiki', // Large WebAssembly dependency - better to bundle at build time
+      'shiki/core',
+      'shiki/engine/oniguruma',
+      'shiki/wasm',
+      'shiki/dist',
       '@lobehub/ui/node_modules/shiki', // Nested shiki dependency
+      // Exclude unused Shiki engines to reduce bundle size
+      'shiki/engine/javascript',
+      'shiki/engine/textmate',
     ],
     include: [
       // Core React dependencies
@@ -136,7 +190,6 @@ tryCatchDeoptimization: false,
       'zustand/shallow',
 
       // Utilities (tree-shakeable)
-      'lodash-es',
       'dayjs',
       'consola',
 
@@ -161,8 +214,7 @@ tryCatchDeoptimization: false,
       'antd/es/tooltip',
       'antd/es/dropdown',
 
-      // Lucide icons (commonly used)
-      'lucide-react',
+
     ],
   },
 

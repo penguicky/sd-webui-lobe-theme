@@ -1,7 +1,7 @@
-import { Icon } from '@lobehub/ui';
 import { Button, Result } from 'antd';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Component, ErrorInfo, ReactNode } from 'react';
+
+import { OptimizedIcon } from '@/components/OptimizedIcon';
 import { Center, Flexbox } from 'react-layout-kit';
 
 import { debugError, debugWarn } from '@/modules/PromptHighlight/utils/debug';
@@ -167,7 +167,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <Flexbox gap={12} horizontal>
                 {canRetry && (
                   <Button
-                    icon={<Icon icon={RefreshCw} />}
+                    icon={<OptimizedIcon name="refresh-cw" />}
                     onClick={this.handleRetry}
                     type="primary"
                   >
@@ -178,7 +178,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 <Button onClick={() => window.location.reload()}>Reload Page</Button>
               </Flexbox>
             }
-            icon={<Icon icon={AlertTriangle} style={{ color: '#ff4d4f' }} />}
+            icon={<OptimizedIcon name="alert-triangle" style={{ color: '#ff4d4f' }} />}
             status="error"
             subTitle={
               showDetails ? (
@@ -212,8 +212,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           textAlign: 'center',
         }}
       >
-        <Icon
-          icon={AlertTriangle}
+        <OptimizedIcon
+          name="alert-triangle"
           style={{ color: '#ff4d4f', fontSize: '24px', marginBottom: '8px' }}
         />
         <div style={{ marginBottom: '12px' }}>
@@ -225,7 +225,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <Flexbox gap={8} horizontal justify="center">
           {canRetry && (
             <Button
-              icon={<Icon icon={RefreshCw} />}
+              icon={<OptimizedIcon name="refresh-cw" />}
               onClick={this.handleRetry}
               size="small"
               type="primary"

@@ -1,7 +1,7 @@
-import { Icon } from '@lobehub/ui';
 import { useThemeMode } from 'antd-style';
-import { Loader2 } from 'lucide-react';
 import { PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react';
+
+import { LoadingIcon } from '@/components/OptimizedIcon';
 import { Center } from 'react-layout-kit';
 
 import { ComponentErrorBoundary } from '@/components/ErrorBoundary';
@@ -173,7 +173,7 @@ const SyntaxHighlighter = memo<PropsWithChildrenParentId>(
           {/* Loading indicator only for high priority items */}
           {showLoading && priority === 'high' && (
             <Center className={styles.loading} gap={8} horizontal style={{ pointerEvents: 'none' }}>
-              <Icon icon={Loader2} spin />
+              <LoadingIcon />
               Highlighting...
             </Center>
           )}

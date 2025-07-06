@@ -9,8 +9,9 @@ import {
 import { Button } from 'antd';
 import { useTheme } from 'antd-style';
 import isEqual from 'fast-deep-equal';
-import { Github, Heart } from 'lucide-react';
 import { memo, useEffect, useRef } from 'react';
+
+import { GitHubIcon, HeartIcon } from '@/components/OptimizedIcon';
 import { useTranslation } from 'react-i18next';
 import { Center, Flexbox } from 'react-layout-kit';
 
@@ -105,7 +106,7 @@ const Giscus = memo<GiscusProps>(({ open, onCancel }) => {
               >
                 <Button
                   aria-label="View GitHub repository"
-                  icon={<Icon icon={Github} />}
+                  icon={<GitHubIcon />}
                   size={'large'}
                 >
                   GitHub
@@ -117,7 +118,7 @@ const Giscus = memo<GiscusProps>(({ open, onCancel }) => {
                 rel="noreferrer"
                 target="_blank"
               >
-                <GradientButton aria-label="Sponsor this project" icon={<Icon icon={Heart} />}>
+                <GradientButton aria-label="Sponsor this project" icon={<HeartIcon />}>
                   Sponsor
                 </GradientButton>
               </a>

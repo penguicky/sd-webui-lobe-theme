@@ -1,7 +1,8 @@
 import { ActionIcon, CopyButton } from '@lobehub/ui';
 import { createStyles } from 'antd-style';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { memo, useState } from 'react';
+
+import { ChevronDown, ChevronRight } from '@/components/OptimizedIcon';
 import { Flexbox } from 'react-layout-kit';
 
 import SyntaxHighlighter from '@/modules/PromptHighlight/features/SyntaxHighlighter';

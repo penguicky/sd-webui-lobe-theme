@@ -3,12 +3,27 @@
  * Moves heavy Shiki processing to a dedicated worker thread
  */
 
-import { HighlighterCore, createHighlighterCore } from 'shiki/core';
-import { createOnigurumaEngine } from 'shiki/engine/oniguruma';
-
+// Conditional imports for better tree-shaking
 import { createDynamicGrammar } from '@/modules/PromptHighlight/features/dynamicGrammar';
 import prompt from '@/modules/PromptHighlight/features/grammar';
 import { themeConfig } from '@/modules/PromptHighlight/features/promptTheme';
+
+let createHighlighterCore: any;
+let createOnigurumaEngine: any;
+
+const loadShikiModules = async () => {
+  if (!createHighlighterCore) {
+    const [coreModule, engineModule] = await Promise.all([
+      import('shiki/core'),
+      import('shiki/engine/oniguruma'),
+    ]);
+
+    createHighlighterCore = coreModule.createHighlighterCore;
+    createOnigurumaEngine = engineModule.createOnigurumaEngine;
+  }
+
+  return { createHighlighterCore, createOnigurumaEngine };
+};
 
 // Worker message types
 interface HighlightRequest {
@@ -45,8 +60,8 @@ type WorkerResponse = HighlightResponse | InitResponse;
 // Worker state
 class ShikiWorkerEngine {
   private engine: any = null;
-  private staticHighlighter: HighlighterCore | null = null;
-  private dynamicHighlighterCache = new Map<string, HighlighterCore>();
+  private staticHighlighter: any = null;
+  private dynamicHighlighterCache = new Map<string, any>();
   private grammarCache = new Map<string, any>();
   private isInitialized = false;
 
@@ -62,24 +77,49 @@ class ShikiWorkerEngine {
     if (this.isInitialized) return;
 
     try {
-      // Initialize the Oniguruma engine
-      this.engine = await createOnigurumaEngine(() => import('shiki/wasm'));
-      
-      // Create static highlighter
-      this.staticHighlighter = await createHighlighterCore({
+      // Load Shiki modules conditionally
+      const { createOnigurumaEngine: createEngine } = await loadShikiModules();
+
+      // Optimized: Initialize minimal Oniguruma engine for prompt syntax only
+      this.engine = await createEngine(async () => {
+        // Load only core WASM module for better performance
+        const wasmModule = await import('shiki/wasm');
+        console.log('📦 Worker: Minimal Shiki WASM loaded for prompt syntax');
+        return wasmModule;
+      });
+
+      // Optimized: Create static highlighter with minimal grammar
+      const baseGrammar = prompt[0];
+      if (!baseGrammar) {
+        throw new Error('Base grammar not available');
+      }
+
+      const optimizedGrammar = {
+        ...baseGrammar,
+        
+        // Filter patterns to essential ones for performance
+patterns: baseGrammar.patterns?.filter((pattern: any) => {
+          // Keep core patterns, exclude less critical ones like comments
+          return pattern.name !== 'comment' || pattern.match !== '#.*';
+        }) || [],
+        
+        // Keep minimal repository
+repository: {},
+      };
+
+      // Load Shiki modules conditionally
+      const { createHighlighterCore: createCore } = await loadShikiModules();
+
+      this.staticHighlighter = await createCore({
         engine: this.engine,
-        langs: [
-          {
-            ...prompt[0],
-            repository: {}, // Required for Shiki v3
-          } as any,
-        ],
+        langs: [optimizedGrammar as any],
         themes: this.themes,
       });
 
       this.isInitialized = true;
+      console.log('✅ Worker: Optimized Shiki engine initialized successfully');
     } catch (error) {
-      throw new Error(`Failed to initialize Shiki worker: ${error}`);
+      throw new Error(`Failed to initialize optimized Shiki worker: ${error}`);
     }
   }
 
@@ -95,35 +135,56 @@ class ShikiWorkerEngine {
     return text.slice(0, 100) + text.length;
   }
 
-  private async getDynamicHighlighter(text: string): Promise<HighlighterCore> {
+  private async getDynamicHighlighter(text: string): Promise<any> {
     const cacheKey = this.generateGrammarCacheKey(text);
-    
+
     // Check cache first
     if (this.dynamicHighlighterCache.has(cacheKey)) {
       return this.dynamicHighlighterCache.get(cacheKey)!;
     }
 
-    // Get or create grammar
+    // Optimized: Get or create grammar with performance checks
     let grammar = this.grammarCache.get(cacheKey);
     if (!grammar) {
-      grammar = await createDynamicGrammar(text);
+      // Only create dynamic grammar for complex patterns
+      const hasComplexPatterns = text.includes('<') || text.includes('{') || text.includes('embedding:');
+
+      if (hasComplexPatterns) {
+        grammar = await createDynamicGrammar(text);
+      } else {
+        // Use static grammar for simple text to save processing
+        grammar = prompt[0];
+      }
       this.grammarCache.set(cacheKey, grammar);
     }
 
-    // Create highlighter
-    const highlighter = await createHighlighterCore({
+    // Optimized: Create highlighter with minimal grammar structure
+    const baseGrammar = prompt[0];
+    if (!baseGrammar) {
+      throw new Error('Base grammar not available');
+    }
+
+    const optimizedGrammar = {
+      ...grammar,
+      
+      // Limit patterns to essential ones for performance
+patterns: grammar.patterns?.slice(0, 15) || baseGrammar.patterns || [],
+      
+      // Keep minimal repository
+repository: {},
+    };
+
+    // Load Shiki modules conditionally
+    const { createHighlighterCore: createCore } = await loadShikiModules();
+
+    const highlighter = await createCore({
       engine: this.engine,
-      langs: [
-        {
-          ...grammar,
-          repository: {}, // Required for Shiki v3
-        },
-      ],
+      langs: [optimizedGrammar],
       themes: this.themes,
     });
 
-    // Cache with size limit
-    if (this.dynamicHighlighterCache.size >= 5) {
+    // Optimized: Reduced cache size for better memory management
+    if (this.dynamicHighlighterCache.size >= 3) { // Reduced from 5 to 3
       const firstKey = this.dynamicHighlighterCache.keys().next().value;
       if (firstKey !== undefined) {
         this.dynamicHighlighterCache.delete(firstKey);

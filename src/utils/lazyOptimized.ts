@@ -60,6 +60,45 @@ export function lazyOptimized<T extends ComponentType<any>>(
 }
 
 /**
+ * Advanced code splitting utilities for Phase 2 optimizations
+ */
+
+// Track chunk loading performance
+const chunkLoadTimes = new Map<string, number>();
+
+/**
+ * Enhanced chunk loading with performance tracking
+ */
+export function trackChunkLoad<T>(
+  chunkName: string,
+  importFn: () => Promise<T>,
+): Promise<T> {
+  const startTime = performance.now();
+
+  return importFn().then(
+    (result) => {
+      const loadTime = performance.now() - startTime;
+      chunkLoadTimes.set(chunkName, loadTime);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`📦 Chunk "${chunkName}" loaded in ${loadTime.toFixed(2)}ms`);
+      }
+
+      return result;
+    },
+    (error) => {
+      const loadTime = performance.now() - startTime;
+
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`❌ Chunk "${chunkName}" failed after ${loadTime.toFixed(2)}ms:`, error);
+      }
+
+      throw error;
+    }
+  );
+}
+
+/**
  * Preload multiple components in sequence to avoid blocking
  */
 export async function preloadComponents(
@@ -97,6 +136,47 @@ export async function preloadComponents(
       });
     }
   }
+}
+
+/**
+ * Create feature-specific lazy components with intelligent preloading
+ * Phase 2: Advanced code splitting implementation
+ */
+export function lazyFeature<T extends ComponentType<any>>(
+  featureName: string,
+  importFn: () => Promise<{ default: T }>,
+  options: LazyOptions & {
+    // Preload when feature becomes relevant
+    preloadOnFeatureEnabled?: boolean;
+    // Feature priority for loading order
+    priority?: 'high' | 'medium' | 'low';
+  } = {},
+): LazyComponentWithPreload<T> {
+  const { priority = 'medium', preloadOnFeatureEnabled = true, ...lazyOptions } = options;
+
+  const wrappedImportFn = () => trackChunkLoad(`feature-${featureName}`, importFn);
+  const LazyComponent = lazyOptimized(wrappedImportFn, lazyOptions);
+
+  // Feature-specific preloading logic
+  if (preloadOnFeatureEnabled) {
+    // Check if feature is enabled in settings and preload accordingly
+    const checkFeatureEnabled = () => {
+      // This would be connected to the actual settings store
+      // For now, implement basic priority-based preloading
+      const delay = priority === 'high' ? 1000 : priority === 'medium' ? 3000 : 5000;
+
+      setTimeout(() => {
+        LazyComponent.preload().catch(() => {
+          // Silently handle preload failures
+        });
+      }, delay);
+    };
+
+    // Start checking after initial app load
+    setTimeout(checkFeatureEnabled, 500);
+  }
+
+  return LazyComponent;
 }
 
 /**
@@ -221,3 +301,51 @@ export const lazyPerformance = {
     };
   },
 };
+
+/**
+ * Get chunk loading performance metrics
+ */
+export function getChunkPerformanceMetrics(): {
+  averageLoadTime: number;
+  slowestChunks: Array<{ loadTime: number, name: string; }>;
+  totalChunks: number;
+} {
+  const loadTimes = Array.from(chunkLoadTimes.values());
+  const averageLoadTime = loadTimes.length > 0
+    ? loadTimes.reduce((sum, time) => sum + time, 0) / loadTimes.length
+    : 0;
+
+  const slowestChunks = Array.from(chunkLoadTimes.entries())
+    .map(([name, loadTime]) => ({ loadTime, name }))
+    .sort((a, b) => b.loadTime - a.loadTime)
+    .slice(0, 5);
+
+  return {
+    averageLoadTime,
+    slowestChunks,
+    totalChunks: chunkLoadTimes.size,
+  };
+}
+
+/**
+ * Development helper to log chunk performance
+ */
+export function logChunkPerformance(): void {
+  if (process.env.NODE_ENV !== 'development') return;
+
+  const metrics = getChunkPerformanceMetrics();
+
+  console.group('📊 Chunk Loading Performance');
+  console.log(`Total chunks loaded: ${metrics.totalChunks}`);
+  console.log(`Average load time: ${metrics.averageLoadTime.toFixed(2)}ms`);
+
+  if (metrics.slowestChunks.length > 0) {
+    console.group('🐌 Slowest chunks:');
+    metrics.slowestChunks.forEach(({ name, loadTime }) => {
+      console.log(`  ${name}: ${loadTime.toFixed(2)}ms`);
+    });
+    console.groupEnd();
+  }
+
+  console.groupEnd();
+}

@@ -1,6 +1,6 @@
-import { Icon } from '@lobehub/ui';
-import { Brush, FlaskConical, Layout, PanelRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
+import { OptimizedIcon } from '@/components/OptimizedIcon';
 
 import { SettingsTabs } from '@/features/Setting/Sidebar/index';
 
@@ -9,18 +9,18 @@ export const useTabItems = () => {
 
   return [
     {
-      icon: <Icon icon={Brush} />,
+      icon: <OptimizedIcon name="brush" />,
       key: SettingsTabs.Appearance,
       label: t('setting.tab.appearance'),
     },
-    { icon: <Icon icon={Layout} />, key: SettingsTabs.Layout, label: t('setting.tab.layout') },
+    { icon: <OptimizedIcon name="layout" />, key: SettingsTabs.Layout, label: t('setting.tab.layout') },
     {
-      icon: <Icon icon={PanelRight} />,
+      icon: <OptimizedIcon name="panel-right" />,
       key: SettingsTabs.Sidebar,
       label: t('setting.tab.sidebar'),
     },
     {
-      icon: <Icon icon={FlaskConical} />,
+      icon: <OptimizedIcon name="flask-conical" />,
       key: SettingsTabs.Experimental,
       label: t('setting.tab.experimental'),
     },

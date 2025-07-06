@@ -1,8 +1,9 @@
 import { Form, type ItemGroup, Swatches } from '@lobehub/ui';
 import { Button, Input, InputNumber, Segmented, Select, Switch } from 'antd';
 import isEqual from 'fast-deep-equal';
-import { Layout, Palette, PanelLeftClose, PanelRightClose, TextCursorInput } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
+
+import { Layout, Palette, PanelLeftClose, PanelRightClose, TextCursorInput } from '@/components/OptimizedIcon';
 import { useTranslation } from 'react-i18next';
 
 import { CustomLogo } from '@/components';
