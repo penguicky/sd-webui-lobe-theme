@@ -9,7 +9,7 @@ const Share = memo<{ type: 'txt' | 'img' }>(({ type }) => {
   const [open, setOpen] = useState(false);
 
   // Memoize button creation to prevent recreation on every render
-  const buttonReference = useRef<any>();
+  const buttonReference = useRef<any>(null);
 
   // Initialize button reference only once
   useMemo(() => {

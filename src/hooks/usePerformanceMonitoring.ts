@@ -81,8 +81,8 @@ export const useComponentPerformance = (componentName: string, enabled = __DEV__
     updateCount: 0,
   });
 
-  const renderStartRef = useRef<number>();
-  const mountStartRef = useRef<number>();
+  const renderStartRef = useRef<number>(0);
+  const mountStartRef = useRef<number>(0);
   const renderTimesRef = useRef<number[]>([]);
 
   // Track component mount
@@ -441,7 +441,9 @@ export function trackProgressiveLoadingMetrics() {
   // Track initial render completion
   const trackInitialRender = () => {
     progressiveMetrics.initialRenderTime = performance.now();
-    consola.info(`🚀 Initial render completed in ${progressiveMetrics.initialRenderTime.toFixed(2)}ms`);
+    consola.info(
+      `🚀 Initial render completed in ${progressiveMetrics.initialRenderTime.toFixed(2)}ms`,
+    );
   };
 
   // Use requestIdleCallback to track when initial render is complete
@@ -471,5 +473,3 @@ export function trackProgressiveLoadingMetrics() {
     },
   };
 }
-
-

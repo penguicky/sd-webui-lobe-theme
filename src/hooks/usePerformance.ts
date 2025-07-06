@@ -5,7 +5,7 @@ import { useAppStore } from '@/store';
 
 // Performance monitoring hook
 export const usePerformanceMonitor = (componentName: string) => {
-  const startTimeRef = useRef<number>();
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (__DEV__) {
@@ -33,7 +33,7 @@ export const useDebouncedCallback = <T extends (...args: any[]) => any>(
   callback: T,
   delay: number,
 ): T => {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const debouncedCallback = useCallback(
     (...args: Parameters<T>) => {
@@ -70,8 +70,8 @@ export const useThrottledEffect = (
   deps: React.DependencyList,
   delay: number,
 ) => {
-  const lastRan = useRef<number>();
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const lastRan = useRef<number>(0);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const now = Date.now();

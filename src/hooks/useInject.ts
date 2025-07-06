@@ -19,14 +19,14 @@ interface InjectOptions {
   parent?: string;
 }
 export const useInject = (
-  ref: RefObject<HTMLDivElement>,
+  ref: RefObject<HTMLDivElement | null>,
   selectors: string,
   { onSuccess, onError, debug, id, onStart, parent, inverse }: InjectOptions = {},
 ) => {
   const [isLoading, setIsLoading] = useState(true);
   const [element, setElement] = useState<HTMLDivElement>();
-  const isInject = useRef(false);
-  const retryCount = useRef(0);
+  const isInject = useRef<boolean>(false);
+  const retryCount = useRef<number>(0);
   const maxRetries = 3;
 
   useEffect(() => {
