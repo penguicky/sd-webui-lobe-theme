@@ -65,7 +65,7 @@
   },
   "dependencies": {
     "@bluelovers/auto1111-pnginfo": "^2.0.3",
-    "@icons-pack/react-simple-icons": "^9.5.0",
+    "@icons-pack/react-simple-icons": "^13.4.0",
     "@lobehub/ui": "1.141.0",
     "ahooks": "^3.8.0",
     "antd": "^5.26.3",
@@ -75,18 +75,18 @@
     "i18next": "^23.11.5",
     "i18next-http-backend": "^2.5.2",
     "lodash-es": "^4.17.21",
-    "lucide-react": "0.263.1",
+    "lucide-react": "^0.525.0",
     "lucide-static": "^0.525.0",
     "modern-screenshot": "^4.6.4",
     "polished": "^4.3.1",
-    "react": ">=18.0.0",
+    "react": "^19.1.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
-    "react-dom": ">=18.0.0",
+    "react-dom": "^19.1.0",
     "react-helmet": "^6.1.0",
-    "react-i18next": "^14.1.2",
-    "react-layout-kit": "^1.9.0",
-    "react-rnd": "^10.4.10",
+    "react-i18next": "^15.6.0",
+    "react-layout-kit": "^1.9.1",
+    "react-rnd": "^10.5.2",
     "react-tag-input": "6.9.0",
     "semver": "^7.6.2",
     "shiki": "^3.7.0",
@@ -101,7 +101,7 @@
     "@fullhuman/postcss-purgecss": "^7.0.2",
     "@lobehub/lint": "^1.26.2",
     "@testing-library/jest-dom": "^6.4.5",
-    "@testing-library/react": "^15.0.7",
+    "@testing-library/react": "^16.3.0",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^20.12.12",
     "@types/react": "^19.1.0",
@@ -135,8 +135,8 @@
     "vitest": "~1.2.2"
   },
   "peerDependencies": {
-    "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "publishConfig": {
     "access": "public",
