@@ -3,6 +3,8 @@
  * Provides runtime analysis of bundle composition and optimization opportunities
  */
 
+import { webUIImport } from './webUICompat';
+
 // Track imported modules for analysis
 const moduleRegistry = new Map<
   string,
@@ -36,46 +38,89 @@ export function registerModuleUsage(moduleName: string, size?: number): void {
 }
 
 /**
- * Track dynamic import performance
+ * WebUI-compatible dynamic import with fallback mechanisms
  */
-export function trackDynamicImport<T>(moduleName: string, importPromise: Promise<T>): Promise<T> {
+export function webUICompatibleImport<T>(
+  moduleName: string,
+  importFn: () => Promise<T>,
+  fallbackFn?: () => Promise<T>
+): Promise<T> {
   const startTime = performance.now();
 
-  return importPromise.then(
-    (result) => {
-      const loadTime = performance.now() - startTime;
-      const existing = moduleRegistry.get(moduleName);
+  const handleSuccess = (result: T, isFallback = false) => {
+    const loadTime = performance.now() - startTime;
+    const existing = moduleRegistry.get(moduleName);
 
-      if (existing) {
-        existing.loadTime = loadTime;
-      } else {
-        moduleRegistry.set(moduleName, {
-          lastUsed: Date.now(),
-          loadTime,
-          name: moduleName,
-          usage: 1,
-        });
+    if (existing) {
+      existing.loadTime = loadTime;
+      existing.usage += 1;
+      existing.lastUsed = Date.now();
+    } else {
+      moduleRegistry.set(moduleName, {
+        lastUsed: Date.now(),
+        loadTime,
+        name: moduleName,
+        usage: 1,
+      });
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      const prefix = isFallback ? '🔄 Fallback' : '📦';
+      console.log(`${prefix} Module "${moduleName}" loaded in ${loadTime.toFixed(2)}ms`);
+    }
+
+    return result;
+  };
+
+  const handleError = (error: any, isFallback = false) => {
+    const loadTime = performance.now() - startTime;
+
+    if (process.env.NODE_ENV === 'development') {
+      const prefix = isFallback ? '❌ Fallback failed' : '⚠️ Primary import failed';
+      console.error(
+        `${prefix} for "${moduleName}" after ${loadTime.toFixed(2)}ms:`,
+        error,
+      );
+    }
+
+    return error;
+  };
+
+  // Try primary import with WebUI compatibility
+  return importFn()
+    .then(result => handleSuccess(result, false))
+    .catch(async (error) => {
+      handleError(error, false);
+
+      // Try WebUI-compatible import as first fallback
+      if (moduleName && typeof webUIImport === 'function') {
+        try {
+          const webUIResult = await webUIImport(moduleName);
+          return handleSuccess(webUIResult, true);
+        } catch (webUIError) {
+          console.warn(`WebUI import also failed for ${moduleName}:`, webUIError);
+        }
       }
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`📦 Module "${moduleName}" loaded in ${loadTime.toFixed(2)}ms`);
-      }
-
-      return result;
-    },
-    (error) => {
-      const loadTime = performance.now() - startTime;
-
-      if (process.env.NODE_ENV === 'development') {
-        console.error(
-          `❌ Module "${moduleName}" failed to load after ${loadTime.toFixed(2)}ms:`,
-          error,
-        );
+      // Try custom fallback if available
+      if (fallbackFn) {
+        return fallbackFn()
+          .then(result => handleSuccess(result, true))
+          .catch(fallbackError => {
+            handleError(fallbackError, true);
+            throw fallbackError;
+          });
       }
 
       throw error;
-    },
-  );
+    });
+}
+
+/**
+ * Track dynamic import performance (legacy compatibility)
+ */
+export function trackDynamicImport<T>(moduleName: string, importPromise: Promise<T>): Promise<T> {
+  return webUICompatibleImport(moduleName, () => importPromise);
 }
 
 /**

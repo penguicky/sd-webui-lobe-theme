@@ -1,5 +1,5 @@
 import { LayoutHeader, LayoutMain, LayoutSidebar } from '@lobehub/ui';
-import { memo, useEffect } from 'react';
+import { lazy, memo, useEffect } from 'react';
 import { shallow } from 'zustand/shallow';
 
 import { AppErrorBoundary, FeatureErrorBoundary } from '@/components/ErrorBoundary';
@@ -21,9 +21,10 @@ import { registerCommonFeatures } from '@/utils/featureLoader';
 import { ProgressiveLoader, SuspenseLoader } from '@/components/ProgressiveLoader';
 
 import Content from '../features/Content';
-import Footer from '../features/Footer';
-import Header from '../features/Header';
 import { useStyles } from './style';
+// Lazy load non-critical components for Phase 3 optimization
+const Footer = lazy(() => import('../features/Footer'));
+const Header = lazy(() => import('../features/Header'));
 
 // Phase 2: Advanced code splitting with progressive loading
 // Components are now loaded dynamically using ProgressiveLoader
@@ -212,9 +213,11 @@ const Index = memo(() => {
       <StructuredData />
       <GlobalStyle />
       <LayoutHeader aria-label="Main navigation header" headerHeight={HEADER_HEIGHT} role="banner">
-        <FeatureErrorBoundary feature="Header">
-          <Header />
-        </FeatureErrorBoundary>
+        <SuspenseLoader minHeight={HEADER_HEIGHT}>
+          <FeatureErrorBoundary feature="Header">
+            <Header />
+          </FeatureErrorBoundary>
+        </SuspenseLoader>
       </LayoutHeader>
       <LayoutMain aria-label="Main content area" role="main">
         <div
@@ -282,9 +285,11 @@ const Index = memo(() => {
         )}
       </LayoutMain>
       <footer aria-label="Application footer" role="contentinfo">
-        <FeatureErrorBoundary feature="Footer">
-          <Footer />
-        </FeatureErrorBoundary>
+        <SuspenseLoader minHeight={60}>
+          <FeatureErrorBoundary feature="Footer">
+            <Footer />
+          </FeatureErrorBoundary>
+        </SuspenseLoader>
       </footer>
     </AppErrorBoundary>
   );

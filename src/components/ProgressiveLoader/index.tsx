@@ -2,6 +2,7 @@ import { Skeleton } from 'antd';
 import { type ComponentType, type ReactNode, Suspense, memo, useEffect, useState } from 'react';
 
 import { trackChunkLoad } from '@/utils/lazyOptimized';
+import { getMemoryManager } from '@/utils/memoryManagement';
 
 interface ProgressiveLoaderProps {
   // Chunk name for tracking
@@ -118,7 +119,7 @@ export const ProgressiveLoader = memo<ProgressiveLoaderProps>(({
     const loadComponent = async () => {
       try {
         const result = await trackChunkLoad(chunkName, component);
-        
+
         // Ensure minimum loading time to prevent flash
         const loadTime = Date.now() - (loadStartTime || 0);
         if (loadTime < minLoadingTime) {
@@ -128,7 +129,23 @@ export const ProgressiveLoader = memo<ProgressiveLoaderProps>(({
             }, minLoadingTime - loadTime);
           });
         }
-        
+
+        // Phase 3: Register component with memory manager
+        const memoryManager = getMemoryManager();
+        if (memoryManager) {
+          const estimatedSize = strategy === 'immediate' ? 100 : 50; // Immediate components likely larger
+          memoryManager.registerComponent(chunkName, result.default, estimatedSize);
+        }
+
+        // Track progressive loading metrics
+        window.dispatchEvent(new CustomEvent('progressive-component-loaded', {
+          detail: {
+            componentName: chunkName,
+            loadTime: Date.now() - (loadStartTime || 0),
+            strategy,
+          }
+        }));
+
         setLoadedComponent(() => result.default);
       } catch (error_) {
         setError(error_ instanceof Error ? error_ : new Error('Failed to load component'));

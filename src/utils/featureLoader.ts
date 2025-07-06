@@ -1,6 +1,6 @@
 import { type ComponentType } from 'react';
 
-import { trackChunkLoad } from './lazyOptimized';
+
 
 /**
  * Feature-based loading system for Phase 2 optimizations
@@ -163,7 +163,8 @@ class FeatureLoadingManager {
   }
 
   private async performLoad(feature: FeatureConfig): Promise<ComponentType<any>> {
-    const result = await trackChunkLoad(`feature-${feature.name}`, feature.loader);
+    // Direct import (IIFE format)
+    const result = await feature.loader();
     return result.default;
   }
 

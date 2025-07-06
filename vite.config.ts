@@ -44,8 +44,9 @@ export default defineConfig({
 
         entryFileNames: `[name].js`,
 
-        // Use ES modules for code splitting compatibility
-        format: 'es',
+        // Use IIFE format for WebUI compatibility
+        format: 'iife',
+        name: 'LobeTheme',
 
         // Aggressive minification settings
         generatedCode: {
@@ -54,41 +55,10 @@ export default defineConfig({
           objectShorthand: true,
         },
 
-        // Enable strategic code splitting - Phase 2 optimization
-        inlineDynamicImports: false,
+        // Disable code splitting for IIFE compatibility with WebUI
+        inlineDynamicImports: true,
 
-        // Manual chunk configuration for logical grouping
-        manualChunks: (id) => {
-          // Core dependencies chunk
-          if (id.includes('node_modules/react') ||
-              id.includes('node_modules/react-dom') ||
-              id.includes('node_modules/zustand')) {
-            return 'core';
-          }
-
-          // UI library chunk
-          if (id.includes('node_modules/@lobehub/ui') ||
-              id.includes('node_modules/antd') ||
-              id.includes('node_modules/antd-style')) {
-            return 'ui-lib';
-          }
-
-          // Heavy utilities chunk
-          if (id.includes('node_modules/shiki') ||
-              id.includes('node_modules/lodash-es') ||
-              id.includes('node_modules/modern-screenshot')) {
-            return 'heavy-utils';
-          }
-
-          // Feature-specific chunks
-          if (id.includes('src/features/Share') ||
-              id.includes('src/features/Setting')) {
-            return 'features-advanced';
-          }
-
-          // Keep main bundle for critical components
-          return undefined;
-        },
+        // IIFE format doesn't support manual chunks - all code will be inlined
       },
 
       // Enhanced tree-shaking configuration for Phase 1 optimizations

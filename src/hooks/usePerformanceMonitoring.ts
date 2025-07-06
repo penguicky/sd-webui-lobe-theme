@@ -26,8 +26,14 @@ interface ComponentPerformanceData {
 interface BundleLoadMetrics {
   cached: boolean;
   componentName: string;
+  isLazyLoaded?: boolean;
+  // Phase 3: Enhanced progressive loading metrics
+  loadStrategy?: 'immediate' | 'visible' | 'interaction' | 'idle' | 'tiered';
   loadTime: number;
+  preloaded?: boolean;
+  priority?: number;
   size?: number;
+  tier?: string;
 }
 
 interface UserInteractionMetrics {
@@ -394,3 +400,76 @@ export const usePerformanceDashboard = (enabled = __DEV__) => {
     memoryInfo,
   };
 };
+
+// =============================================================================
+// PHASE 3: PROGRESSIVE LOADING PERFORMANCE TRACKING
+// =============================================================================
+
+// Helper function for calculating average load time
+function calculateAverageLoadTime(metrics: any): number {
+  const allLoads = [...metrics.tieredLoads.values(), ...metrics.lazyLoads.values()];
+  if (allLoads.length === 0) return 0;
+
+  const totalTime = allLoads.reduce((sum, load) => sum + load.loadTime, 0);
+  return totalTime / allLoads.length;
+}
+
+/**
+ * Track progressive loading performance metrics
+ */
+export function trackProgressiveLoadingMetrics() {
+  const progressiveMetrics = {
+    initialRenderTime: 0,
+    lazyLoads: new Map<string, BundleLoadMetrics>(),
+    tieredLoads: new Map<string, BundleLoadMetrics>(),
+    totalSavedTime: 0,
+  };
+
+  // Listen for tiered loading events
+  window.addEventListener('tiered-component-loaded', (event: any) => {
+    const { componentName, tierName, loadTime } = event.detail;
+    progressiveMetrics.tieredLoads.set(componentName, {
+      cached: false,
+      componentName,
+      isLazyLoaded: true,
+      loadStrategy: 'tiered',
+      loadTime,
+      tier: tierName,
+    });
+  });
+
+  // Track initial render completion
+  const trackInitialRender = () => {
+    progressiveMetrics.initialRenderTime = performance.now();
+    consola.info(`🚀 Initial render completed in ${progressiveMetrics.initialRenderTime.toFixed(2)}ms`);
+  };
+
+  // Use requestIdleCallback to track when initial render is complete
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(trackInitialRender, { timeout: 5000 });
+  } else {
+    setTimeout(trackInitialRender, 1000);
+  }
+
+  return {
+    getProgressiveMetrics: () => ({
+      averageLoadTime: calculateAverageLoadTime(progressiveMetrics),
+      initialRenderTime: progressiveMetrics.initialRenderTime,
+      lazyLoads: Array.from(progressiveMetrics.lazyLoads.values()),
+      tieredLoads: Array.from(progressiveMetrics.tieredLoads.values()),
+      totalComponents: progressiveMetrics.tieredLoads.size + progressiveMetrics.lazyLoads.size,
+    }),
+
+    trackLazyLoad: (componentName: string, loadTime: number, strategy: string) => {
+      progressiveMetrics.lazyLoads.set(componentName, {
+        cached: false,
+        componentName,
+        isLazyLoaded: true,
+        loadStrategy: strategy as any,
+        loadTime,
+      });
+    },
+  };
+}
+
+

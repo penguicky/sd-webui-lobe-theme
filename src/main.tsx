@@ -5,27 +5,24 @@ import { createRoot } from 'react-dom/client';
 import './styles/critical.css';
 
 import Page from './app/page';
-import { trackDynamicImport } from './utils/bundleAnalysis';
+import { initTieredLoading } from './utils/tieredLoading';
+import { initMemoryManagement } from './utils/memoryManagement';
+import { trackProgressiveLoadingMetrics } from './hooks/usePerformanceMonitoring';
+import { initIntelligentPreloading } from './utils/intelligentPreloading';
 
-// Optimized Shiki engine pre-warming with Web Worker support
+// Optimized Shiki engine pre-warming with Web Worker support and WebUI compatibility
 const preWarmShiki = async () => {
   try {
-    // Pre-warm Web Worker first (non-blocking)
-    const { shikiWorkerManager } = await trackDynamicImport(
-      'shikiWorkerManager',
-      import('./utils/shikiWorkerManager'),
-    );
+    // Import Shiki worker manager directly (IIFE format)
+    const { shikiWorkerManager } = await import('./utils/shikiWorkerManager');
 
     // Start worker pre-warming (don't await to avoid blocking)
-    shikiWorkerManager.preWarm().catch((error) => {
+    shikiWorkerManager.preWarm().catch((error: any) => {
       consola.warn('Web Worker pre-warming failed, will use main thread fallback:', error);
     });
 
-    // Also pre-warm main thread fallback
-    const { ShikiEngineManager } = await trackDynamicImport(
-      'useHighlight',
-      import('./hooks/useHighlight'),
-    );
+    // Import main thread fallback directly (IIFE format)
+    const { ShikiEngineManager } = await import('./hooks/useHighlight');
     const manager = ShikiEngineManager.getInstance();
     await manager.preWarm();
   } catch (error) {
@@ -34,6 +31,39 @@ const preWarmShiki = async () => {
 };
 
 if (window.global === undefined) window.global = window;
+
+// Phase 3: Initialize progressive enhancement systems
+console.log('🚀 Phase 3: Initializing progressive enhancement systems...');
+
+// Initialize tiered loading system
+initTieredLoading();
+console.log('✅ Tiered loading system initialized');
+
+// Initialize memory management
+const memoryManager = initMemoryManagement();
+console.log('✅ Memory management system initialized');
+
+// Initialize progressive loading metrics
+const progressiveMetrics = trackProgressiveLoadingMetrics();
+console.log('✅ Progressive loading metrics initialized');
+
+// Initialize intelligent preloading
+const intelligentPreloader = initIntelligentPreloading();
+console.log('✅ Intelligent preloading system initialized');
+
+// Log performance improvements every 30 seconds in development
+if (process.env.NODE_ENV === 'development') {
+  setInterval(() => {
+    const stats = memoryManager.getMemoryStats();
+    const metrics = progressiveMetrics.getProgressiveMetrics();
+    const preloadStats = intelligentPreloader.getPreloadingStats();
+    console.log('📊 Phase 3 Performance Stats:', {
+      memory: stats,
+      preloading: preloadStats,
+      progressive: metrics,
+    });
+  }, 30_000);
+}
 
 const skipLoad = window.location.href.includes('dev') && process.env.NODE_ENV === 'production';
 
