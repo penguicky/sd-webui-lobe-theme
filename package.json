@@ -109,7 +109,7 @@
     "@types/react-helmet": "^6.1.11",
     "@types/react-tag-input": "^6.6.6",
     "@types/semver": "^7.5.8",
-    "@vitejs/plugin-react-swc": "^3.7.0",
+    "@vitejs/plugin-react-swc": "^3.10.2",
     "@vitest/coverage-v8": "^1.6.0",
     "autoprefixer": "^10.4.21",
     "commitlint": "^19.3.0",
@@ -128,10 +128,10 @@
     "rollup-plugin-visualizer": "^6.0.3",
     "semantic-release": "^21.1.2",
     "stylelint": "^15.11.0",
-    "terser": "^5.31.0",
-    "typescript": "^5.4.5",
-    "vite": "^5.2.11",
-    "vite-bundle-analyzer": "^0.7.0",
+    "terser": "^5.43.1",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.2",
+    "vite-bundle-analyzer": "^1.0.0",
     "vitest": "~1.2.2"
   },
   "peerDependencies": {
