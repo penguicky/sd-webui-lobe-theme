@@ -1,5 +1,6 @@
 import { consola } from 'consola';
-import { startCase } from 'lodash-es';
+
+import { startCase } from '@/utils/nativeUtils';
 
 const getNavTabs = (): HTMLDivElement[] =>
   Array.prototype.slice.call(
