@@ -1,11 +1,10 @@
 import {
   type DivProps,
   ThemeProvider,
-  colorScales,
   generateColorNeutralPalette,
   generateColorPalette,
-  neutralColorScales,
 } from '@lobehub/ui';
+import { colors as colorScales, gray as grayScale } from '@lobehub/ui/color';
 import isEqual from 'fast-deep-equal';
 import qs from 'query-string';
 import { memo, useCallback, useEffect } from 'react';
@@ -49,8 +48,8 @@ const GlobalLayout = memo<DivProps>(({ children }) => {
       if (setting.neutralColor === 'kitchen') {
         neutralTokens = kitchenNeutral[themeMode];
       } else {
-        const scale = neutralColorScales[setting.neutralColor];
-        neutralTokens = generateColorNeutralPalette({ appearance: themeMode, scale });
+        // Use gray scale for all neutral colors in 2.x
+        neutralTokens = generateColorNeutralPalette({ appearance: themeMode, scale: grayScale });
       }
     }
 
@@ -61,7 +60,6 @@ const GlobalLayout = memo<DivProps>(({ children }) => {
     setting && (
       <ThemeProvider
         customToken={genCustomToken}
-        enableWebfonts={setting.enableWebFont}
         themeMode={themeMode}
       >
         {children}

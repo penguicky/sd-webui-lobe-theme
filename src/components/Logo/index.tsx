@@ -1,4 +1,5 @@
-import { Logo as LobeLogo } from '@lobehub/ui';
+// Logo component removed in @lobehub/ui 2.x - using custom implementation
+import { Avatar } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { type CSSProperties, memo } from 'react';
 
@@ -33,21 +34,21 @@ const Logo = memo<LogoProps>(({ size = 32, style }) => {
   }
 
   return (
-    <LobeLogo
-      extra={
-        <a
-          href={GITHUB_REPO_URL}
-          rel="noreferrer"
-          style={{ color: 'inherit', fontWeight: 400 }}
-          target="_blank"
-        >
-          SD
-        </a>
-      }
-      size={size}
-      style={style}
-      type="combine"
-    />
+    <div style={{ alignItems: 'center', display: 'flex', gap: 8, ...style }}>
+      <Avatar
+        alt="LobeHub"
+        size={size}
+        src="https://registry.npmmirror.com/@lobehub/assets-logo/1.0.0/files/assets/logo-3d.webp"
+      />
+      <a
+        href={GITHUB_REPO_URL}
+        rel="noreferrer"
+        style={{ color: 'inherit', fontWeight: 400, textDecoration: 'none' }}
+        target="_blank"
+      >
+        SD
+      </a>
+    </div>
   );
 });
 

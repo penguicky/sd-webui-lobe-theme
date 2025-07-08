@@ -1,15 +1,13 @@
 import {
-  DiscordIcon,
-  Giscus as G,
-  GradientButton,
   Icon,
   Modal,
   type ModalProps,
 } from '@lobehub/ui';
 import { Button } from 'antd';
+import G from '@giscus/react';
 import { useTheme } from 'antd-style';
 import isEqual from 'fast-deep-equal';
-import { Github, Heart } from 'lucide-react';
+import { Github, Heart, MessageCircle } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Center, Flexbox } from 'react-layout-kit';
@@ -51,7 +49,7 @@ const Giscus = memo<GiscusProps>(({ open, onCancel }) => {
         >
           <Flexbox gap={16} horizontal>
             <a href={DISCORD_URL} rel="noreferrer" target="_blank">
-              <Button icon={<Icon icon={DiscordIcon} />} size={'large'}>
+              <Button icon={<Icon icon={MessageCircle} />} size={'large'}>
                 Join Discover
               </Button>
             </a>
@@ -61,7 +59,7 @@ const Giscus = memo<GiscusProps>(({ open, onCancel }) => {
               </Button>
             </a>
             <a href={SPONSOR_URL} rel="noreferrer" target="_blank">
-              <GradientButton icon={<Icon icon={Heart} />}>Sponsor</GradientButton>
+              <Button icon={<Icon icon={Heart} />} size={'large'} type="primary">Sponsor</Button>
             </a>
           </Flexbox>
         </Center>

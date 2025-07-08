@@ -1,4 +1,4 @@
-import { Logo } from '@lobehub/ui';
+import { Avatar } from 'antd';
 import { PropsWithChildren, memo } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
@@ -17,7 +17,14 @@ const Preview = memo<FieldType & PropsWithChildren>(({ withBackground, withFoote
           {children}
           {withFooter ? (
             <Flexbox align={'center'} className={styles.footer} gap={4}>
-              <Logo extra={'SD'} type={'combine'} />
+              <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
+                <Avatar
+                  alt="LobeHub"
+                  size={24}
+                  src="https://registry.npmmirror.com/@lobehub/assets-logo/1.0.0/files/assets/logo-3d.webp"
+                />
+                <span>SD</span>
+              </div>
               <div className={styles.url}>{GITHUB_REPO_URL}</div>
             </Flexbox>
           ) : (

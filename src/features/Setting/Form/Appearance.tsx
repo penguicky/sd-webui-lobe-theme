@@ -1,4 +1,4 @@
-import { Form, Swatches } from '@lobehub/ui';
+import { Form, ColorSwatches } from '@lobehub/ui';
 import { Input, Segmented, Select, Switch } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { memo, useCallback, useMemo, useState } from 'react';
@@ -60,10 +60,10 @@ const SettingForm = memo(() => {
         },
         {
           children: (
-            <Swatches
-              activeColor={primaryColor ? primaryColors[primaryColor] : undefined}
-              colors={primaryColorsSwatches}
-              onSelect={(c) => setPrimaryColor(findCustomThemeName('primary', c))}
+            <ColorSwatches
+              colors={primaryColorsSwatches.map(color => ({ color, key: color }))}
+              onChange={(c) => setPrimaryColor(findCustomThemeName('primary', c))}
+              value={primaryColor ? primaryColors[primaryColor] : undefined}
             />
           ),
           desc: t('setting.primaryColor.desc'),
@@ -71,10 +71,10 @@ const SettingForm = memo(() => {
         },
         {
           children: (
-            <Swatches
-              activeColor={neutralColor ? neutralColors[neutralColor] : undefined}
-              colors={neutralColorsSwatches}
-              onSelect={(c) => setNeutralColor(findCustomThemeName('neutral', c))}
+            <ColorSwatches
+              colors={neutralColorsSwatches.map(color => ({ color, key: color }))}
+              onChange={(c) => setNeutralColor(findCustomThemeName('neutral', c))}
+              value={neutralColor ? neutralColors[neutralColor] : undefined}
             />
           ),
           desc: t('setting.neutralColor.desc'),
@@ -172,7 +172,7 @@ const SettingForm = memo(() => {
       onFinish={onFinish}
       onValuesChange={(_, v) => setRawSetting(v)}
       style={{ flex: 1 }}
-      variant={'pure'}
+      variant={'borderless'}
     />
   );
 });

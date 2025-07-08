@@ -1,5 +1,5 @@
-import { FluentEmoji, Logo as LobeLogo, getEmoji } from '@lobehub/ui';
-import { Space } from 'antd';
+import { FluentEmoji } from '@lobehub/ui';
+import { Avatar, Space } from 'antd';
 import { type CSSProperties, memo } from 'react';
 
 export interface CustomLogoProps {
@@ -10,15 +10,22 @@ export interface CustomLogoProps {
 }
 
 const CustomLogo = memo<CustomLogoProps>(({ size = 32, style, logoCustomUrl, logoCustomTitle }) => {
-  let customLogo = <LobeLogo size={size} style={style} />;
+  let customLogo = (
+    <Avatar
+      alt="LobeHub"
+      size={size}
+      src="https://registry.npmmirror.com/@lobehub/assets-logo/1.0.0/files/assets/logo-3d.webp"
+      style={style}
+    />
+  );
 
   if (logoCustomUrl) {
     if (logoCustomUrl.includes('http') || logoCustomUrl.includes('data')) {
       customLogo = <img alt="logo" src={logoCustomUrl} style={{ height: size, ...style }} />;
     } else {
-      const pureEmoji = getEmoji(logoCustomUrl);
-      if (pureEmoji) {
-        customLogo = <FluentEmoji emoji={pureEmoji} size={size} style={style} />;
+      // Simple emoji detection - if it's a short string, treat as emoji
+      if (logoCustomUrl.length <= 4) {
+        customLogo = <FluentEmoji emoji={logoCustomUrl} size={size} style={style} />;
       }
     }
   }

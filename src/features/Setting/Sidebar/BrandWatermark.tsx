@@ -1,4 +1,4 @@
-import { Logo } from '@lobehub/ui';
+import { Avatar } from 'antd';
 import { createStyles } from 'antd-style';
 import { memo } from 'react';
 import { Flexbox, FlexboxProps } from 'react-layout-kit';
@@ -32,7 +32,14 @@ const BrandWatermark = memo<Omit<FlexboxProps, 'children'>>(({ style, ...rest })
         rel="noreferrer"
         target={'_blank'}
       >
-        <Logo size={20} type={'text'} />
+        <div style={{ alignItems: 'center', display: 'flex', gap: 4 }}>
+          <Avatar
+            alt="LobeHub"
+            size={16}
+            src="https://registry.npmmirror.com/@lobehub/assets-logo/1.0.0/files/assets/logo-3d.webp"
+          />
+          <span style={{ fontSize: 12 }}>LobeHub</span>
+        </div>
       </a>
     </Flexbox>
   );

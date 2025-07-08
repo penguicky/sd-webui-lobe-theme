@@ -65,7 +65,7 @@ const SettingForm = memo(() => {
       items={[experimental, promptTextarea]}
       onFinish={onFinish}
       style={{ flex: 1 }}
-      variant={'pure'}
+      variant={'borderless'}
     />
   );
 });

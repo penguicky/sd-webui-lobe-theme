@@ -1,6 +1,6 @@
 {
   "name": "sd-webui-lobe-theme",
-  "version": "3.6.0",
+  "version": "4.0.0",
   "private": true,
   "description": "LobeThem: The Modern Theme for Stable Diffusion WebUI, Exquisite interface design, Highly customizable UI, and Efficiency boosting features.",
   "keywords": [
@@ -35,7 +35,7 @@
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
     "lint:md": "remark . --quiet --output",
     "lint:style": "stylelint \"src/**/*.{css,less,js,jsx,ts,tsx}\" --fix",
-    "prepare": "husky",
+
     "prettier": "prettier -c --write \"**/**\"",
     "release": "semantic-release",
     "start": "npm run dev",
@@ -44,33 +44,11 @@
     "test:update": "vitest -u",
     "type-check": "tsc --noEmit"
   },
-  "lint-staged": {
-    "*.md": [
-      "remark --quiet --output --",
-      "prettier --write --no-error-on-unmatched-pattern"
-    ],
-    "*.json": [
-      "prettier --write --no-error-on-unmatched-pattern"
-    ],
-    "*.{css,less}": [
-      "stylelint --fix --allow-empty-input",
-      "prettier --write"
-    ],
-    "*.{js,jsx}": [
-      "prettier --write",
-      "stylelint --fix",
-      "eslint --fix"
-    ],
-    "*.{ts,tsx}": [
-      "prettier --parser=typescript --write",
-      "stylelint --fix",
-      "eslint --fix"
-    ]
-  },
+
   "dependencies": {
     "@bluelovers/auto1111-pnginfo": "^2.0.3",
     "@icons-pack/react-simple-icons": "^9.5.0",
-    "@lobehub/ui": "1.141.0",
+    "@lobehub/ui": "^2.7.3",
     "ahooks": "^3.8.0",
     "antd": "5.17.0",
     "antd-style": "^3.6.2",

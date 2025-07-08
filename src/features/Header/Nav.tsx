@@ -1,4 +1,4 @@
-import { Burger, TabsNav } from '@lobehub/ui';
+import { Burger, Tabs } from '@lobehub/ui';
 import { useResponsive } from 'antd-style';
 import { memo, useState } from 'react';
 
@@ -14,7 +14,7 @@ const Nav = memo(() => {
 
   if (mobile) return <Burger items={items} opened={opened} setOpened={setOpened} />;
 
-  return <TabsNav activeKey={currentTab} items={items} onChange={onChange} />;
+  return <Tabs activeKey={currentTab} items={items} onChange={onChange} />;
 });
 
 export default Nav;

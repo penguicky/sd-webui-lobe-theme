@@ -1,4 +1,4 @@
-import { Logo } from '@lobehub/ui';
+import { Avatar } from 'antd';
 import { createStyles, useThemeMode } from 'antd-style';
 import { memo } from 'react';
 import { Flexbox } from 'react-layout-kit';
@@ -39,7 +39,14 @@ const Brand = memo(() => {
   return (
     <Flexbox className={styles.container} gap={16}>
       <a className={styles.logo} href={OFFICIAL_SITE}>
-        <Logo type={'combine'} />
+        <div style={{ alignItems: 'center', display: 'flex', gap: 8 }}>
+          <Avatar
+            alt="LobeHub"
+            size={24}
+            src="https://registry.npmmirror.com/@lobehub/assets-logo/1.0.0/files/assets/logo-3d.webp"
+          />
+          <span>LobeHub</span>
+        </div>
       </a>
       <div>Empowering your AI dreams</div>
       <div className={styles.description}>{COPYRIGHT}</div>

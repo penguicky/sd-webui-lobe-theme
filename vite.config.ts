@@ -34,12 +34,18 @@ rollupOptions: {
         chunkFileNames: `[name].js`,
         entryFileNames: `[name].js`,
 
-        
+        // CRITICAL: Use IIFE format for WebUI compatibility
+        format: 'iife',
+        name: 'LobeTheme',
+
         inlineDynamicImports: true,
         // Force everything into a single bundle
-manualChunks: undefined,
+        manualChunks: undefined,
       },
-    }, 
+
+      // External dependencies that should be available globally
+      external: [],
+    },
     sourcemap: !isProduction,
     target: 'es2020',
   },
