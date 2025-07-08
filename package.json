@@ -74,6 +74,7 @@
     "ahooks": "^3.8.0",
     "antd": "5.17.0",
     "antd-style": "^3.6.2",
+    "autoprefixer": "^10.4.21",
     "consola": "^3.2.3",
     "dayjs": "^1.11.13",
     "i18next": "^23.11.5",
@@ -129,7 +130,7 @@
     "stylelint": "^15.11.0",
     "terser": "^5.31.0",
     "typescript": "^5.4.5",
-    "vite": "^5.2.11",
+    "vite": "^7.0.2",
     "vite-bundle-analyzer": "^0.7.0",
     "vitest": "~1.2.2"
   },
