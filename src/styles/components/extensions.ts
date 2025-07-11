@@ -20,20 +20,23 @@ export default (token: Theme) => {
         opacity: 1 !important;
       }
 
+      /* Only protect core UI elements that should never be hidden */
       .fc_mapping,
       .fc_mapping_btns,
-      .fc_row_btns,
       .fc_bg_btns,
       .fc_preview_img,
       .fc_preview_res,
-      .fc_bbox,
-      .fc_adv,
-      .fc_bsc,
-      .fc_msk {
+      .fc_bbox {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
       }
+
+      /*
+       * DO NOT force visibility on mode containers (.fc_adv, .fc_bsc, .fc_msk)
+       * These must be controlled by Gradio's mode switching logic
+       * DO NOT force visibility on .fc_row_btns - controlled by JavaScript
+       */
 
       /* Ensure advanced mode table is properly displayed */
       .fc_mapping table {

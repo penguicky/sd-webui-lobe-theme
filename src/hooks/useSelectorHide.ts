@@ -1,18 +1,17 @@
 import { useEffect } from 'react';
 
 // List of selectors that should be protected from hiding to maintain compatibility with other extensions
+// IMPORTANT: Only include core UI elements that should ALWAYS be visible
+// DO NOT include mode containers (.fc_adv, .fc_bsc, .fc_msk) - they must be controlled by Gradio
+// DO NOT include .fc_row_btns - they are controlled by JavaScript
 const PROTECTED_SELECTORS = [
-  // sd-forge-couple extension selectors
+  // sd-forge-couple extension core selectors
   '.fc_mapping',
   '.fc_mapping_btns',
-  '.fc_row_btns',
   '.fc_bg_btns',
   '.fc_preview_img',
   '.fc_preview_res',
   '.fc_bbox',
-  '.fc_adv',
-  '.fc_bsc',
-  '.fc_msk',
   '#forge_couple_t2i',
   '#forge_couple_i2i',
   // Add other extension selectors as needed
