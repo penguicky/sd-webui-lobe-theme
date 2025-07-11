@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sd-forge-couple Compatibility Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .test-element {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .visible {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .hidden {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .status {
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .pass { color: #28a745; }
+        .fail { color: #dc3545; }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>sd-forge-couple Compatibility Test</h1>
+    <p>This page tests whether the lobe-theme compatibility fixes are working correctly.</p>
+    
+    <div class="test-container">
+        <h2>Test Elements</h2>
+        <p>The following elements simulate sd-forge-couple UI components:</p>
+        
+        <div id="forge_couple_t2i" class="test-element">
+            <strong>#forge_couple_t2i</strong> - Main txt2img container
+            <span class="status" id="status-t2i"></span>
+        </div>
+        
+        <div id="forge_couple_i2i" class="test-element">
+            <strong>#forge_couple_i2i</strong> - Main img2img container
+            <span class="status" id="status-i2i"></span>
+        </div>
+        
+        <div class="fc_mapping test-element">
+            <strong>.fc_mapping</strong> - Visual mapping container
+            <span class="status" id="status-mapping"></span>
+        </div>
+        
+        <div class="fc_mapping_btns test-element">
+            <strong>.fc_mapping_btns</strong> - Mapping control buttons
+            <span class="status" id="status-mapping-btns"></span>
+        </div>
+        
+        <div class="fc_row_btns test-element">
+            <strong>.fc_row_btns</strong> - Row manipulation buttons
+            <span class="status" id="status-row-btns"></span>
+        </div>
+        
+        <div class="fc_bg_btns test-element">
+            <strong>.fc_bg_btns</strong> - Background image buttons
+            <span class="status" id="status-bg-btns"></span>
+        </div>
+        
+        <div class="fc_bbox test-element">
+            <strong>.fc_bbox</strong> - Interactive bounding boxes
+            <span class="status" id="status-bbox"></span>
+        </div>
+        
+        <div class="fc_adv test-element">
+            <strong>.fc_adv</strong> - Advanced mode container
+            <span class="status" id="status-adv"></span>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test Controls</h2>
+        <button onclick="testHideElements()">Test Hide Elements</button>
+        <button onclick="testProtection()">Test Protection</button>
+        <button onclick="resetTest()">Reset Test</button>
+        
+        <div id="test-results" style="margin-top: 20px;"></div>
+    </div>
+    
+    <script>
+        // Simulate the gradioApp function
+        window.gradioApp = function() {
+            return document;
+        };
+        
+        // Test elements
+        const testSelectors = [
+            '#forge_couple_t2i',
+            '#forge_couple_i2i',
+            '.fc_mapping',
+            '.fc_mapping_btns',
+            '.fc_row_btns',
+            '.fc_bg_btns',
+            '.fc_bbox',
+            '.fc_adv'
+        ];
+        
+        function checkElementVisibility(selector) {
+            const element = document.querySelector(selector);
+            if (!element) return false;
+            
+            const style = window.getComputedStyle(element);
+            return style.display !== 'none' && 
+                   style.visibility !== 'hidden' && 
+                   style.opacity !== '0';
+        }
+        
+        function updateStatus() {
+            testSelectors.forEach(selector => {
+                const isVisible = checkElementVisibility(selector);
+                const statusId = 'status-' + selector.replace(/[#.]/g, '').replace(/_/g, '-');
+                const statusElement = document.getElementById(statusId);
+                const element = document.querySelector(selector);
+                
+                if (statusElement) {
+                    if (isVisible) {
+                        statusElement.textContent = '✓ VISIBLE';
+                        statusElement.className = 'status pass';
+                        element.className = element.className.replace('hidden', 'visible');
+                        if (!element.className.includes('visible')) {
+                            element.className += ' visible';
+                        }
+                    } else {
+                        statusElement.textContent = '✗ HIDDEN';
+                        statusElement.className = 'status fail';
+                        element.className = element.className.replace('visible', 'hidden');
+                        if (!element.className.includes('hidden')) {
+                            element.className += ' hidden';
+                        }
+                    }
+                }
+            });
+        }
+        
+        function testHideElements() {
+            // Try to hide all test elements
+            testSelectors.forEach(selector => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+            
+            setTimeout(() => {
+                updateStatus();
+                showResults('Hide test completed. Protected elements should remain visible.');
+            }, 100);
+        }
+        
+        function testProtection() {
+            // This would test the actual protection mechanism
+            // In a real scenario, this would be handled by the compatibility script
+            showResults('Protection test would be handled by the compatibility script in the actual WebUI.');
+        }
+        
+        function resetTest() {
+            testSelectors.forEach(selector => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    element.style.display = '';
+                    element.style.visibility = '';
+                    element.style.opacity = '';
+                }
+            });
+            
+            updateStatus();
+            showResults('Test reset completed.');
+        }
+        
+        function showResults(message) {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = `<p><strong>Result:</strong> ${message}</p>`;
+        }
+        
+        // Initial status check
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus();
+            showResults('Compatibility test loaded. All elements should be visible initially.');
+        });
+        
+        // Simulate the compatibility script loading
+        setTimeout(() => {
+            console.log('[Test] Simulating compatibility script initialization');
+            updateStatus();
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -36,18 +36,18 @@ const Inner = memo(() => {
             id="txt2img-extra-network-sidebar"
             ref={txt2imgExtraNetworkSidebarReference}
             style={
-              currentTab === 'tab_img2img' ?
-                { display: 'none' } :
-                { height: '100%', overflow: 'hidden', position: 'relative' }
+              currentTab === 'tab_img2img'
+                ? { display: 'none' }
+                : { height: '100%', overflow: 'hidden', position: 'relative' }
             }
           />
           <div
             id="img2img-extra-network-sidebar"
             ref={img2imgExtraNetworkSidebarReference}
             style={
-              currentTab === 'tab_img2img' ?
-                { height: '100%' } :
-                { display: 'none', overflow: 'hidden', position: 'relative' }
+              currentTab === 'tab_img2img'
+                ? { height: '100%' }
+                : { display: 'none', overflow: 'hidden', position: 'relative' }
             }
           />
         </div>

@@ -12,6 +12,61 @@ export default (token: Theme) => {
         -webkit-text-fill-color: ${token.colorPrimary} !important;
       }
 
+      /* sd-forge-couple compatibility fixes */
+      #forge_couple_t2i,
+      #forge_couple_i2i {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+
+      .fc_mapping,
+      .fc_mapping_btns,
+      .fc_row_btns,
+      .fc_bg_btns,
+      .fc_preview_img,
+      .fc_preview_res,
+      .fc_bbox,
+      .fc_adv,
+      .fc_bsc,
+      .fc_msk {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+
+      /* Ensure advanced mode table is properly displayed */
+      .fc_mapping table {
+        display: table !important;
+      }
+
+      .fc_mapping tbody {
+        display: table-row-group !important;
+      }
+
+      .fc_mapping tr {
+        display: table-row !important;
+      }
+
+      .fc_mapping td,
+      .fc_mapping th {
+        display: table-cell !important;
+      }
+
+      /* Ensure bounding boxes are positioned correctly */
+      .fc_bbox {
+        position: absolute !important;
+        pointer-events: none !important;
+      }
+
+      /* Ensure buttons are properly displayed */
+      .fc_row_btns button,
+      .fc_bg_btns button,
+      .fc_mapping_btns button {
+        display: inline-block !important;
+        visibility: visible !important;
+      }
+
       /* openOutpaint */
       #tab_openOutpaint {
         position: relative;
@@ -42,14 +97,16 @@ export default (token: Theme) => {
         li {
           border-bottom: 1px solid ${token.colorBorder};
 
-          &:hover, &.selected {
+          &:hover,
+          &.selected {
             background: ${token.colorFillSecondary} !important;
           }
 
           &:nth-of-type(odd) {
             background: transparent !important;
 
-            &:hover, &.selected {
+            &:hover,
+            &.selected {
               background: ${token.colorFillSecondary} !important;
             }
           }

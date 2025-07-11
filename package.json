@@ -26,16 +26,16 @@
     "javascript"
   ],
   "scripts": {
-    "build": "vite build",
-    "build:analyze": "vite build && npx vite-bundle-analyzer javascript/main.js",
+    "build": "vite build && npm run copy-compatibility",
+    "build:analyze": "vite build && npm run copy-compatibility && npx vite-bundle-analyzer javascript/main.js",
     "ci": "npm run lint && npm run type-check",
+    "copy-compatibility": "cp scripts/forge-couple-compatibility.js javascript/",
     "dev": "vite",
     "dev:sd": "cd ../../ && ./webui.sh",
     "i18n": "lobe-i18n",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
     "lint:md": "remark . --quiet --output",
     "lint:style": "stylelint \"src/**/*.{css,less,js,jsx,ts,tsx}\" --fix",
-
     "prettier": "prettier -c --write \"**/**\"",
     "release": "semantic-release",
     "start": "npm run dev",
@@ -44,7 +44,6 @@
     "test:update": "vitest -u",
     "type-check": "tsc --noEmit"
   },
-
   "dependencies": {
     "@bluelovers/auto1111-pnginfo": "^2.0.3",
     "@icons-pack/react-simple-icons": "^9.5.0",
