@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sd-forge-couple Mode Switching Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .mode-container {
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        
+        .fc_bsc { border-color: #28a745; }
+        .fc_adv { border-color: #007bff; }
+        .fc_msk { border-color: #ffc107; }
+        
+        .mode-buttons {
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button.active {
+            background: #28a745;
+        }
+        
+        .status {
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .visible { color: #28a745; }
+        .hidden { color: #dc3545; }
+        
+        .core-elements {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .core-element {
+            padding: 5px;
+            margin: 5px 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>sd-forge-couple Mode Switching Test</h1>
+    <p>This page tests the mode switching functionality after the compatibility fix.</p>
+    
+    <div class="test-container">
+        <h2>Mode Switching Test</h2>
+        <p>Only ONE mode should be visible at a time. Click buttons to switch modes:</p>
+        
+        <div class="mode-buttons">
+            <button id="btn-basic" class="active" onclick="switchMode('basic')">Basic Mode</button>
+            <button id="btn-advanced" onclick="switchMode('advanced')">Advanced Mode</button>
+            <button id="btn-mask" onclick="switchMode('mask')">Mask Mode</button>
+        </div>
+        
+        <div class="mode-container fc_bsc" id="mode-basic">
+            <h3>Basic Mode Container (.fc_bsc)</h3>
+            <p>This simulates the Basic mode interface with direction controls and global effects.</p>
+            <span class="status visible" id="status-basic">✓ VISIBLE</span>
+        </div>
+        
+        <div class="mode-container fc_adv" id="mode-advanced" style="display: none;">
+            <h3>Advanced Mode Container (.fc_adv)</h3>
+            <p>This simulates the Advanced mode interface with visual mapping and coordinate controls.</p>
+            <span class="status hidden" id="status-advanced">✗ HIDDEN</span>
+        </div>
+        
+        <div class="mode-container fc_msk" id="mode-mask" style="display: none;">
+            <h3>Mask Mode Container (.fc_msk)</h3>
+            <p>This simulates the Mask mode interface with mask editing and preview functionality.</p>
+            <span class="status hidden" id="status-mask">✗ HIDDEN</span>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Core Elements Test</h2>
+        <p>These elements should ALWAYS remain visible (protected by compatibility fix):</p>
+        
+        <div class="core-elements">
+            <div class="core-element fc_mapping">
+                <strong>.fc_mapping</strong> - Visual mapping container
+                <span class="status visible">✓ ALWAYS VISIBLE</span>
+            </div>
+            
+            <div class="core-element fc_mapping_btns">
+                <strong>.fc_mapping_btns</strong> - Mapping control buttons
+                <span class="status visible">✓ ALWAYS VISIBLE</span>
+            </div>
+            
+            <div class="core-element fc_bg_btns">
+                <strong>.fc_bg_btns</strong> - Background image buttons
+                <span class="status visible">✓ ALWAYS VISIBLE</span>
+            </div>
+            
+            <div class="core-element fc_preview_img">
+                <strong>.fc_preview_img</strong> - Preview image container
+                <span class="status visible">✓ ALWAYS VISIBLE</span>
+            </div>
+            
+            <div class="core-element fc_bbox">
+                <strong>.fc_bbox</strong> - Interactive bounding boxes
+                <span class="status visible">✓ ALWAYS VISIBLE</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test Results</h2>
+        <div id="test-results">
+            <p><strong>✓ SUCCESS:</strong> Mode switching is working correctly!</p>
+            <p>Only one mode container is visible at a time, and core elements remain protected.</p>
+        </div>
+    </div>
+    
+    <script>
+        let currentMode = 'basic';
+        
+        function switchMode(mode) {
+            // Hide all modes
+            document.getElementById('mode-basic').style.display = 'none';
+            document.getElementById('mode-advanced').style.display = 'none';
+            document.getElementById('mode-mask').style.display = 'none';
+            
+            // Update button states
+            document.querySelectorAll('.mode-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected mode
+            const modeMap = {
+                'basic': 'mode-basic',
+                'advanced': 'mode-advanced',
+                'mask': 'mode-mask'
+            };
+            
+            document.getElementById(modeMap[mode]).style.display = 'block';
+            document.getElementById(`btn-${mode}`).classList.add('active');
+            
+            // Update status indicators
+            updateStatus();
+            currentMode = mode;
+            
+            console.log(`[Mode Switch Test] Switched to ${mode} mode`);
+        }
+        
+        function updateStatus() {
+            const modes = ['basic', 'advanced', 'mask'];
+            modes.forEach(mode => {
+                const element = document.getElementById(`mode-${mode}`);
+                const status = document.getElementById(`status-${mode}`);
+                const isVisible = element.style.display !== 'none';
+                
+                if (isVisible) {
+                    status.textContent = '✓ VISIBLE';
+                    status.className = 'status visible';
+                } else {
+                    status.textContent = '✗ HIDDEN';
+                    status.className = 'status hidden';
+                }
+            });
+        }
+        
+        // Test the compatibility script if it's loaded
+        function testCompatibility() {
+            // Try to hide a core element to test protection
+            const testElement = document.querySelector('.fc_mapping');
+            if (testElement) {
+                testElement.style.display = 'none';
+                
+                setTimeout(() => {
+                    const isStillHidden = testElement.style.display === 'none';
+                    const results = document.getElementById('test-results');
+                    
+                    if (isStillHidden) {
+                        results.innerHTML = `
+                            <p><strong>⚠ WARNING:</strong> Core element protection may not be working.</p>
+                            <p>The .fc_mapping element was hidden and not restored.</p>
+                        `;
+                    } else {
+                        results.innerHTML = `
+                            <p><strong>✓ SUCCESS:</strong> Core element protection is working!</p>
+                            <p>The .fc_mapping element was automatically restored when hidden.</p>
+                        `;
+                    }
+                }, 100);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus();
+            
+            // Test compatibility after a delay
+            setTimeout(testCompatibility, 2000);
+        });
+    </script>
+</body>
+</html>

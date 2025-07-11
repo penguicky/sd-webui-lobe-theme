@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Elements Diagnostic Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .element-status {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .found { background: #d4edda; border: 1px solid #c3e6cb; }
+        .missing { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; }
+        
+        .simulation-area {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .preview-container {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background: #e9ecef;
+            border: 2px dashed #adb5bd;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fc_bbox {
+            position: absolute;
+            border: 2px solid #007bff;
+            background: rgba(0, 123, 255, 0.1);
+            opacity: 0.8;
+            pointer-events: none;
+            display: none;
+        }
+        
+        .fc_bg_btns {
+            position: absolute;
+            right: -120px;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .fc_bg_btns button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        .log-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .critical {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .info {
+            color: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Interactive Elements Diagnostic Test</h1>
+    <p>This page tests the detection and protection of critical sd-forge-couple interactive elements.</p>
+    
+    <div class="test-container">
+        <h2>🎯 Critical Element Detection</h2>
+        <p>Checking for the presence of essential forge-couple interactive elements:</p>
+        
+        <div id="element-status">
+            <div class="element-status missing">
+                <strong>.fc_bbox</strong> - Interactive bounding boxes: <span id="bbox-status">Checking...</span>
+            </div>
+            <div class="element-status missing">
+                <strong>.fc_bg_btns</strong> - Background control buttons: <span id="bgbtns-status">Checking...</span>
+            </div>
+            <div class="element-status missing">
+                <strong>.fc_preview_img</strong> - Preview image containers: <span id="preview-status">Checking...</span>
+            </div>
+            <div class="element-status missing">
+                <strong>.fc_mapping</strong> - Mapping table containers: <span id="mapping-status">Checking...</span>
+            </div>
+        </div>
+        
+        <button onclick="runDiagnostics()">🔄 Run Diagnostics</button>
+        <button onclick="simulateElements()">🧪 Simulate Elements</button>
+        <button onclick="testCompatibility()">⚡ Test Compatibility</button>
+    </div>
+    
+    <div class="test-container">
+        <h2>🧪 Element Simulation</h2>
+        <p>Simulates the creation of forge-couple interactive elements to test protection:</p>
+        
+        <div class="simulation-area">
+            <div class="preview-container" id="preview-container">
+                <span>Preview Image Area</span>
+                
+                <!-- Simulated bounding box -->
+                <div class="fc_bbox" id="simulated-bbox" style="width: 80px; height: 60px; top: 20px; left: 30px;">
+                    Bounding Box
+                </div>
+                
+                <!-- Simulated background buttons -->
+                <div class="fc_bg_btns" id="simulated-bg-btns">
+                    <button>📂 Load</button>
+                    <button>⏏ Transfer</button>
+                    <button>🗑 Clear</button>
+                </div>
+            </div>
+            
+            <button onclick="showBoundingBox()">Show Bounding Box</button>
+            <button onclick="hideBoundingBox()">Hide Bounding Box</button>
+            <button onclick="testElementProtection()">Test Protection</button>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>📊 Compatibility Status</h2>
+        <div id="compatibility-status">
+            <p>Checking compatibility script status...</p>
+        </div>
+        
+        <h3>🔧 Browser Console Output</h3>
+        <p>Check browser console for detailed compatibility logs. Look for:</p>
+        <ul>
+            <li><span class="info">[Lobe Theme Compatibility]</span> messages</li>
+            <li><span class="critical">WARNING: Critical element not found</span> messages</li>
+            <li><span class="success">Detected forge-couple element addition</span> messages</li>
+        </ul>
+    </div>
+    
+    <div class="test-container">
+        <h2>📝 Diagnostic Log</h2>
+        <div class="log-output" id="diagnostic-log">
+            Diagnostic log will appear here...\n
+        </div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="test-container">
+        <h2>🎯 Expected Results</h2>
+        <h3>✅ Success Indicators:</h3>
+        <ul>
+            <li><strong>.fc_bbox elements found</strong> - Interactive bounding boxes detected</li>
+            <li><strong>.fc_bg_btns elements found</strong> - Background control buttons detected</li>
+            <li><strong>Elements remain visible after hide attempts</strong> - Protection working</li>
+            <li><strong>Console shows compatibility messages</strong> - Script is active</li>
+        </ul>
+        
+        <h3>❌ Failure Indicators:</h3>
+        <ul>
+            <li><strong>Elements not found</strong> - Dynamic creation failed or elements removed</li>
+            <li><strong>Elements hidden after protection test</strong> - Compatibility not working</li>
+            <li><strong>No console messages</strong> - Compatibility script not loaded</li>
+            <li><strong>Missing parent containers</strong> - Structural issues</li>
+        </ul>
+    </div>
+    
+    <script>
+        let logOutput = '';
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            const logMessage = `[${timestamp}] ${prefix} ${message}`;
+            
+            logOutput += logMessage + '\n';
+            document.getElementById('diagnostic-log').textContent = logOutput;
+            
+            // Also log to console
+            console.log(`[Interactive Elements Test] ${message}`);
+        }
+        
+        function runDiagnostics() {
+            log('Starting comprehensive diagnostics...', 'info');
+            
+            // Check for critical elements
+            const criticalElements = {
+                '.fc_bbox': 'Interactive bounding boxes',
+                '.fc_bg_btns': 'Background control buttons', 
+                '.fc_preview_img': 'Preview image containers',
+                '.fc_mapping': 'Mapping table containers'
+            };
+            
+            Object.entries(criticalElements).forEach(([selector, description]) => {
+                const elements = document.querySelectorAll(selector);
+                const statusElement = document.getElementById(selector.replace('.fc_', '') + '-status');
+                const parentElement = statusElement.closest('.element-status');
+                
+                if (elements.length > 0) {
+                    statusElement.textContent = `Found ${elements.length} elements ✅`;
+                    parentElement.className = 'element-status found';
+                    log(`${description}: Found ${elements.length} elements`, 'success');
+                } else {
+                    statusElement.textContent = 'Not found ❌';
+                    parentElement.className = 'element-status missing';
+                    log(`${description}: Not found`, 'error');
+                }
+            });
+            
+            // Check for forge-couple containers
+            const containers = document.querySelectorAll('#forge_couple_t2i, #forge_couple_i2i');
+            log(`Forge-couple containers: Found ${containers.length}`, containers.length > 0 ? 'success' : 'error');
+            
+            // Check for advanced mode containers
+            const advContainers = document.querySelectorAll('.fc_adv');
+            log(`Advanced mode containers: Found ${advContainers.length}`, advContainers.length > 0 ? 'success' : 'info');
+            
+            // Check compatibility script status
+            const hasCompatibility = window.lobeThemeCompatibility !== undefined;
+            log(`Compatibility script loaded: ${hasCompatibility}`, hasCompatibility ? 'success' : 'error');
+            
+            log('Diagnostics completed', 'info');
+        }
+        
+        function simulateElements() {
+            log('Simulating forge-couple element creation...', 'info');
+            
+            // Create simulated elements
+            const container = document.getElementById('preview-container');
+            
+            // Remove existing simulated elements
+            container.querySelectorAll('.fc_bbox, .fc_bg_btns').forEach(el => el.remove());
+            
+            // Create bbox
+            const bbox = document.createElement('div');
+            bbox.className = 'fc_bbox';
+            bbox.style.cssText = 'width: 80px; height: 60px; top: 20px; left: 30px; display: block;';
+            bbox.textContent = 'Simulated BBox';
+            container.appendChild(bbox);
+            
+            // Create bg buttons
+            const bgBtns = document.createElement('div');
+            bgBtns.className = 'fc_bg_btns';
+            bgBtns.innerHTML = '<button>📂 Load</button><button>⏏ Transfer</button><button>🗑 Clear</button>';
+            container.appendChild(bgBtns);
+            
+            log('Simulated elements created', 'success');
+            
+            // Run diagnostics after creation
+            setTimeout(runDiagnostics, 100);
+        }
+        
+        function showBoundingBox() {
+            const bbox = document.getElementById('simulated-bbox');
+            if (bbox) {
+                bbox.style.display = 'block';
+                log('Bounding box shown', 'info');
+            }
+        }
+        
+        function hideBoundingBox() {
+            const bbox = document.getElementById('simulated-bbox');
+            if (bbox) {
+                bbox.style.display = 'none';
+                log('Bounding box hidden', 'info');
+            }
+        }
+        
+        function testElementProtection() {
+            log('Testing element protection...', 'info');
+            
+            const elements = document.querySelectorAll('.fc_bbox, .fc_bg_btns');
+            elements.forEach(element => {
+                const originalDisplay = element.style.display;
+                element.style.display = 'none';
+                
+                setTimeout(() => {
+                    const isStillHidden = element.style.display === 'none';
+                    const className = element.className;
+                    
+                    if (isStillHidden) {
+                        log(`${className}: Still hidden - protection may not be working`, 'error');
+                    } else {
+                        log(`${className}: Visibility restored - protection working`, 'success');
+                    }
+                }, 200);
+            });
+        }
+        
+        function testCompatibility() {
+            log('Testing compatibility script functionality...', 'info');
+            
+            // Check if compatibility script is loaded
+            if (window.lobeThemeCompatibility) {
+                log('Compatibility script detected', 'success');
+                
+                // Test if the script responds to element changes
+                testElementProtection();
+            } else {
+                log('Compatibility script not found', 'error');
+            }
+            
+            // Check console for compatibility messages
+            log('Check browser console for [Lobe Theme Compatibility] messages', 'info');
+        }
+        
+        function clearLog() {
+            logOutput = '';
+            document.getElementById('diagnostic-log').textContent = 'Log cleared...\n';
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Interactive Elements Test initialized', 'info');
+            
+            // Run initial diagnostics after a delay
+            setTimeout(() => {
+                log('Running initial diagnostics...', 'info');
+                runDiagnostics();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

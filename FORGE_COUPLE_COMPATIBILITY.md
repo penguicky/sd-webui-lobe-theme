@@ -46,20 +46,36 @@ Runtime protection against UI element hiding:
 
 ## Protected Elements
 
-The following sd-forge-couple selectors are protected from being hidden:
+The compatibility system categorizes elements into three types for intelligent protection:
+
+### Core Elements (Always Protected)
+
+These elements are always protected from being hidden by lobe-theme:
 
 - `#forge_couple_t2i` - Main txt2img container
 - `#forge_couple_i2i` - Main img2img container
 - `.fc_mapping` - Visual mapping container
 - `.fc_mapping_btns` - Mapping control buttons
-- `.fc_row_btns` - Row manipulation buttons
 - `.fc_bg_btns` - Background image buttons
 - `.fc_preview_img` - Preview image container
 - `.fc_preview_res` - Preview resolution input
 - `.fc_bbox` - Interactive bounding boxes
+
+### Mode Containers (Conditionally Protected)
+
+These elements respect Gradio's mode switching logic:
+
 - `.fc_adv` - Advanced mode container
 - `.fc_bsc` - Basic mode container
 - `.fc_msk` - Mask mode container
+
+_Only protected when not intentionally hidden by Gradio's mode switching_
+
+### Dynamic Elements (No Interference)
+
+These elements are controlled by JavaScript and not interfered with:
+
+- `.fc_row_btns` - Row manipulation buttons (visibility controlled by forge-couple logic)
 
 ## Features Preserved
 
