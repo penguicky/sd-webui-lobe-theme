@@ -63,6 +63,12 @@ export const useSelectorHide = (selectors: string) => {
       return;
     }
 
+    // Don't hide elements that are already hidden by Gradio accordion (.hidden class)
+    if (ele.classList.contains('hidden')) {
+      console.log(`[Lobe Theme] Skipping hide for accordion-hidden element: ${selectors}`);
+      return;
+    }
+
     ele.style.display = 'none';
   }, []);
 };

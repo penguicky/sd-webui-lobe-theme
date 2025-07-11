@@ -13,8 +13,9 @@ export default (token: Theme) => {
       }
 
       /* sd-forge-couple compatibility fixes */
-      #forge_couple_t2i,
-      #forge_couple_i2i {
+      /* Main containers - only protect when not hidden by Gradio accordion */
+      #forge_couple_t2i:not(.hidden),
+      #forge_couple_i2i:not(.hidden) {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;

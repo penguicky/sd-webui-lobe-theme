@@ -28,10 +28,15 @@
   function ensureElementsVisible() {
     // Only protect core forge-couple elements that should ALWAYS be visible
     // Do NOT interfere with mode containers or dynamic elements
+    // RESPECT Gradio's .hidden class for accordion functionality
     FORGE_COUPLE_SELECTORS.forEach((selector) => {
       const elements = document.querySelectorAll(selector);
       elements.forEach((element) => {
-        if (element.style.display === 'none') {
+        // Don't restore visibility if element is hidden by Gradio accordion (.hidden class)
+        const isHiddenByAccordion = element.classList.contains('hidden');
+        const isDirectlyHidden = element.style.display === 'none';
+
+        if (isDirectlyHidden && !isHiddenByAccordion) {
           console.log(`[Lobe Theme Compatibility] Restoring visibility for: ${selector}`);
           element.style.display = '';
           element.style.visibility = 'visible';
@@ -61,14 +66,19 @@
             });
 
             // Only protect core elements - do NOT interfere with mode containers or dynamic elements
+            // RESPECT Gradio's .hidden class for accordion functionality
             if (isCoreForgeCoupleElement && element.style.display === 'none') {
-              console.log(
-                `[Lobe Theme Compatibility] Preventing hide of core forge-couple element:`,
-                element,
-              );
-              element.style.display = '';
-              element.style.visibility = 'visible';
-              element.style.opacity = '1';
+              const isHiddenByAccordion = element.classList.contains('hidden');
+
+              if (!isHiddenByAccordion) {
+                console.log(
+                  `[Lobe Theme Compatibility] Preventing hide of core forge-couple element:`,
+                  element,
+                );
+                element.style.display = '';
+                element.style.visibility = 'visible';
+                element.style.opacity = '1';
+              }
             }
           }
         }
