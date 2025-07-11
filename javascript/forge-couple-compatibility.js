@@ -31,6 +31,11 @@
     // RESPECT Gradio's .hidden class for accordion functionality
     FORGE_COUPLE_SELECTORS.forEach((selector) => {
       const elements = document.querySelectorAll(selector);
+
+      if (elements.length === 0 && (selector === '.fc_bbox' || selector === '.fc_bg_btns')) {
+        console.log(`[Lobe Theme Compatibility] WARNING: Critical element not found: ${selector}`);
+      }
+
       elements.forEach((element) => {
         // Don't restore visibility if element is hidden by Gradio accordion (.hidden class)
         const isHiddenByAccordion = element.classList.contains('hidden');
@@ -46,10 +51,34 @@
     });
   }
 
+  // Function to diagnose missing elements
+  function diagnoseMissingElements() {
+    console.log('[Lobe Theme Compatibility] Diagnosing element status...');
+
+    const criticalElements = ['.fc_bbox', '.fc_bg_btns'];
+    criticalElements.forEach((selector) => {
+      const elements = document.querySelectorAll(selector);
+      console.log(`${selector}: Found ${elements.length} elements`);
+
+      if (elements.length === 0) {
+        // Check if parent containers exist
+        const previewImages = document.querySelectorAll('.fc_preview_img img');
+        console.log(`  Preview images found: ${previewImages.length}`);
+
+        if (selector === '.fc_bg_btns') {
+          // Check if bg_btns exist anywhere in the DOM
+          const bgBtnsAnywhere = document.querySelectorAll('[class*="fc_bg"]');
+          console.log(`  Elements with fc_bg in class: ${bgBtnsAnywhere.length}`);
+        }
+      }
+    });
+  }
+
   // Function to protect elements from being hidden by mutation observers
   function protectElements() {
     const observer = new MutationObserver(function (mutations) {
       mutations.forEach(function (mutation) {
+        // Handle style attribute changes
         if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
           const target = mutation.target;
           if (target.nodeType === Node.ELEMENT_NODE) {
@@ -82,6 +111,40 @@
             }
           }
         }
+
+        // Handle node additions (for dynamically created elements)
+        else if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(function (node) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const element = node;
+
+              // Check if the added element is a forge-couple element
+              const isForgeElement = FORGE_COUPLE_SELECTORS.some((selector) => {
+                if (selector.startsWith('#')) {
+                  return element.id === selector.slice(1);
+                } else if (selector.startsWith('.')) {
+                  return element.classList.contains(selector.slice(1));
+                }
+                return false;
+              });
+
+              // Also check if any child elements are forge-couple elements
+              const hasForgeChildren = FORGE_COUPLE_SELECTORS.some((selector) => {
+                return element.querySelector && element.querySelector(selector);
+              });
+
+              if (isForgeElement || hasForgeChildren) {
+                console.log(
+                  '[Lobe Theme Compatibility] Detected forge-couple element addition:',
+                  element,
+                );
+                setTimeout(() => {
+                  ensureElementsVisible();
+                }, 50);
+              }
+            }
+          });
+        }
       });
     });
 
@@ -89,6 +152,7 @@
     observer.observe(document.body, {
       attributes: true,
       attributeFilter: ['style'],
+      childList: true,
       subtree: true,
     });
 
@@ -149,6 +213,13 @@
             '[Lobe Theme Compatibility] sd-forge-couple detected, initializing compatibility',
           );
           initCompatibility();
+
+          // Additional wait for forge-couple's dynamic element creation
+          setTimeout(() => {
+            ensureElementsVisible();
+            diagnoseMissingElements();
+            console.log('[Lobe Theme Compatibility] Post-setup element check completed');
+          }, 1500);
         } else {
           console.log(
             '[Lobe Theme Compatibility] sd-forge-couple not detected, skipping compatibility fixes',
