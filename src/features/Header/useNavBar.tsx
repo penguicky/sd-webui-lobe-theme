@@ -19,6 +19,8 @@ export const useNavBar = (mobile?: boolean) => {
     [navList],
   );
   useSelectorHide('#tabs > .tab-nav:first-of-type');
+  useSelectorHide('#txt2img_actions_column');
+  useSelectorHide('#txt2img_enable');
   useEffect(() => {
     try {
       const list: TabsProps['items'] = navList.map((item) => {
