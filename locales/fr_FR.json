@@ -164,25 +164,7 @@
       "sidebar": "Barre latérale"
     }
   },
-  "share": "Partager",
-  "shareModal": {
-    "download": "Télécharger la capture d'écran",
-    "imageType": "Format d'image",
-    "info": "Informations sur l'image",
-    "screenshot": "Capture d'écran",
-    "settings": "Paramètres d'export",
-    "showAllImages": "Afficher toutes les images",
-    "showConfig": "Afficher la configuration générée",
-    "showNegative": "Afficher la promotion négative",
-    "tabs": {
-      "info": "Info",
-      "settings": "Paramètres"
-    },
-    "title": "Nom de l'image",
-    "warn": "Veuillez d'abord générer l'image",
-    "withBackground": "Inclure l'image de fond",
-    "withFooter": "Inclure le pied de page"
-  },
+
   "sidebar": {
     "extraNetwork": "Réseau supplémentaire",
     "mode": {

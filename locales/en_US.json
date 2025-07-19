@@ -164,25 +164,7 @@
       "sidebar": "Sidebar"
     }
   },
-  "share": "Share",
-  "shareModal": {
-    "download": "Download Screenshot",
-    "imageType": "Image Format",
-    "info": "Image Info",
-    "screenshot": "Screenshot",
-    "settings": "Export Settings",
-    "showAllImages": "Show All Images",
-    "showConfig": "Show Generate Config",
-    "showNegative": "Show Negative Promot",
-    "tabs": {
-      "info": "Info",
-      "settings": "Settings"
-    },
-    "title": "Image Name",
-    "warn": "Please Generate Image First",
-    "withBackground": "Include Background Image",
-    "withFooter": "Include Footer"
-  },
+
   "sidebar": {
     "extraNetwork": "Extra Network",
     "mode": {

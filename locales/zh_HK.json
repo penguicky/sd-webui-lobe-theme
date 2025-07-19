@@ -164,25 +164,7 @@
       "sidebar": "側邊欄"
     }
   },
-  "share": "分享",
-  "shareModal": {
-    "download": "下載截圖",
-    "imageType": "圖片格式",
-    "info": "圖片資訊",
-    "screenshot": "截圖",
-    "settings": "匯出設定",
-    "showAllImages": "顯示所有圖片",
-    "showConfig": "顯示生成配置",
-    "showNegative": "顯示負面推廣",
-    "tabs": {
-      "info": "資訊",
-      "settings": "設定"
-    },
-    "title": "圖片名稱",
-    "warn": "請先生成圖片",
-    "withBackground": "包括背景圖片",
-    "withFooter": "包括頁腳"
-  },
+
   "sidebar": {
     "extraNetwork": "額外網絡",
     "mode": {

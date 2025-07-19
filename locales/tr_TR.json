@@ -164,25 +164,7 @@
       "sidebar": "Kenar Çubuğu"
     }
   },
-  "share": "Paylaş",
-  "shareModal": {
-    "download": "Ekran Görüntüsünü İndir",
-    "imageType": "Görüntü Biçimi",
-    "info": "Görüntü Bilgisi",
-    "screenshot": "Ekran Görüntüsü",
-    "settings": "Ayarları Dışa Aktar",
-    "showAllImages": "Tüm Görüntüleri Göster",
-    "showConfig": "Oluşturma Yapılandırmasını Göster",
-    "showNegative": "Negatif İsteği Göster",
-    "tabs": {
-      "info": "Bilgi",
-      "settings": "Ayarlar"
-    },
-    "title": "Görüntü Adı",
-    "warn": "Lütfen Önce Görüntü Oluşturun",
-    "withBackground": "Arka Plan Görüntüsü Dahil Et",
-    "withFooter": "Altbilgi Dahil Et"
-  },
+
   "sidebar": {
     "extraNetwork": "Ek Ağ",
     "mode": {

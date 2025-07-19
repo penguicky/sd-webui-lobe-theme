@@ -164,25 +164,7 @@
       "sidebar": "侧边栏"
     }
   },
-  "share": "分享",
-  "shareModal": {
-    "download": "下载截图",
-    "imageType": "图片格式",
-    "info": "图片信息",
-    "screenshot": "截图",
-    "settings": "导出设置",
-    "showAllImages": "显示所有图片",
-    "showConfig": "显示生成配置",
-    "showNegative": "显示负面促销",
-    "tabs": {
-      "info": "信息",
-      "settings": "设置"
-    },
-    "title": "图片名称",
-    "warn": "请先生成图片",
-    "withBackground": "包括背景图片",
-    "withFooter": "包括页脚"
-  },
+
   "sidebar": {
     "extraNetwork": "额外网络",
     "mode": {

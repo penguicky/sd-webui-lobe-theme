@@ -164,25 +164,7 @@
       "sidebar": "サイドバー"
     }
   },
-  "share": "共有",
-  "shareModal": {
-    "download": "スクリーンショットをダウンロード",
-    "imageType": "画像形式",
-    "info": "画像情報",
-    "screenshot": "スクリーンショット",
-    "settings": "エクスポート設定",
-    "showAllImages": "すべての画像を表示",
-    "showConfig": "生成設定を表示",
-    "showNegative": "ネガティブプロモーションを表示",
-    "tabs": {
-      "info": "情報",
-      "settings": "設定"
-    },
-    "title": "画像名",
-    "warn": "まず画像を生成してください",
-    "withBackground": "背景画像を含める",
-    "withFooter": "フッターを含める"
-  },
+
   "sidebar": {
     "extraNetwork": "追加のネットワーク",
     "mode": {

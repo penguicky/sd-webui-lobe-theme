@@ -164,25 +164,7 @@
       "sidebar": "Seitenleiste"
     }
   },
-  "share": "Teilen",
-  "shareModal": {
-    "download": "Screenshot herunterladen",
-    "imageType": "Bildformat",
-    "info": "Bildinformationen",
-    "screenshot": "Screenshot",
-    "settings": "Exporteinstellungen",
-    "showAllImages": "Alle Bilder anzeigen",
-    "showConfig": "Konfiguration anzeigen",
-    "showNegative": "Negative anzeigen",
-    "tabs": {
-      "info": "Info",
-      "settings": "Einstellungen"
-    },
-    "title": "Bildname",
-    "warn": "Bitte zuerst ein Bild generieren",
-    "withBackground": "Hintergrundbild einbeziehen",
-    "withFooter": "Fußzeile einbeziehen"
-  },
+
   "sidebar": {
     "extraNetwork": "Zusätzliches Netzwerk",
     "mode": {

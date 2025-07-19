@@ -164,25 +164,7 @@
       "sidebar": "Barra lateral"
     }
   },
-  "share": "Compartir",
-  "shareModal": {
-    "download": "Descargar Captura de pantalla",
-    "imageType": "Formato de Imagen",
-    "info": "Información de la imagen",
-    "screenshot": "Captura de pantalla",
-    "settings": "Configuración de Exportación",
-    "showAllImages": "Mostrar todas las imágenes",
-    "showConfig": "Mostrar generar configuración",
-    "showNegative": "Mostrar promoción negativa",
-    "tabs": {
-      "info": "Información",
-      "settings": "Ajustes"
-    },
-    "title": "Nombre de la imagen",
-    "warn": "Por favor, Generar la Imagen Primero",
-    "withBackground": "Incluir Imagen de Fondo",
-    "withFooter": "Incluir Pie de Página"
-  },
+
   "sidebar": {
     "extraNetwork": "Red adicional",
     "mode": {

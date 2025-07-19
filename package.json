@@ -54,12 +54,12 @@
     "antd-style": "^3.6.2",
     "autoprefixer": "^10.4.21",
     "consola": "^3.2.3",
-    "dayjs": "^1.11.13",
+
     "i18next": "^23.11.5",
     "i18next-http-backend": "^2.5.2",
     "lucide-react": "0.263.1",
     "lucide-static": "^0.525.0",
-    "modern-screenshot": "^4.6.5",
+
     "polished": "^4.3.1",
     "react": "^19.1.0",
     "react-dnd": "^16.0.1",
