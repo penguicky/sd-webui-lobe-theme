@@ -126,10 +126,7 @@
       "desc": "Provide a simple prompt editor at the top of the quick setting sidebar",
       "title": "Prompt Editor"
     },
-    "promptHighlight": {
-      "desc": "Automatically colorize prompt display according to the Stable Diffusion syntax rules",
-      "title": "Prompt Syntax Highlighting"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "Whether to expand the sidebar by default when starting",

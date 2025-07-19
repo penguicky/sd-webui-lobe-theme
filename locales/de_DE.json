@@ -126,10 +126,7 @@
       "desc": "Bietet einen einfachen Prompt-Editor oben in der Schnelleinstellungsseitenleiste",
       "title": "Prompt-Editor"
     },
-    "promptHighlight": {
-      "desc": "Färbt die Prompt-Anzeige automatisch gemäß den Stable Diffusion-Syntaxregeln ein",
-      "title": "Prompt-Syntaxhervorhebung"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "Ob die Seitenleiste beim Starten standardmäßig erweitert werden soll",

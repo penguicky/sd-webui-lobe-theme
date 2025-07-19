@@ -7,7 +7,6 @@ import type { I18n } from '@/types';
 export interface WebuiSetting {
   confirmPageUnload: boolean;
   enableExtraNetworkSidebar: boolean;
-  enableHighlight: boolean;
   enableImageInfo: boolean;
   enableSidebar: boolean;
   enableWebFont: boolean;
@@ -37,7 +36,6 @@ export type WebuiSettingKeys = keyof WebuiSetting;
 export const DEFAULT_SETTING: WebuiSetting = {
   confirmPageUnload: false,
   enableExtraNetworkSidebar: true,
-  enableHighlight: false,
   enableImageInfo: true,
   enableSidebar: true,
   enableWebFont: true,

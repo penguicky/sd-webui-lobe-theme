@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { memo, useState } from 'react';
 import { Flexbox } from 'react-layout-kit';
 
-import SyntaxHighlighter from '@/modules/PromptHighlight/features/SyntaxHighlighter';
+
 import { DivProps } from '@/types';
 
 const useStyles = createStyles(
@@ -113,7 +113,17 @@ export const Highlighter = memo<HighlighterProps>(
           )}
         </Flexbox>
         <div style={expand ? {} : { height: 0, overflow: 'hidden' }}>
-          <SyntaxHighlighter parentId={className || ''}>{children}</SyntaxHighlighter>
+          <pre style={{
+            margin: 0,
+            padding: '8px',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            fontFamily: 'monospace',
+            fontSize: '13px',
+            lineHeight: '1.5'
+          }}>
+            {children}
+          </pre>
         </div>
       </div>
     );

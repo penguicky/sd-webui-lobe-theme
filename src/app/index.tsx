@@ -7,7 +7,7 @@ import PromptFormator from '@/features/PromptFormator';
 import { useOptimizedSelector, usePerformanceMonitor } from '@/hooks/usePerformance';
 import '@/locales/config';
 import ImageInfo from '@/modules/ImageInfo/page';
-import PromptHighlight from '@/modules/PromptHighlight/page';
+
 import replaceIcon from '@/scripts/replaceIcon';
 import GlobalStyle from '@/styles';
 
@@ -24,7 +24,6 @@ export const HEADER_HEIGHT = 64;
 // Optimized selectors
 const selectLayoutSettings = (state: any) => ({
   enableExtraNetworkSidebar: state.setting.enableExtraNetworkSidebar,
-  enableHighlight: state.setting.enableHighlight,
   enableImageInfo: state.setting.enableImageInfo,
   enableSidebar: state.setting.enableSidebar,
   liteAnimation: state.setting.liteAnimation,
@@ -40,7 +39,6 @@ const Index = memo(() => {
   const {
     enableSidebar,
     enableExtraNetworkSidebar,
-    enableHighlight,
     enableImageInfo,
     svgIcon,
     liteAnimation,
@@ -55,10 +53,6 @@ const Index = memo(() => {
   useEffect(() => {
     // Batch DOM operations
     const tasks: Array<() => void> = [];
-
-    if (enableHighlight) {
-      tasks.push(() => PromptHighlight());
-    }
 
     if (enableImageInfo) {
       tasks.push(() => ImageInfo());
@@ -80,7 +74,7 @@ const Index = memo(() => {
         });
       });
     }
-  }, [enableHighlight, enableImageInfo, svgIcon]);
+  }, [enableImageInfo, svgIcon]);
 
   return (
     <>

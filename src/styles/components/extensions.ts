@@ -5,12 +5,7 @@ import { HEADER_HEIGHT } from '../../app/index';
 export default (token: Theme) => {
   return css`
     #root {
-      /* sd-webui-prompt-all-in-one */
-      .physton-highlight-prompt {
-        color: ${token.colorPrimary} !important;
 
-        -webkit-text-fill-color: ${token.colorPrimary} !important;
-      }
 
       /* openOutpaint */
       #tab_openOutpaint {

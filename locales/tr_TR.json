@@ -126,10 +126,7 @@
       "desc": "Hızlı ayar kenar çubuğunun üstünde basit bir isteğe bağlı düzenleyici sağlar",
       "title": "İsteğe Bağlı Düzenleyici"
     },
-    "promptHighlight": {
-      "desc": "Stable Diffusion sözdizimi kurallarına göre otomatik olarak isteği bağlı renklendirme",
-      "title": "İsteğe Bağlı Sözdizimi Vurgulama"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "Başlangıçta kenar çubuğunu varsayılan olarak genişletmek için",

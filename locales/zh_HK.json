@@ -126,10 +126,7 @@
       "desc": "在快速設置側邊欄頂部提供簡單的提示編輯器",
       "title": "提示編輯器"
     },
-    "promptHighlight": {
-      "desc": "根據 Stable Diffusion 語法規則自動著色提示顯示",
-      "title": "提示語法高亮"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "啟動時是否默認展開側邊欄",

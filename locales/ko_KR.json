@@ -126,10 +126,7 @@
       "desc": "빠른 설정 사이드바 상단에 간단한 프롬프트 편집기 제공",
       "title": "프롬프트 편집기"
     },
-    "promptHighlight": {
-      "desc": "Stable Diffusion 구문 규칙에 따라 프롬프트 표시를 자동으로 색상화",
-      "title": "프롬프트 구문 강조"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "시작할 때 사이드바를 기본적으로 확장할지 여부",

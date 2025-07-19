@@ -126,10 +126,7 @@
       "desc": "在快速设置侧边栏顶部提供简单的提示编辑器",
       "title": "提示编辑器"
     },
-    "promptHighlight": {
-      "desc": "根据 Stable Diffusion 语法规则自动着色提示显示",
-      "title": "提示语法高亮"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "启动时默认是否展开侧边栏",

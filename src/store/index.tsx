@@ -51,7 +51,6 @@ export const commonSelectors = {
   themeMode: (state: Store) => state.themeMode,
 
   uiSettings: (state: Store) => ({
-    enableHighlight: state.setting.enableHighlight,
     enableImageInfo: state.setting.enableImageInfo,
     liteAnimation: state.setting.liteAnimation,
     neutralColor: state.setting.neutralColor,

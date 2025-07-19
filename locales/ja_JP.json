@@ -126,10 +126,7 @@
       "desc": "クイック設定サイドバーの上部にシンプルなプロンプトエディタを提供",
       "title": "プロンプトエディタ"
     },
-    "promptHighlight": {
-      "desc": "Stable Diffusionの構文ルールに従ってプロンプト表示を自動的にカラーリング",
-      "title": "プロンプトシンタックスハイライト"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "開始時にサイドバーをデフォルトで展開するかどうか",

@@ -126,10 +126,7 @@
       "desc": "Fournir un éditeur de demande simple en haut de la barre latérale de réglage rapide",
       "title": "Éditeur de demande"
     },
-    "promptHighlight": {
-      "desc": "Coloriser automatiquement l'affichage de la demande selon les règles de syntaxe de Stable Diffusion",
-      "title": "Mise en évidence de la syntaxe de la demande"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "S'il faut développer la barre latérale par défaut au démarrage",

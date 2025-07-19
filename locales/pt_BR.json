@@ -126,10 +126,7 @@
       "desc": "Fornece um editor de prompt simples no topo da barra lateral de configuração rápida",
       "title": "Editor de Prompt"
     },
-    "promptHighlight": {
-      "desc": "Colorize automaticamente a exibição do prompt de acordo com as regras de sintaxe do Stable Diffusion",
-      "title": "Realce de Sintaxe do Prompt"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "Se deve expandir a barra lateral por padrão ao iniciar",

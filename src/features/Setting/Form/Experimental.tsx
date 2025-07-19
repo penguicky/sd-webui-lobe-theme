@@ -38,13 +38,7 @@ const SettingForm = memo(() => {
   const promptTextarea: SettingItemGroup = useMemo(
     () => ({
       children: [
-        {
-          children: <Switch />,
-          desc: t('setting.promptHighlight.desc'),
-          label: t('setting.promptHighlight.title'),
-          name: 'enableHighlight',
-          valuePropName: 'checked',
-        },
+
         {
           children: <Switch />,
           desc: t('setting.promptEditor.desc'),

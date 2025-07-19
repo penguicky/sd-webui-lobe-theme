@@ -126,10 +126,7 @@
       "desc": "Proporcionar un editor de aviso simple en la parte superior de la barra lateral de configuración rápida",
       "title": "Editor de aviso"
     },
-    "promptHighlight": {
-      "desc": "Colorear automáticamente la visualización del aviso según las reglas de sintaxis de Stable Diffusion",
-      "title": "Resaltado de sintaxis de aviso"
-    },
+
     "quickSettingSidebar": {
       "defaultExpand": {
         "desc": "Si expandir la barra lateral de forma predeterminada al iniciar",
