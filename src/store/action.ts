@@ -169,10 +169,6 @@ export const createSettings: StateCreator<Store, [['zustand/devtools', never]], 
       await postSetting(setting);
       set(() => ({ setting }), false, 'onLoadSetting');
       consola.success('🤯 [setting] loaded');
-
-      if (__DEV__) {
-        console.table(setting);
-      }
     } catch (error) {
       consola.error('Failed to post setting:', error);
       // Still set the setting even if posting fails
