@@ -16,9 +16,11 @@ export const usePerformanceMonitor = (componentName: string) => {
           const endTime = performance.now();
           const renderTime = endTime - startTimeRef.current;
 
-          if (renderTime > 50) {
-            // Only log if render time > 50ms (very slow renders)
+          if (renderTime > 16) {
+            // Only log if render time > 16ms (60fps threshold)
             console.warn(`🐌 ${componentName} slow render: ${renderTime.toFixed(2)}ms`);
+          } else if (renderTime > 8) {
+            console.log(`⚡ ${componentName} render: ${renderTime.toFixed(2)}ms`);
           }
         }
       };
